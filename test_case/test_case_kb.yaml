@@ -1,0 +1,50 @@
+case_id: test_rpc_device_rgbw_profile_turn_on_rgbw
+source_test_case: test_rpc_device_rgbw_profile
+
+initial_state:
+  ha:
+    entity_id: light.rgbw_0
+    state: "on"
+    attributes:
+      supported_color_modes: [rgbw]
+      supported_features: [transition]
+      rgbw_color: [21, 22, 23, 120]
+  virtual_device:
+    component: rgbw:0
+    status:
+      id: 0
+      output: true
+      rgb: [21, 22, 23]
+      white: 120
+
+command_to_ha:
+  service: light.turn_on
+  data:
+    entity_id: light.rgbw_0
+    rgbw_color: [72, 82, 92, 128]
+
+expected_virtual_device_call:
+  method: RGBW.Set
+  params:
+    id: 0
+    "on": true
+    rgb: [72, 82, 92]
+    white: 128
+
+example_virtual_device_response:
+  result: null
+
+expected_final_state:
+  ha:
+    entity_id: light.rgbw_0
+    state: "on"
+    attributes:
+      color_mode: rgbw
+      rgbw_color: [72, 82, 92, 128]
+  virtual_device:
+    component: rgbw:0
+    status:
+      id: 0
+      output: true
+      rgb: [72, 82, 92]
+      white: 128

@@ -1,0 +1,54 @@
+{
+    "name": test case extraction,
+    "description": "Extract the behaviour from the test cases",
+    "input schema": {
+        "type": object,
+        "properties":{
+        "name": {
+        "type": "string",
+        "description": "Name of the test function."
+        },
+        "device_type": {
+            "type": "string",
+            "description": "Type of device being tested. To be extracted from the function name itself"
+        },
+        "states": {
+            "type": "object",
+            "description": "Named device state snapshots.",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "variables": {
+                        "type": "object",
+                        "description": "State variables and their values.",
+                    }
+                },
+            }
+        },
+        "transitions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "description": "Action invoked in the test. Translate the propriotary terms to common terms, "SERVICE_TURN_OFF" to "off" for example"
+                    },
+                    "from": {
+                        "type": "string",
+                        "description": "Snapshot before the action."
+                    },
+                    "to": {
+                        "type": "string",
+                        "description": "Snapshot after the action."
+                    },
+                    "inputs": {
+                        "type": "object",
+                        "description": "Action parameters.",
+                    },
+                }
+            }
+        }
+        }
+    }
+}

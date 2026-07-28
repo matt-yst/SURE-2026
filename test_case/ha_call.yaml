@@ -1,0 +1,7 @@
+curl -X POST "$HA_URL/api/services/light/turn_on" \
+  -H "Authorization: Bearer $HA_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entity_id": "light.rgbw_0",
+    "rgbw_color": [72, 82, 92, 128]
+  }'
