@@ -26,7 +26,6 @@ url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
 response = requests.get(url)
 data = response.json()
 
-print(data["download_url"])
 
 # raw = requests.get(data["download_url"]).text
 raw = open("snippet.txt", "r", encoding="utf-8").read()
@@ -77,11 +76,26 @@ lines = raw.splitlines()
 
 for node in tree.body:
     if isinstance(node, ast.AsyncFunctionDef) and node.name.startswith("test_"):
-        function_source = "\n".join(
-            lines[node.lineno - 1 : node.end_lineno]
-        )
+        behaviour = []
+        i = 0
+        while i < len(node.body):
+            if not isinstance(node.body[i], ast.Assert):
+                behaviour.append(ast.unparse(node.body[i])) 
+                i += 1
+            else:
+                curr = {"snapshot": []}
+                while i < len(node.body) and isinstance(node.body[i], ast.Assert):
+                    curr["snapshot"].append(ast.unparse(node.body[i].test))
+                    i +=  1
+                behaviour.append(curr)
 
-        tests.append("name: " + node.name + "\n" + "source: " + function_source + "\n" + "linenum: " + str(node.lineno))
+
+        # print(node.body)
+        tests.append("name: " + node.name + "\n" + "behaviour: " + str(behaviour) + "\n" + "linenum: " + str(node.lineno))
+
+# with open("test.txt", "w") as f:
+#     for test in tests:
+#         f.write(test + "\n\n")  # extra blank line between entries
 
 tools = [
     {
