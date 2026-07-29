@@ -18,12 +18,14 @@ CLAUDE_KEY = os.getenv("API_KEY")
 client = Anthropic(api_key = CLAUDE_KEY)
 tools = []
 
-# path = Path(/.core-dev)
-
-# raw = requests.get(data["download_url"]).text
-raw = open("snippet.txt", "r", encoding="utf-8").read()
+path = Path(".core-dev/tests/components/shelly/test_light.py")
 
 
+with path.open("r") as file:
+    raw = file.read()
+
+# with open("snippet.txt", "r") as file:
+#     raw = file.read()
 
 class State(BaseModel):
     variables: dict[str, Any] = Field(
@@ -71,8 +73,11 @@ tree = ast.parse(raw)
 tests = []
 lines = raw.splitlines()
 
+print("input tests: ")
+
 for node in tree.body:
     if isinstance(node, ast.AsyncFunctionDef) and node.name.startswith("test_"):
+        print(node.name)
         behaviour = []
         i = 0
         while i < len(node.body):
@@ -94,6 +99,10 @@ for node in tree.body:
 #     for test in tests:
 #         f.write(test + "\n\n")  # extra blank line between entries
 
+print("\n")
+print("********************************************************************************************************")
+print("\n")
+
 tools = [
     {
         "name": "extract_test_cases",
@@ -101,26 +110,29 @@ tools = [
         "input_schema": schema,
     }
 ]
-            
-message = client.messages.create(
-    max_tokens=1000,
-    tools = tools,
-    tool_choice = {
-        "type": "tool",
-        "name": "extract_test_cases",
-    },
-    messages=[
-        {
-        "role": "user",
-        "content": f"Extract all the test case information following the schema provided, from the following list of test cases {tests}" ,
-        }
-    ],
-    model="claude-haiku-4-5",
-)
 
-for block in message.content:
-    print(block.type)
+for i in range(2):
+    message = client.messages.create(
+        max_tokens=1000,
+        tools = tools,
+        tool_choice = {
+            "type": "tool",
+            "name": "extract_test_cases",
+        },
+        messages=[
+            {
+            "role": "user",
+            "content": f"Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}" ,
+            }
+        ],
+        model="claude-haiku-4-5",
+    )
+
+    for block in message.content:
+        print(block.type)
     if block.type == "tool_use":
         print(block.name)
         print(block.input)
-print(message.usage)
+
+
+# print(message.usage)
