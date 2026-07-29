@@ -1,54 +1,112 @@
 {
-    "name": test case extraction,
-    "description": "Extract the behaviour from the test cases",
-    "input schema": {
-        "type": object,
-        "properties":{
-        "name": {
-        "type": "string",
-        "description": "Name of the test function."
-        },
-        "device_type": {
-            "type": "string",
-            "description": "Type of device being tested. To be extracted from the function name itself"
-        },
-        "states": {
-            "type": "object",
-            "description": "Named device state snapshots.",
-            "additionalProperties": {
-                "type": "object",
-                "properties": {
-                    "variables": {
-                        "type": "object",
-                        "description": "State variables and their values.",
-                    }
-                },
+   "$defs":{
+      "State":{
+         "properties":{
+            "variables":{
+               "additionalProperties":true,
+               "description":"Dictionary of observable state variables.",
+               "title":"Variables",
+               "type":"object"
             }
-        },
-        "transitions": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "action": {
-                        "type": "string",
-                        "description": "Action invoked in the test. Translate the propriotary terms to common terms, "SERVICE_TURN_OFF" to "off" for example"
-                    },
-                    "from": {
-                        "type": "string",
-                        "description": "Snapshot before the action."
-                    },
-                    "to": {
-                        "type": "string",
-                        "description": "Snapshot after the action."
-                    },
-                    "inputs": {
-                        "type": "object",
-                        "description": "Action parameters.",
-                    },
-                }
+         },
+         "required":[
+            "variables"
+         ],
+         "title":"State",
+         "type":"object"
+      },
+      "TestScenario":{
+         "properties":{
+            "name":{
+               "description":"Name of the test scenario. To be extracted from the function name of the test case.",
+               "examples":[
+                  "test_block_device_white_bulb",
+                  "test_rpc_light"
+               ],
+               "title":"Name",
+               "type":"string"
+            },
+            "device_type":{
+               "description":"The type of device being tested. To be extracted from the test case name or the source code.",
+               "examples":[
+                  "light",
+                  "switch",
+                  "light_white",
+                  "light_rgbw"
+               ],
+               "title":"Device Type",
+               "type":"string"
+            },
+            "states":{
+               "additionalProperties":{
+                  "$ref":"#/$defs/State"
+               },
+               "title":"States",
+               "type":"object"
+            },
+            "transitions":{
+               "items":{
+                  "$ref":"#/$defs/Transition"
+               },
+               "title":"Transitions",
+               "type":"array"
             }
-        }
-        }
-    }
+         },
+         "required":[
+            "name",
+            "device_type",
+            "states",
+            "transitions"
+         ],
+         "title":"TestScenario",
+         "type":"object"
+      },
+      "Transition":{
+         "properties":{
+            "action":{
+               "description":"Action invoked in the test. Translate the proprietary terms to common terms, 'SERVICE_TURN_OFF' to 'off' for example",
+               "title":"Action",
+               "type":"string"
+            },
+            "starting_state":{
+               "description":"State before the action.",
+               "title":"Starting State",
+               "type":"string"
+            },
+            "ending_state":{
+               "description":"State after the action.",
+               "title":"Ending State",
+               "type":"string"
+            },
+            "inputs":{
+               "additionalProperties":true,
+               "description":"Input parameters supplied to the action.",
+               "title":"Inputs",
+               "type":"object"
+            }
+         },
+         "required":[
+            "action",
+            "starting_state",
+            "ending_state"
+         ],
+         "title":"Transition",
+         "type":"object"
+      }
+   },
+   "properties":{
+      "test_scenarios":{
+         "description":"List of test scenarios extracted from the test file.",
+         "items":{
+            "$ref":"#/$defs/TestScenario"
+         },
+         "title":"Test Scenarios",
+         "type":"array"
+      }
+   },
+   "required":[
+      "test_scenarios"
+   ],
+   "title":"TestFile",
+   "type":"object"
 }
