@@ -1,5 +1,6 @@
 import requests
 import re
+import json
 from pydantic import BaseModel, Field
 import os
 from anthropic import Anthropic 
@@ -7,6 +8,7 @@ import ast
 from typing import Any
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv 
+from pathlib import Path
 
 load_dotenv()
 
@@ -16,16 +18,7 @@ CLAUDE_KEY = os.getenv("API_KEY")
 client = Anthropic(api_key = CLAUDE_KEY)
 tools = []
 
-owner = "home-assistant"
-repo = "core"
-path = "tests/components/shelly/test_light.py"
-
-url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
-
-
-response = requests.get(url)
-data = response.json()
-
+# path = Path(/.core-dev)
 
 # raw = requests.get(data["download_url"]).text
 raw = open("snippet.txt", "r", encoding="utf-8").read()
@@ -66,9 +59,13 @@ class TestScenario(BaseModel):
     states: dict[str, State]
     transitions: list[Transition]
 
-schema = TestScenario.model_json_schema()
+class TestFile(BaseModel):
+    test_scenarios: list[TestScenario] = Field(
+        description = "List of test scenarios extracted from the test file."
+    )
 
-
+schema = TestFile.model_json_schema()
+# schema_json = json.dumps(schema, indent=2)
 
 tree = ast.parse(raw)
 tests = []
