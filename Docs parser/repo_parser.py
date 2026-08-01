@@ -66,8 +66,8 @@ class TestFile(BaseModel):
         description = "List of test scenarios extracted from the test file."
     )
 
-schema = TestFile.model_json_schema()
-# schema_json = json.dumps(schema, indent=2)
+schema = TestScenario.model_json_schema()
+# schema_json = json.dumps(schema, indent=4)
 
 tree = ast.parse(raw)
 tests = []
@@ -103,6 +103,8 @@ print("\n")
 print("********************************************************************************************************")
 print("\n")
 
+output = TestFile(test_scenarios=[])
+
 tools = [
     {
         "name": "extract_test_cases",
@@ -111,7 +113,7 @@ tools = [
     }
 ]
 
-for i in range(2):
+for i in range(len(tests)):
     message = client.messages.create(
         max_tokens=1000,
         tools = tools,
@@ -129,10 +131,12 @@ for i in range(2):
     )
 
     for block in message.content:
-        print(block.type)
-    if block.type == "tool_use":
-        print(block.name)
-        print(block.input)
+        # print(block.type)
+        if block.type == "tool_use":
+        # print(block.name)
+            # print(block.input)
+            output.test_scenarios.append(block.input)
 
+print(json.dumps(output.model_dump(), indent=4))
 
 # print(message.usage)
