@@ -9,6 +9,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv 
 from pathlib import Path
+from ollama import chat
 
 load_dotenv()
 
@@ -18,7 +19,8 @@ CLAUDE_KEY = os.getenv("API_KEY")
 client = Anthropic(api_key = CLAUDE_KEY)
 tools = []
 
-path = Path(".core-dev/tests/components/shelly/test_light.py")
+script_dir = Path("repo_parser.py").resolve().parent
+path = script_dir.parent / "core" / "tests" / "components" / "shelly" / "test_light.py"
 
 
 with path.open("r") as file:
@@ -103,7 +105,8 @@ print("\n")
 print("********************************************************************************************************")
 print("\n")
 
-output = TestFile(test_scenarios=[])
+# output = TestFile(test_scenarios=[])
+output = []
 
 tools = [
     {
@@ -113,30 +116,44 @@ tools = [
     }
 ]
 
-for i in range(len(tests)):
-    message = client.messages.create(
-        max_tokens=1000,
-        tools = tools,
-        tool_choice = {
-            "type": "tool",
-            "name": "extract_test_cases",
-        },
+for i in range(2):
+    # message = client.messages.create(
+    #     max_tokens=1000,
+    #     tools = tools,
+    #     tool_choice = {
+    #         "type": "tool",
+    #         "name": "extract_test_cases",
+    #     },
+    #     messages=[
+    #         {
+    #         "role": "user",
+    #         "content": f"Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}" ,
+    #         }
+    #     ],
+    #     model="claude-haiku-4-5",
+    # )
+
+    response = chat(
         messages=[
             {
-            "role": "user",
-            "content": f"Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}" ,
+                'role': 'user',
+                'content': f"Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}"
             }
         ],
-        model="claude-haiku-4-5",
+        model="gpt-oss:120b",
+        format = schema
     )
 
-    for block in message.content:
-        # print(block.type)
-        if block.type == "tool_use":
-        # print(block.name)
-            # print(block.input)
-            output.test_scenarios.append(block.input)
+    output.append(json.dumps(response.message.content, indent=4))
 
-print(json.dumps(output.model_dump(), indent=4))
+#     for block in response.message.content:
+#         # print(block.type)
+#         if block.type == "tool_use":
+#         # print(block.name)
+#             # print(block.input)
+#             output.test_scenarios.append(block.input)
+
+# print(json.dumps(output.model_dump(), indent=4))
+print(output)
 
 # print(message.usage)
