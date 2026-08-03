@@ -11,27 +11,53 @@ from dotenv import load_dotenv
 from pathlib import Path
 from ollama import chat
 
-load_dotenv()
+# **********************************************DECLARATIONS**********************************************
 
-CLAUDE_KEY = os.getenv("API_KEY")
+# API declaration 
+# load_dotenv()
+# CLAUDE_KEY = os.getenv("API_KEY")
+# client = Anthropic(api_key = CLAUDE_KEY)
 
 
-client = Anthropic(api_key = CLAUDE_KEY)
+# file declaration
 tools = []
 
 script_dir = Path("repo_parser.py").resolve().parent
 path = script_dir.parent / "core" / "tests" / "components" / "shelly" / "test_light.py"
 
+output_file = open("output.txt", "w")
+
+
 
 with path.open("r") as file:
     raw = file.read()
 
-# with open("snippet.txt", "r") as file:
-#     raw = file.read()
-
+# schema declaratrion
 class State(BaseModel):
     variables: dict[str, Any] = Field(
-        description="Dictionary of observable state variables."
+        description="Dictionary of observable state variables. State variables meant to be extracted from the asserts",
+        examples = ["""{
+                        "state": "on",
+                        "color_mode": "rgbw",
+                        "rgbw_color": [
+                            70,
+                            80,
+                            90,
+                            30
+                        ],
+                        "brightness": 33,
+                        "effect": "Flash"
+                    }
+                    """,
+                    """
+                    {
+                        "state": "on",
+                        "color_mode": "color_temp",
+                        "color_temp_kelvin": 3500,
+                        "unique_id": "123456789ABC-light_0"
+                    }
+                    """
+                    ]
     )
 
 
@@ -71,6 +97,8 @@ class TestFile(BaseModel):
 schema = TestScenario.model_json_schema()
 # schema_json = json.dumps(schema, indent=4)
 
+
+# **********************************************CODE PROCEDURE**********************************************
 tree = ast.parse(raw)
 tests = []
 lines = raw.splitlines()
@@ -97,15 +125,12 @@ for node in tree.body:
         # print(node.body)
         tests.append("name: " + node.name + "\n" + "behaviour: " + str(behaviour) + "\n" + "linenum: " + str(node.lineno))
 
-# with open("test.txt", "w") as f:
-#     for test in tests:
-#         f.write(test + "\n\n")  # extra blank line between entries
+
 
 print("\n")
 print("********************************************************************************************************")
 print("\n")
 
-# output = TestFile(test_scenarios=[])
 output = []
 
 tools = [
@@ -116,7 +141,7 @@ tools = [
     }
 ]
 
-for i in range(2):
+for i in range(len(tests)):
     # message = client.messages.create(
     #     max_tokens=1000,
     #     tools = tools,
@@ -133,18 +158,34 @@ for i in range(2):
     #     model="claude-haiku-4-5",
     # )
 
+    print("input data: " + tests[i])
+    print("\n")
+    print("********************************************************************************************************")
+    print("\n")
+
+
+    prompt = f"""Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}.
+    Utilise the schema in the provided format
+    'name' is the name of the test function
+    'device_type' is the type of device being tested, meant to be extracted from the test case name or source code.
+    'states' are defined as the snapshot asserts within the test case behaviour
+    'transitions' are the actions moving from one state to another, the 'starting_state' and 'ending_state'. The 'action' is the action involved with the state transition, and 'inputs' are the parameters of the action. the statring and ending sattes must be defined in the 'states' field, and the other information must be taken from the behaviour field of the 'tests' list. 
+
+    """
+
     response = chat(
         messages=[
             {
                 'role': 'user',
-                'content': f"Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}"
+                'content': prompt
             }
         ],
         model="gpt-oss:120b",
         format = schema
     )
-
-    output.append(json.dumps(response.message.content, indent=4))
+    # print(response.message.content)
+    curr = json.loads(response.message.content)
+    output.append(curr)
 
 #     for block in response.message.content:
 #         # print(block.type)
@@ -154,6 +195,6 @@ for i in range(2):
 #             output.test_scenarios.append(block.input)
 
 # print(json.dumps(output.model_dump(), indent=4))
-print(output)
+output_file.write(json.dumps(output, indent=4))
 
 # print(message.usage)
