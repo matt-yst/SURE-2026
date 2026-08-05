@@ -25,7 +25,7 @@ tools = []
 script_dir = Path("repo_parser.py").resolve().parent
 path = script_dir.parent / "core" / "tests" / "components" / "shelly" / "test_light.py"
 
-output_file = open("outpu3.txt", "w")
+output_file = open("output4.txt", "w")
 
 
 
@@ -111,13 +111,18 @@ for node in tree.body:
         behaviour = []
         i = 0
         while i < len(node.body):
-            if not isinstance(node.body[i], ast.Assert):
-                behaviour.append(ast.unparse(node.body[i])) 
+            line = node.body[i]
+            if not isinstance(line, ast.Assert):
+                behaviour.append(ast.unparse(line)) 
                 i += 1
             else:
                 curr = {"snapshot": []}
-                while i < len(node.body) and isinstance(node.body[i], ast.Assert):
-                    curr["snapshot"].append(ast.unparse(node.body[i].test))
+                while i < len(node.body) and isinstance(line, ast.Assert):
+                    comparison = line.test
+                    if isinstance(comparison, ast.Compare):
+                        left = ast.unparse(comparison.left)
+                        right = ast.unparse(comparison.comparators[0])
+                        curr["snapshot"].append({left: right})      
                     i +=  1
                 behaviour.append(curr)
 
@@ -141,7 +146,7 @@ tools = [
     }
 ]
 
-for i in range(len(tests)):
+for i in range(1):
     # message = client.messages.create(
     #     max_tokens=1000,
     #     tools = tools,
@@ -158,7 +163,7 @@ for i in range(len(tests)):
     #     model="claude-haiku-4-5",
     # )
 
-    print("input data: " + tests[i])
+    print(tests[i])
     print("\n")
     print("********************************************************************************************************")
     print("\n")
@@ -173,28 +178,28 @@ for i in range(len(tests)):
 
     """
 
-    response = chat(
-        messages=[
-            {
-                'role': 'user',
-                'content': prompt
-            }
-        ],
-        model="gpt-oss:120b",
-        format = schema
-    )
-    # print(response.message.content)
-    curr = json.loads(response.message.content)
-    output.append(curr)
+#     response = chat(
+#         messages=[
+#             {
+#                 'role': 'user',
+#                 'content': prompt
+#             }
+#         ],
+#         model="gpt-oss:120b",
+#         format = schema
+#     )
+#     # print(response.message.content)
+#     curr = json.loads(response.message.content)
+#     output.append(curr)
 
-#     for block in response.message.content:
-#         # print(block.type)
-#         if block.type == "tool_use":
-#         # print(block.name)
-#             # print(block.input)
-#             output.test_scenarios.append(block.input)
+# #     for block in response.message.content:
+# #         # print(block.type)
+# #         if block.type == "tool_use":
+# #         # print(block.name)
+# #             # print(block.input)
+# #             output.test_scenarios.append(block.input)
 
-# print(json.dumps(output.model_dump(), indent=4))
-output_file.write(json.dumps(output, indent=4))
+# # print(json.dumps(output.model_dump(), indent=4))
+# output_file.write(json.dumps(output, indent=4))
 
 # print(message.usage)
