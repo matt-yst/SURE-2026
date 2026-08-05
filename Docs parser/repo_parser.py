@@ -25,7 +25,7 @@ tools = []
 script_dir = Path("repo_parser.py").resolve().parent
 path = script_dir.parent / "core" / "tests" / "components" / "shelly" / "test_light.py"
 
-output_file = open("output.txt", "w")
+output_file = open("outpu3.txt", "w")
 
 
 
@@ -34,8 +34,8 @@ with path.open("r") as file:
 
 # schema declaratrion
 class State(BaseModel):
-    variables: dict[str, Any] = Field(
-        description="Dictionary of observable state variables. State variables meant to be extracted from the asserts",
+    variables: dict[str, str] = Field(
+        description="Dictionary of observable state variables. State variables meant to be extracted from the snapshot entries.",
         examples = ["""{
                         "state": "on",
                         "color_mode": "rgbw",
@@ -168,7 +168,7 @@ for i in range(len(tests)):
     Utilise the schema in the provided format
     'name' is the name of the test function
     'device_type' is the type of device being tested, meant to be extracted from the test case name or source code.
-    'states' are defined as the snapshot asserts within the test case behaviour
+    'states' are defined as the snapshot asserts within the test case behaviour. Extract all the listed entries within the snapshot dictionary objects to be the entries in the "variables" field of the state object.
     'transitions' are the actions moving from one state to another, the 'starting_state' and 'ending_state'. The 'action' is the action involved with the state transition, and 'inputs' are the parameters of the action. the statring and ending sattes must be defined in the 'states' field, and the other information must be taken from the behaviour field of the 'tests' list. 
 
     """
