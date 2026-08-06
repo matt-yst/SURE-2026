@@ -25,7 +25,7 @@ tools = []
 script_dir = Path("repo_parser.py").resolve().parent
 path = script_dir.parent / "core" / "tests" / "components" / "shelly" / "test_light.py"
 
-output_file = open("output4.txt", "w")
+output_file = open("output5.txt", "w")
 
 
 
@@ -35,7 +35,7 @@ with path.open("r") as file:
 # schema declaratrion
 class State(BaseModel):
     variables: dict[str, str] = Field(
-        description="Dictionary of observable state variables. State variables meant to be extracted from the snapshot entries.",
+        description="Dictionary of observable state variables. State variables meant to be extracted from the snapshot entries. Translate the names of the asserted variables and the state names to more common terms, like the examples given",
         examples = ["""{
                         "state": "on",
                         "color_mode": "rgbw",
@@ -103,6 +103,7 @@ tree = ast.parse(raw)
 tests = []
 lines = raw.splitlines()
 
+assert_types = {""}
 print("input tests: ")
 
 for node in tree.body:
@@ -111,18 +112,20 @@ for node in tree.body:
         behaviour = []
         i = 0
         while i < len(node.body):
-            line = node.body[i]
-            if not isinstance(line, ast.Assert):
-                behaviour.append(ast.unparse(line)) 
+            node.body[i]
+            if not isinstance(node.body[i], ast.Assert):
+                behaviour.append(ast.unparse(node.body[i])) 
                 i += 1
             else:
+                curr_assert = ast.parse(node.body[i])
+                assert_types.add(curr_assert.test.__class__.__name__)
                 curr = {"snapshot": []}
-                while i < len(node.body) and isinstance(line, ast.Assert):
-                    comparison = line.test
+                while i < len(node.body) and isinstance(node.body[i], ast.Assert):
+                    comparison = node.body[i].test
                     if isinstance(comparison, ast.Compare):
                         left = ast.unparse(comparison.left)
                         right = ast.unparse(comparison.comparators[0])
-                        curr["snapshot"].append({left: right})      
+                        curr["snapshot"].append({left: right})     
                     i +=  1
                 behaviour.append(curr)
 
@@ -146,7 +149,7 @@ tools = [
     }
 ]
 
-for i in range(1):
+for i in range(len(tests)):
     # message = client.messages.create(
     #     max_tokens=1000,
     #     tools = tools,
@@ -178,28 +181,29 @@ for i in range(1):
 
     """
 
-#     response = chat(
-#         messages=[
-#             {
-#                 'role': 'user',
-#                 'content': prompt
-#             }
-#         ],
-#         model="gpt-oss:120b",
-#         format = schema
-#     )
-#     # print(response.message.content)
-#     curr = json.loads(response.message.content)
-#     output.append(curr)
+    response = chat(
+        messages=[
+            {
+                'role': 'user',
+                'content': prompt
+            }
+        ],
+        model="gpt-oss:120b",
+        format = schema
+    )
+    # print(response.message.content)
+    curr = json.loads(response.message.content)
+    output.append(curr)
 
-# #     for block in response.message.content:
-# #         # print(block.type)
-# #         if block.type == "tool_use":
-# #         # print(block.name)
-# #             # print(block.input)
-# #             output.test_scenarios.append(block.input)
+#     for block in response.message.content:
+#         # print(block.type)
+#         if block.type == "tool_use":
+#         # print(block.name)
+#             # print(block.input)
+#             output.test_scenarios.append(block.input)
 
-# # print(json.dumps(output.model_dump(), indent=4))
-# output_file.write(json.dumps(output, indent=4))
+# print(json.dumps(output.model_dump(), indent=4))
+output_file.write(json.dumps(output, indent=4))
+print(assert_types)
 
 # print(message.usage)
