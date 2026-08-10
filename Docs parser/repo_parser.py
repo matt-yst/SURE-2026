@@ -13,24 +13,14 @@ from ollama import chat
 
 # **********************************************DECLARATIONS**********************************************
 
-# API declaration 
-# load_dotenv()
-# CLAUDE_KEY = os.getenv("API_KEY")
-# client = Anthropic(api_key = CLAUDE_KEY)
-
-
 # file declaration
-tools = []
 
 script_dir = Path("repo_parser.py").resolve().parent
 path = script_dir.parent / "core" / "tests" / "components" / "shelly" / "test_light.py"
 
-output_file = open("output5.txt", "w")
 
 
 
-with path.open("r") as file:
-    raw = file.read()
 
 # schema declaratrion
 class State(BaseModel):
@@ -63,7 +53,7 @@ class State(BaseModel):
 
 class Transition(BaseModel):
     action: str = Field(
-        description="Action invoked in the test. Translate the proprietary terms to common terms, 'SERVICE_TURN_OFF' to 'off' for example"
+        description="Action invoked in the test. Translate the proprietary terms to common terms, 'SERVICE_TURN_OFF' to 'off' for example. If an initial state is not explicitly defined, assume it to be called 'initial_state' with no variables to assert"
 )
     starting_state : str = Field(
         description="State before the action."
@@ -95,92 +85,37 @@ class TestFile(BaseModel):
     )
 
 schema = TestScenario.model_json_schema()
-# schema_json = json.dumps(schema, indent=4)
+
+# **********************************************FUNTCION DEFS**********************************************
+def extract_input_data(tree, test):
+    for node in tree.body:
+        if isinstance(node, ast.AsyncFunctionDef) and node.name.startswith("test_"):
+            print(node.name)
+            behaviour = []
+            i = 0
+            while i < len(node.body):
+                node.body[i]
+                if not isinstance(node.body[i], ast.Assert):
+                    behaviour.append(ast.unparse(node.body[i])) 
+                    i += 1
+                else:
+                    curr_assert = ast.parse(node.body[i])
+                    assert_types.add(curr_assert.test.__class__.__name__)
+                    curr = {"snapshot": []}
+                    while i < len(node.body) and isinstance(node.body[i], ast.Assert):
+                        comparison = node.body[i].test
+                        if isinstance(comparison, ast.Compare):
+                            left = ast.unparse(comparison.left)
+                            right = ast.unparse(comparison.comparators[0])
+                            curr["snapshot"].append({left: right})     
+                        i +=  1
+                    behaviour.append(curr)
 
 
-# **********************************************CODE PROCEDURE**********************************************
-tree = ast.parse(raw)
-tests = []
-lines = raw.splitlines()
+            # print(node.body)
+            tests.append("name: " + node.name + "\n" + "behaviour: " + str(behaviour) + "\n" + "linenum: " + str(node.lineno))
 
-assert_types = {""}
-print("input tests: ")
-
-for node in tree.body:
-    if isinstance(node, ast.AsyncFunctionDef) and node.name.startswith("test_"):
-        print(node.name)
-        behaviour = []
-        i = 0
-        while i < len(node.body):
-            node.body[i]
-            if not isinstance(node.body[i], ast.Assert):
-                behaviour.append(ast.unparse(node.body[i])) 
-                i += 1
-            else:
-                curr_assert = ast.parse(node.body[i])
-                assert_types.add(curr_assert.test.__class__.__name__)
-                curr = {"snapshot": []}
-                while i < len(node.body) and isinstance(node.body[i], ast.Assert):
-                    comparison = node.body[i].test
-                    if isinstance(comparison, ast.Compare):
-                        left = ast.unparse(comparison.left)
-                        right = ast.unparse(comparison.comparators[0])
-                        curr["snapshot"].append({left: right})     
-                    i +=  1
-                behaviour.append(curr)
-
-
-        # print(node.body)
-        tests.append("name: " + node.name + "\n" + "behaviour: " + str(behaviour) + "\n" + "linenum: " + str(node.lineno))
-
-
-
-print("\n")
-print("********************************************************************************************************")
-print("\n")
-
-output = []
-
-tools = [
-    {
-        "name": "extract_test_cases",
-        "description": "Extract behavioral scenarios from the provided list",
-        "input_schema": schema,
-    }
-]
-
-for i in range(len(tests)):
-    # message = client.messages.create(
-    #     max_tokens=1000,
-    #     tools = tools,
-    #     tool_choice = {
-    #         "type": "tool",
-    #         "name": "extract_test_cases",
-    #     },
-    #     messages=[
-    #         {
-    #         "role": "user",
-    #         "content": f"Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}" ,
-    #         }
-    #     ],
-    #     model="claude-haiku-4-5",
-    # )
-
-    print(tests[i])
-    print("\n")
-    print("********************************************************************************************************")
-    print("\n")
-
-
-    prompt = f"""Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}.
-    Utilise the schema in the provided format
-    'name' is the name of the test function
-    'device_type' is the type of device being tested, meant to be extracted from the test case name or source code.
-    'states' are defined as the snapshot asserts within the test case behaviour. Extract all the listed entries within the snapshot dictionary objects to be the entries in the "variables" field of the state object.
-    'transitions' are the actions moving from one state to another, the 'starting_state' and 'ending_state'. The 'action' is the action involved with the state transition, and 'inputs' are the parameters of the action. the statring and ending sattes must be defined in the 'states' field, and the other information must be taken from the behaviour field of the 'tests' list. 
-
-    """
-
+def LLM_prompt(prompt, schema):
     response = chat(
         messages=[
             {
@@ -191,19 +126,52 @@ for i in range(len(tests)):
         model="gpt-oss:120b",
         format = schema
     )
-    # print(response.message.content)
     curr = json.loads(response.message.content)
     output.append(curr)
 
-#     for block in response.message.content:
-#         # print(block.type)
-#         if block.type == "tool_use":
-#         # print(block.name)
-#             # print(block.input)
-#             output.test_scenarios.append(block.input)
 
-# print(json.dumps(output.model_dump(), indent=4))
+# **********************************************CODE PROCEDURE**********************************************
+with path.open("r") as file:
+    raw = file.read()
+tree = ast.parse(raw)
+tests = []
+
+assert_types = {""}
+print("input tests: ")
+
+output_file = open("output5.txt", "w")
+
+
+
+extract_input_data(tree, tests)
+
+
+print("\n")
+print("********************************************************************************************************")
+print("\n")
+
+output = []
+
+
+
+for i in range(len(tests)):
+    print(tests[i])
+    print("\n")
+    print("********************************************************************************************************")
+    print("\n")
+
+    prompt = f"""Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}.
+    Utilise the schema in the provided format
+    'name' is the name of the test function
+    'device_type' is the type of device being tested, meant to be extracted from the test case name or source code.
+    'states' are defined as the snapshot asserts within the test case behaviour. Extract all the listed entries within the snapshot dictionary objects to be the entries in the "variables" field of the state object.
+    'transitions' are the actions moving from one state to another, the 'starting_state' and 'ending_state'. The 'action' is the action involved with the state transition, and 'inputs' are the parameters of the action. the statring and ending sattes must be defined in the 'states' field, and the other information must be taken from the behaviour field of the 'tests' list. 
+
+    If you find that an initialisation state is not explicityly defined by asserts but a transition action is present (let's say an initiialisation function is called for example), you can assume the initial state has no variables to assert. However, do name this null state as "initial_state" in the list of transitions
+    """
+
+    LLM_prompt(prompt, schema)
+
+
 output_file.write(json.dumps(output, indent=4))
 print(assert_types)
-
-# print(message.usage)
