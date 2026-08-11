@@ -86,9 +86,11 @@ schema = TestScenario.model_json_schema()
 
 # **********************************************FUNTCION DEFS**********************************************
 def extract_input_data(tree, test):
+    num = 0
     for node in tree.body:
         if isinstance(node, ast.AsyncFunctionDef) and node.name.startswith("test_"):
             print(node.name)
+            num += 1
             behaviour = []
             i = 0
             while i < len(node.body):
@@ -110,6 +112,9 @@ def extract_input_data(tree, test):
                     behaviour.append(curr)
 
             tests.append("name: " + node.name + "\n" + "behaviour: " + str(behaviour) + "\n" + "linenum: " + str(node.lineno))
+
+    print("number of functions: " + str(num))
+    return num
 
 def LLM_prompt(prompt):
     response = chat(
@@ -145,7 +150,7 @@ if __name__ == "__main__":
     print("\n")
     print("********************************************************************************************************")
     print("\n")
-
+    no_of_tests = 0
     for child in component_dir.iterdir():
         if child.is_file() and child.name.startswith("test_"):
             path = child
@@ -153,7 +158,7 @@ if __name__ == "__main__":
             output_file = output_folder / output_name
             output_file.touch(exist_ok=True)
         
-            output_file = open(output_file, "w")
+            # output_file = open(output_file, "w")
 
             print(f"Processing file: {path.name}")
             print("\n")
@@ -171,7 +176,7 @@ if __name__ == "__main__":
 
             print("INPUT TESTS: ")
             print("\n")
-            extract_input_data(tree, tests)
+            no_of_tests += extract_input_data(tree, tests)
 
 
             print("\n")
@@ -201,3 +206,5 @@ if __name__ == "__main__":
 
             output_file.write(json.dumps(output, indent=4))
             print(assert_types)
+
+    print("total number of tests: " + str(no_of_tests))
