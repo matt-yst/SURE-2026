@@ -207,35 +207,12 @@
         "states": {
             "state_1": {
                 "variables": {
-                    "get_rpc_channel_name(mock_rpc_device, 'input:0')": "Test input 0"
-                }
-            },
-            "state_2": {
-                "variables": {
+                    "get_rpc_channel_name(mock_rpc_device, 'input:0')": "Test input 0",
                     "get_rpc_channel_name(mock_rpc_device, 'input:3')": "Input 3"
                 }
             }
         },
-        "transitions": [
-            {
-                "action": "get_rpc_channel_name",
-                "starting_state": "initial_state",
-                "ending_state": "state_1",
-                "inputs": {
-                    "mock_rpc_device": "mock_rpc_device",
-                    "channel_name": "input:0"
-                }
-            },
-            {
-                "action": "get_rpc_channel_name",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
-                "inputs": {
-                    "mock_rpc_device": "mock_rpc_device",
-                    "channel_name": "input:3"
-                }
-            }
-        ]
+        "transitions": []
     },
     {
         "name": "test_get_rpc_channel_name_multiple_components",
@@ -280,12 +257,15 @@
         "name": "test_get_rpc_input_triggers",
         "device_type": "rpc_device",
         "states": {
-            "button_state": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_button": {
                 "variables": {
                     "set(get_rpc_input_triggers(mock_rpc_device))": "{('btn_down', 'button1'), ('btn_up', 'button1'), ('single_push', 'button1'), ('double_push', 'button1'), ('triple_push', 'button1'), ('long_push', 'button1')}"
                 }
             },
-            "switch_state": {
+            "state_switch": {
                 "variables": {}
             }
         },
@@ -293,7 +273,7 @@
             {
                 "action": "monkeypatch.setattr",
                 "starting_state": "initial_state",
-                "ending_state": "button_state",
+                "ending_state": "state_button",
                 "inputs": {
                     "target": "mock_rpc_device",
                     "attribute": "config",
@@ -306,8 +286,8 @@
             },
             {
                 "action": "monkeypatch.setattr",
-                "starting_state": "button_state",
-                "ending_state": "switch_state",
+                "starting_state": "state_button",
+                "ending_state": "state_switch",
                 "inputs": {
                     "target": "mock_rpc_device",
                     "attribute": "config",
@@ -317,22 +297,6 @@
                         }
                     }
                 }
-            },
-            {
-                "action": "get_rpc_input_triggers",
-                "starting_state": "button_state",
-                "ending_state": "button_state",
-                "inputs": {
-                    "device": "mock_rpc_device"
-                }
-            },
-            {
-                "action": "get_rpc_input_triggers",
-                "starting_state": "switch_state",
-                "ending_state": "switch_state",
-                "inputs": {
-                    "device": "mock_rpc_device"
-                }
             }
         ]
     },
@@ -340,9 +304,12 @@
         "name": "test_shelly_receiver_get",
         "device_type": "ShellyReceiver",
         "states": {
-            "state_1": {
+            "initial_state": {
+                "variables": {}
+            },
+            "after_get": {
                 "variables": {
-                    "response": "'test_response'"
+                    "response": "test_response"
                 }
             }
         },
@@ -350,7 +317,7 @@
             {
                 "action": "receiver.get",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "after_get",
                 "inputs": {
                     "mock_request": "Mock(spec=Request)"
                 }
@@ -359,12 +326,12 @@
     },
     {
         "name": "test_get_rpc_sub_device_name",
-        "device_type": "rpc_sub_device",
+        "device_type": "rpc_device",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "state_after_get_rpc_sub_device_name": {
+            "asserted_state": {
                 "variables": {
                     "get_rpc_sub_device_name(mock_rpc_device, key)": "expected"
                 }
@@ -374,7 +341,7 @@
             {
                 "action": "get_rpc_sub_device_name",
                 "starting_state": "initial_state",
-                "ending_state": "state_after_get_rpc_sub_device_name",
+                "ending_state": "asserted_state",
                 "inputs": {
                     "mock_rpc_device": "mock_rpc_device",
                     "key": "key"
@@ -386,9 +353,6 @@
         "name": "test_get_rpc_sub_device_name_with_custom_name",
         "device_type": "switch",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
             "state_1": {
                 "variables": {
                     "get_rpc_sub_device_name(mock_rpc_device, 'switch:0')": "My Custom Output"
@@ -401,8 +365,20 @@
                 "starting_state": "initial_state",
                 "ending_state": "state_1",
                 "inputs": {
-                    "mock_rpc_device": {},
+                    "mock_rpc_device": "mock_rpc_device",
                     "device_id": "switch:0"
+                }
+            },
+            {
+                "action": "config_override",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "config": {
+                        "switch:0": {
+                            "name": "My Custom Output"
+                        }
+                    }
                 }
             }
         ]
@@ -411,12 +387,15 @@
         "name": "test_get_rpc_sub_device_name_with_emeter_phase",
         "device_type": "emeter",
         "states": {
-            "state_A": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_phase_A": {
                 "variables": {
                     "get_rpc_sub_device_name(mock_rpc_device, 'em:0', 'A')": "Test name Phase A"
                 }
             },
-            "state_B": {
+            "state_phase_B": {
                 "variables": {
                     "get_rpc_sub_device_name(mock_rpc_device, 'em:0', 'B')": "Test name Phase B"
                 }
@@ -426,7 +405,7 @@
             {
                 "action": "get_rpc_sub_device_name",
                 "starting_state": "initial_state",
-                "ending_state": "state_A",
+                "ending_state": "state_phase_A",
                 "inputs": {
                     "device": "mock_rpc_device",
                     "sub_device_id": "em:0",
@@ -435,8 +414,8 @@
             },
             {
                 "action": "get_rpc_sub_device_name",
-                "starting_state": "state_A",
-                "ending_state": "state_B",
+                "starting_state": "state_phase_A",
+                "ending_state": "state_phase_B",
                 "inputs": {
                     "device": "mock_rpc_device",
                     "sub_device_id": "em:0",

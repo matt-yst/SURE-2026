@@ -3,6 +3,9 @@
         "name": "test_rpc_button",
         "device_type": "button",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state_0": {
                 "variables": {
                     "state.state": "STATE_UNKNOWN",
@@ -53,18 +56,18 @@
         "name": "test_rpc_script_1_event",
         "device_type": "script",
         "states": {
-            "initial_state": {
+            "state_1": {
                 "variables": {
                     "hass.states.get(entity_id)": "snapshot(name=f'{entity_id}-state')",
                     "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
                 }
             },
-            "script_start_state": {
+            "state_2": {
                 "variables": {
                     "state.attributes.get(ATTR_EVENT_TYPE)": "'script_start'"
                 }
             },
-            "unknown_event_state": {
+            "state_3": {
                 "variables": {
                     "state.attributes.get(ATTR_EVENT_TYPE)": "'unknown_event'"
                 }
@@ -72,9 +75,18 @@
         },
         "transitions": [
             {
-                "action": "inject_rpc_device_event",
+                "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "script_start_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 2
+                }
+            },
+            {
+                "action": "inject_rpc_device_event",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
                     "monkeypatch": "monkeypatch",
                     "mock_rpc_device": "mock_rpc_device",
@@ -93,8 +105,8 @@
             },
             {
                 "action": "inject_rpc_device_event",
-                "starting_state": "script_start_state",
-                "ending_state": "unknown_event_state",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
                     "monkeypatch": "monkeypatch",
                     "mock_rpc_device": "mock_rpc_device",
@@ -117,42 +129,9 @@
         "name": "test_rpc_script_2_event",
         "device_type": "script",
         "states": {
-            "final_state": {
+            "post_init": {
                 "variables": {
-                    "hass.states.get(entity_id)": "event.test_name_test_script_2_js-state",
-                    "entity_registry.async_get(entity_id)": "event.test_name_test_script_2_js-entry"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "init_integration",
-                "starting_state": "initial_state",
-                "ending_state": "final_state",
-                "inputs": {
-                    "hass": "hass",
-                    "count": 2
-                }
-            },
-            {
-                "action": "snapshot_asserts",
-                "starting_state": "final_state",
-                "ending_state": "final_state",
-                "inputs": {}
-            }
-        ]
-    },
-    {
-        "name": "test_rpc_script_ble_event",
-        "device_type": "ble",
-        "states": {
-            "entity_state_snapshot": {
-                "variables": {
-                    "hass.states.get(entity_id)": "snapshot(name=f'{entity_id}-state')"
-                }
-            },
-            "entity_entry_snapshot": {
-                "variables": {
+                    "hass.states.get(entity_id)": "snapshot(name=f'{entity_id}-state')",
                     "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
                 }
             }
@@ -161,7 +140,33 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "entity_state_snapshot",
+                "ending_state": "post_init",
+                "inputs": {
+                    "hass": "hass",
+                    "value": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_script_ble_event",
+        "device_type": "BLE",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_event_state": {
+                "variables": {
+                    "hass.states.get(entity_id)": "snapshot(name=f'{entity_id}-state')",
+                    "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_event_state",
                 "inputs": {
                     "hass": "hass",
                     "count": 2
@@ -171,7 +176,7 @@
     },
     {
         "name": "test_rpc_event_removal",
-        "device_type": "event",
+        "device_type": "rpc_event",
         "states": {
             "state_1": {
                 "variables": {
@@ -190,10 +195,23 @@
                 "starting_state": "initial_state",
                 "ending_state": "state_1",
                 "inputs": {
-                    "hass": "<hass>",
+                    "hass": "hass",
                     "domain": "EVENT_DOMAIN",
                     "name": "test_name_input_0",
-                    "config_key": "input:0"
+                    "entity_key": "input:0"
+                }
+            },
+            {
+                "action": "monkeypatch.setitem",
+                "starting_state": "state_1",
+                "ending_state": "state_1",
+                "inputs": {
+                    "target": "mock_rpc_device.config",
+                    "key": "input:0",
+                    "value": {
+                        "id": 0,
+                        "type": "switch"
+                    }
                 }
             },
             {
@@ -201,8 +219,8 @@
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
-                    "hass": "<hass>",
-                    "parameter": 2
+                    "hass": "hass",
+                    "entity_count": 2
                 }
             }
         ]
@@ -217,7 +235,7 @@
                     "state.attributes.get(ATTR_EVENT_TYPES)": "unordered(['single', 'long'])",
                     "state.attributes.get(ATTR_EVENT_TYPE)": "None",
                     "state.attributes.get(ATTR_DEVICE_CLASS)": "EventDeviceClass.BUTTON",
-                    "entry.unique_id": "123456789ABC-relay_0-1"
+                    "entry.unique_id": "'123456789ABC-relay_0-1'"
                 }
             },
             "state_2": {
@@ -233,25 +251,38 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "instance": 1
+                    "arg2": 1
                 }
             },
             {
-                "action": "mock_update",
+                "action": "mock_update_event",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
-                "inputs": {}
+                "inputs": {
+                    "sensor_ids_patch": "monkeypatch.setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'sensor_ids', {'inputEvent': 'L', 'inputEventCnt': 0})",
+                    "input_event_patch": "monkeypatch.setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'inputEvent', 'L')",
+                    "mock_update_call": "mock_block_device.mock_update()",
+                    "await_block_till_done": "await hass.async_block_till_done()"
+                }
+            },
+            {
+                "action": "entity_id_assignment",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "entity_id": "event.test_name_channel_1_input"
+                }
             }
         ]
     },
     {
         "name": "test_block_event_single_output",
-        "device_type": "block",
+        "device_type": "block_device",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "initialized": {
+            "post_init_state": {
                 "variables": {}
             }
         },
@@ -259,7 +290,7 @@
             {
                 "action": "monkeypatch.setitem",
                 "starting_state": "initial_state",
-                "ending_state": "initial_state",
+                "ending_state": "post_init_state",
                 "inputs": {
                     "target": "mock_block_device.shelly",
                     "key": "num_outputs",
@@ -268,8 +299,8 @@
             },
             {
                 "action": "init_integration",
-                "starting_state": "initial_state",
-                "ending_state": "initialized",
+                "starting_state": "post_init_state",
+                "ending_state": "post_init_state",
                 "inputs": {
                     "hass": "hass",
                     "num_outputs": 1
@@ -279,20 +310,17 @@
     },
     {
         "name": "test_block_event_custom_name",
-        "device_type": "block",
+        "device_type": "block_device",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "post_init": {
+            "state_0": {
                 "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "setitem",
+                "action": "monkeypatch.setitem",
                 "starting_state": "initial_state",
-                "ending_state": "configured_state",
+                "ending_state": "state_0",
                 "inputs": {
                     "target": "mock_block_device.settings",
                     "key": "relays",
@@ -309,11 +337,11 @@
             },
             {
                 "action": "init_integration",
-                "starting_state": "configured_state",
-                "ending_state": "post_init",
+                "starting_state": "initial_state",
+                "ending_state": "state_0",
                 "inputs": {
                     "hass": "hass",
-                    "entity_count": 1
+                    "value": 1
                 }
             }
         ]
@@ -325,49 +353,15 @@
             "initial_state": {
                 "variables": {}
             },
-            "state_after_num_outputs": {
-                "variables": {}
-            },
-            "state_after_relays": {
-                "variables": {}
-            },
-            "state_after_init": {
+            "post_init": {
                 "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "monkeypatch.setitem",
-                "starting_state": "initial_state",
-                "ending_state": "state_after_num_outputs",
-                "inputs": {
-                    "target": "mock_block_device.shelly",
-                    "key": "num_outputs",
-                    "value": 1
-                }
-            },
-            {
-                "action": "monkeypatch.setitem",
-                "starting_state": "state_after_num_outputs",
-                "ending_state": "state_after_relays",
-                "inputs": {
-                    "target": "mock_block_device.settings",
-                    "key": "relays",
-                    "value": [
-                        {
-                            "name": "test channel",
-                            "btn_type": "momentary"
-                        },
-                        {
-                            "btn_type": "toggle"
-                        }
-                    ]
-                }
-            },
-            {
                 "action": "init_integration",
-                "starting_state": "state_after_relays",
-                "ending_state": "state_after_init",
+                "starting_state": "initial_state",
+                "ending_state": "post_init",
                 "inputs": {
                     "hass": "hass",
                     "num_devices": 1
@@ -379,9 +373,6 @@
         "name": "test_block_event_shix3_1",
         "device_type": "SHIX3-1",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
             "state_1": {
                 "variables": {
                     "state.attributes.get(ATTR_EVENT_TYPES)": "UNORDERED_EVENT_TYPES"
@@ -405,8 +396,28 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "device_id": 1,
-                    "model": "MODEL_I3"
+                    "model": "MODEL_I3",
+                    "param": 1
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "model": "MODEL_I3",
+                    "param": 1
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_3",
+                "inputs": {
+                    "hass": "hass",
+                    "model": "MODEL_I3",
+                    "param": 1
                 }
             }
         ]
