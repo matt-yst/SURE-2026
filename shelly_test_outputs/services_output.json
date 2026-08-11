@@ -3,10 +3,7 @@
         "name": "test_service_get_kvs_value",
         "device_type": "rpc_device",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "snapshot": {
+            "snapshot_state": {
                 "variables": {
                     "response": "{'value': 'test_value'}"
                 }
@@ -14,33 +11,9 @@
         },
         "transitions": [
             {
-                "action": "initialize_integration",
+                "action": "hass.services.async_call",
                 "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {
-                    "function": "init_integration",
-                    "args": [
-                        "hass",
-                        2
-                    ]
-                }
-            },
-            {
-                "action": "lookup_device",
-                "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {
-                    "function": "dr.async_entries_for_config_entry",
-                    "args": [
-                        "device_registry",
-                        "entry.entry_id"
-                    ]
-                }
-            },
-            {
-                "action": "call_service",
-                "starting_state": "initial_state",
-                "ending_state": "snapshot",
+                "ending_state": "snapshot_state",
                 "inputs": {
                     "domain": "DOMAIN",
                     "service": "SERVICE_GET_KVS_VALUE",
@@ -51,25 +24,14 @@
                     "blocking": true,
                     "return_response": true
                 }
-            },
-            {
-                "action": "assert_kvs_get_called",
-                "starting_state": "snapshot",
-                "ending_state": "snapshot",
-                "inputs": {
-                    "function": "mock_rpc_device.kvs_get.assert_called_once_with",
-                    "args": [
-                        "test_key"
-                    ]
-                }
             }
         ]
     },
     {
         "name": "test_service_get_kvs_value_invalid_device",
-        "device_type": "generic",
+        "device_type": "device",
         "states": {
-            "initial_state": {
+            "initialized": {
                 "variables": {}
             },
             "error_state": {
@@ -84,15 +46,15 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "initial_state",
+                "ending_state": "initialized",
                 "inputs": {
                     "hass": "hass",
-                    "device_count": 2
+                    "arg": 2
                 }
             },
             {
-                "action": "async_call_service",
-                "starting_state": "initial_state",
+                "action": "hass.services.async_call",
+                "starting_state": "initialized",
                 "ending_state": "error_state",
                 "inputs": {
                     "domain": "DOMAIN",
@@ -121,13 +83,13 @@
         },
         "transitions": [
             {
-                "action": "service_call",
+                "action": "hass.services.async_call",
                 "starting_state": "initial_state",
                 "ending_state": "error_state",
                 "inputs": {
                     "domain": "DOMAIN",
                     "service": "SERVICE_GET_KVS_VALUE",
-                    "data": {
+                    "service_data": {
                         "ATTR_DEVICE_ID": "device.id",
                         "ATTR_KEY": "test_key"
                     },
@@ -139,12 +101,9 @@
     },
     {
         "name": "test_service_get_kvs_value_exc",
-        "device_type": "unspecified",
+        "device_type": "device",
         "states": {
             "initial_state": {
-                "variables": {}
-            },
-            "initialized_state": {
                 "variables": {}
             },
             "error_state": {
@@ -157,32 +116,16 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "hass.services.async_call",
                 "starting_state": "initial_state",
-                "ending_state": "initialized_state",
-                "inputs": {
-                    "hass": "hass",
-                    "parameter": 2
-                }
-            },
-            {
-                "action": "set_side_effect",
-                "starting_state": "initialized_state",
-                "ending_state": "initialized_state",
-                "inputs": {
-                    "target": "mock_rpc_device.kvs_get",
-                    "side_effect": "exc"
-                }
-            },
-            {
-                "action": "services.async_call",
-                "starting_state": "initialized_state",
                 "ending_state": "error_state",
                 "inputs": {
                     "domain": "DOMAIN",
                     "service": "SERVICE_GET_KVS_VALUE",
-                    "device_id": "device.id",
-                    "key": "test_key",
+                    "service_data": {
+                        "ATTR_DEVICE_ID": "device.id",
+                        "ATTR_KEY": "test_key"
+                    },
                     "blocking": true,
                     "return_response": true
                 }
@@ -193,12 +136,12 @@
         "name": "test_config_entry_not_loaded",
         "device_type": "device",
         "states": {
-            "not_loaded_state": {
+            "not_loaded": {
                 "variables": {
                     "entry.state": "ConfigEntryState.NOT_LOADED"
                 }
             },
-            "error_state": {
+            "error": {
                 "variables": {
                     "exc_info.value.translation_domain": "DOMAIN",
                     "exc_info.value.translation_key": "'entry_not_loaded'",
@@ -210,15 +153,15 @@
             {
                 "action": "async_unload",
                 "starting_state": "initial_state",
-                "ending_state": "not_loaded_state",
+                "ending_state": "not_loaded",
                 "inputs": {
                     "entry_id": "entry.entry_id"
                 }
             },
             {
-                "action": "service_call",
-                "starting_state": "not_loaded_state",
-                "ending_state": "error_state",
+                "action": "services.async_call",
+                "starting_state": "not_loaded",
+                "ending_state": "error",
                 "inputs": {
                     "domain": "DOMAIN",
                     "service": "SERVICE_GET_KVS_VALUE",
@@ -236,57 +179,54 @@
         "name": "test_service_get_kvs_value_sleeping_device",
         "device_type": "sleeping_device",
         "states": {
-            "exception_state": {
+            "initial_state": {
+                "variables": {}
+            },
+            "error_state": {
                 "variables": {
-                    "exc_info.value.translation_domain": "DOMAIN",
-                    "exc_info.value.translation_key": "kvs_not_supported",
-                    "exc_info.value.translation_placeholders": "{'device': entry.title}"
+                    "translation_domain": "DOMAIN",
+                    "translation_key": "kvs_not_supported",
+                    "translation_placeholders": "{'device': entry.title}"
                 }
             }
         },
         "transitions": [
             {
-                "action": "services.async_call",
+                "action": "service_call",
                 "starting_state": "initial_state",
-                "ending_state": "exception_state",
+                "ending_state": "error_state",
                 "inputs": {
                     "domain": "DOMAIN",
                     "service": "SERVICE_GET_KVS_VALUE",
-                    "service_data": {
-                        "device_id": "device.id",
-                        "key": "test_key"
-                    },
-                    "blocking": true,
-                    "return_response": true
+                    "device_id": "device.id",
+                    "key": "test_key"
                 }
             }
         ]
     },
     {
         "name": "test_service_set_kvs_value",
-        "device_type": "unknown",
+        "device_type": "unspecified",
         "states": {
-            "kvs_set_called": {
-                "variables": {
-                    "method": "kvs_set",
-                    "args": ":[",
-                    "test_key": ",",
-                    "test_value": ""
-                }
+            "initial_state": {
+                "variables": {}
+            },
+            "post_service_call": {
+                "variables": {}
             }
         },
         "transitions": [
             {
                 "action": "hass.services.async_call",
                 "starting_state": "initial_state",
-                "ending_state": "kvs_set_called",
+                "ending_state": "post_service_call",
                 "inputs": {
                     "domain": "DOMAIN",
                     "service": "SERVICE_SET_KVS_VALUE",
                     "service_data": {
-                        "device_id": "device.id",
-                        "key": "test_key",
-                        "value": "test_value"
+                        "ATTR_DEVICE_ID": "device.id",
+                        "ATTR_KEY": "test_key",
+                        "ATTR_VALUE": "test_value"
                     },
                     "blocking": true
                 }
@@ -295,7 +235,7 @@
     },
     {
         "name": "test_service_get_kvs_value_device_not_initialized",
-        "device_type": "device",
+        "device_type": "generic",
         "states": {
             "initial_state": {
                 "variables": {}
@@ -310,27 +250,51 @@
         },
         "transitions": [
             {
-                "action": "call_service",
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_count": 2
+                }
+            },
+            {
+                "action": "retrieve_device",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "device_registry": "device_registry",
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "remove_rpc_attribute",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "target": "entry.runtime_data",
+                    "attribute": "rpc"
+                }
+            },
+            {
+                "action": "service_call",
                 "starting_state": "initial_state",
                 "ending_state": "error_state",
                 "inputs": {
                     "domain": "DOMAIN",
-                    "service": "SERVICE_GET_KVS_VALUE",
-                    "data": {
-                        "device_id": "device.id",
-                        "key": "test_key"
-                    }
+                    "service": "get_kvs_value",
+                    "device_id": "device.id",
+                    "key": "test_key",
+                    "blocking": true,
+                    "return_response": true
                 }
             }
         ]
     },
     {
         "name": "test_service_get_kvs_value_wrong_domain",
-        "device_type": "device",
+        "device_type": "generic_device",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
             "error_state": {
                 "variables": {
                     "exc_info.value.translation_domain": "DOMAIN",
@@ -341,41 +305,16 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
-                "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {
-                    "hass": "hass",
-                    "num_devices": 2
-                }
-            },
-            {
-                "action": "async_update_device_add_config_entry",
-                "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {
-                    "device_id": "device.id",
-                    "config_entry_id": "other_entry.entry_id"
-                }
-            },
-            {
-                "action": "async_update_device_remove_config_entry",
-                "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {
-                    "device_id": "device.id",
-                    "config_entry_id": "entry.entry_id"
-                }
-            },
-            {
-                "action": "call_service_get_kvs_value",
+                "action": "service_call",
                 "starting_state": "initial_state",
                 "ending_state": "error_state",
                 "inputs": {
                     "domain": "DOMAIN",
                     "service": "SERVICE_GET_KVS_VALUE",
-                    "device_id": "device.id",
-                    "key": "test_key",
+                    "service_data": {
+                        "ATTR_DEVICE_ID": "device.id",
+                        "ATTR_KEY": "test_key"
+                    },
                     "blocking": true,
                     "return_response": true
                 }

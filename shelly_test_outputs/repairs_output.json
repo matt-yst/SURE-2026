@@ -3,20 +3,20 @@
         "name": "test_ble_scanner_unsupported_firmware_issue",
         "device_type": "BLE scanner",
         "states": {
-            "state_1": {
+            "state0": {
                 "variables": {}
             },
-            "state_2": {
+            "state1": {
                 "variables": {
                     "len(issue_registry.issues)": "1"
                 }
             },
-            "state_3": {
+            "state2": {
                 "variables": {
                     "result['step_id']": "'confirm'"
                 }
             },
-            "state_4": {
+            "state3": {
                 "variables": {
                     "result['type']": "'create_entry'",
                     "mock_rpc_device.trigger_ota_update.call_count": "1",
@@ -26,18 +26,20 @@
         },
         "transitions": [
             {
-                "action": "hass.async_block_till_done",
+                "action": "assign_issue_id",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
-                "inputs": {}
+                "ending_state": "state0",
+                "inputs": {
+                    "expression": "BLE_SCANNER_FIRMWARE_UNSUPPORTED_ISSUE_ID.format(unique=MOCK_MAC)"
+                }
             },
             {
                 "action": "init_integration",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "starting_state": "state0",
+                "ending_state": "state1",
                 "inputs": {
                     "hass": "hass",
-                    "param": 2,
+                    "device_count": 2,
                     "options": {
                         "CONF_BLE_SCANNER_MODE": "BLEScannerMode.ACTIVE"
                     }
@@ -45,8 +47,8 @@
             },
             {
                 "action": "start_repair_fix_flow",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
+                "starting_state": "state1",
+                "ending_state": "state2",
                 "inputs": {
                     "client": "client",
                     "domain": "DOMAIN",
@@ -55,8 +57,8 @@
             },
             {
                 "action": "process_repair_fix_flow",
-                "starting_state": "state_3",
-                "ending_state": "state_4",
+                "starting_state": "state2",
+                "ending_state": "state3",
                 "inputs": {
                     "client": "client",
                     "flow_id": "flow_id"
@@ -97,67 +99,6 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "config_entry_id": 2,
-                    "options": {
-                        "CONF_BLE_SCANNER_MODE": "BLEScannerMode.ACTIVE"
-                    }
-                }
-            },
-            {
-                "action": "start_repair_fix_flow",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
-                "inputs": {
-                    "client": "client",
-                    "domain": "DOMAIN",
-                    "issue_id": "issue_id"
-                }
-            },
-            {
-                "action": "process_repair_fix_flow",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
-                "inputs": {
-                    "client": "client",
-                    "flow_id": "flow_id",
-                    "monkeypatch": "set mock_rpc_device.status['sys']['available_updates'] = {}"
-                }
-            }
-        ]
-    },
-    {
-        "name": "test_unsupported_firmware_issue_exc",
-        "device_type": "BLE scanner",
-        "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state_1": {
-                "variables": {
-                    "len(issue_registry.issues)": "1"
-                }
-            },
-            "state_2": {
-                "variables": {
-                    "result['step_id']": "'confirm'"
-                }
-            },
-            "state_3": {
-                "variables": {
-                    "result['type']": "'abort'",
-                    "result['reason']": "'cannot_connect'",
-                    "mock_rpc_device.trigger_ota_update.call_count": "1",
-                    "len(issue_registry.issues)": "1"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "init_integration",
-                "starting_state": "initial_state",
-                "ending_state": "state_1",
-                "inputs": {
-                    "hass": "hass",
                     "device_count": 2,
                     "options": {
                         "CONF_BLE_SCANNER_MODE": "BLEScannerMode.ACTIVE"
@@ -171,13 +112,74 @@
                 "inputs": {
                     "client": "client",
                     "domain": "DOMAIN",
-                    "issue_id": "issue_id"
+                    "issue_id": "BLE_SCANNER_FIRMWARE_UNSUPPORTED_ISSUE_ID.format(unique=MOCK_MAC)"
                 }
             },
             {
                 "action": "process_repair_fix_flow",
                 "starting_state": "state_2",
                 "ending_state": "state_3",
+                "inputs": {
+                    "client": "client",
+                    "flow_id": "flow_id",
+                    "monkeypatch": "setitem(mock_rpc_device.status, 'sys', {'available_updates': {}})"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_unsupported_firmware_issue_exc",
+        "device_type": "BLE scanner",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_issues_created": {
+                "variables": {
+                    "len(issue_registry.issues)": "1"
+                }
+            },
+            "state_confirm_step": {
+                "variables": {
+                    "result['step_id']": "'confirm'"
+                }
+            },
+            "state_abort_result": {
+                "variables": {
+                    "result['type']": "'abort'",
+                    "result['reason']": "'cannot_connect'",
+                    "mock_rpc_device.trigger_ota_update.call_count": "1",
+                    "len(issue_registry.issues)": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_issues_created",
+                "inputs": {
+                    "hass": "hass",
+                    "device_count": 2,
+                    "options": {
+                        "CONF_BLE_SCANNER_MODE": "BLEScannerMode.ACTIVE"
+                    }
+                }
+            },
+            {
+                "action": "start_repair_fix_flow",
+                "starting_state": "state_issues_created",
+                "ending_state": "state_confirm_step",
+                "inputs": {
+                    "client": "client",
+                    "domain": "DOMAIN",
+                    "issue_id": "issue_id"
+                }
+            },
+            {
+                "action": "process_repair_fix_flow",
+                "starting_state": "state_confirm_step",
+                "ending_state": "state_abort_result",
                 "inputs": {
                     "client": "client",
                     "flow_id": "flow_id",
@@ -203,12 +205,12 @@
             },
             "state_2": {
                 "variables": {
-                    "result['step_id']": "confirm"
+                    "result['step_id']": "'confirm'"
                 }
             },
             "state_3": {
                 "variables": {
-                    "result['type']": "create_entry",
+                    "result['type']": "'create_entry'",
                     "mock_rpc_device.ws_setconfig.call_count": "1",
                     "mock_rpc_device.ws_setconfig.call_args[0]": "(False, ws_url)",
                     "mock_rpc_device.trigger_reboot.call_count": "1",
@@ -218,41 +220,44 @@
         },
         "transitions": [
             {
-                "action": "configure_mock",
+                "action": "setup mock websocket config",
                 "starting_state": "initial_state",
                 "ending_state": "state_0",
                 "inputs": {
                     "ws_url": "ws://10.10.10.10:8123/api/shelly/ws",
-                    "ws_enable": true,
-                    "issue_id": "OUTBOUND_WEBSOCKET_INCORRECTLY_ENABLED_ISSUE_ID.format(unique=MOCK_MAC)"
+                    "mock_rpc_device.config['ws']": {
+                        "enable": true,
+                        "server": "ws_url"
+                    }
                 }
             },
             {
-                "action": "setup_integration",
+                "action": "initialize integration",
                 "starting_state": "state_0",
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "device_count": "2"
+                    "device_count": 2,
+                    "await_hass_async_block_till_done": true
                 }
             },
             {
-                "action": "start_repair_fix_flow",
+                "action": "start repair fix flow",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
-                    "client": "client",
+                    "client": "hass_client()",
                     "domain": "DOMAIN",
-                    "issue_id": "issue_id"
+                    "issue_id": "OUTBOUND_WEBSOCKET_INCORRECTLY_ENABLED_ISSUE_ID.format(unique=MOCK_MAC)"
                 }
             },
             {
-                "action": "process_repair_fix_flow",
+                "action": "process repair fix flow",
                 "starting_state": "state_2",
                 "ending_state": "state_3",
                 "inputs": {
-                    "client": "client",
-                    "flow_id": "flow_id"
+                    "client": "hass_client()",
+                    "flow_id": "result['flow_id']"
                 }
             }
         ]
@@ -261,6 +266,9 @@
         "name": "test_repairs_skipped_when_device_not_initialized",
         "device_type": "rpc_device",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state_1": {
                 "variables": {
                     "len(issue_registry.issues)": "0"
@@ -274,32 +282,35 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "value": 2
+                    "entity_id": 2
                 }
             }
         ]
     },
     {
         "name": "test_outbound_websocket_incorrectly_enabled_issue_exc",
-        "device_type": "shelly",
+        "device_type": "rpc_device",
         "states": {
-            "state_0": {
+            "initial_state": {
                 "variables": {}
             },
             "state_1": {
+                "variables": {}
+            },
+            "state_2": {
                 "variables": {
                     "len(issue_registry.issues)": "1"
                 }
             },
-            "state_2": {
-                "variables": {
-                    "result['step_id']": "confirm"
-                }
-            },
             "state_3": {
                 "variables": {
-                    "result['type']": "abort",
-                    "result['reason']": "cannot_connect",
+                    "result['step_id']": "'confirm'"
+                }
+            },
+            "state_4": {
+                "variables": {
+                    "result['type']": "'abort'",
+                    "result['reason']": "'cannot_connect'",
                     "mock_rpc_device.ws_setconfig.call_count": "1",
                     "len(issue_registry.issues)": "1"
                 }
@@ -307,29 +318,32 @@
         },
         "transitions": [
             {
-                "action": "setup",
+                "action": "setup_test",
                 "starting_state": "initial_state",
-                "ending_state": "state_0",
+                "ending_state": "state_1",
                 "inputs": {
                     "ws_url": "ws://10.10.10.10:8123/api/shelly/ws",
-                    "config_ws.enable": true,
-                    "config_ws.server": "ws://10.10.10.10:8123/api/shelly/ws",
+                    "config_ws_enable": true,
+                    "config_ws_server": "ws://10.10.10.10:8123/api/shelly/ws",
                     "issue_id": "OUTBOUND_WEBSOCKET_INCORRECTLY_ENABLED_ISSUE_ID.format(unique=MOCK_MAC)"
                 }
             },
             {
-                "action": "await init_integration",
-                "starting_state": "state_0",
-                "ending_state": "state_1",
+                "action": "initialize_integration",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "hass": "hass",
-                    "parameter": 2
+                    "await_hass_async_block_till_done": null,
+                    "init_integration_params": [
+                        "hass",
+                        2
+                    ]
                 }
             },
             {
                 "action": "start_repair_fix_flow",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
                     "client": "client",
                     "domain": "DOMAIN",
@@ -338,86 +352,19 @@
             },
             {
                 "action": "process_repair_fix_flow",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
                 "inputs": {
                     "client": "client",
                     "flow_id": "flow_id",
-                    "mock_rpc_device.ws_setconfig.side_effect": "exception"
+                    "ws_setconfig_side_effect": "exception"
                 }
             }
         ]
     },
     {
         "name": "test_deprecated_firmware_issue",
-        "device_type": "wall_display",
-        "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state_0": {
-                "variables": {}
-            },
-            "state_1": {
-                "variables": {
-                    "len(issue_registry.issues)": "1"
-                }
-            },
-            "state_2": {
-                "variables": {
-                    "result['step_id']": "confirm"
-                }
-            },
-            "state_3": {
-                "variables": {
-                    "result['type']": "create_entry",
-                    "mock_rpc_device.trigger_ota_update.call_count": "1",
-                    "len(issue_registry.issues)": "0"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "assign_issue_id",
-                "starting_state": "initial_state",
-                "ending_state": "state_0",
-                "inputs": {
-                    "unique": "MOCK_MAC"
-                }
-            },
-            {
-                "action": "init_integration",
-                "starting_state": "state_0",
-                "ending_state": "state_1",
-                "inputs": {
-                    "device_count": 2,
-                    "model": "MODEL_WALL_DISPLAY"
-                }
-            },
-            {
-                "action": "start_repair_fix_flow",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
-                "inputs": {
-                    "client": "client",
-                    "domain": "DOMAIN",
-                    "issue_id": "issue_id"
-                }
-            },
-            {
-                "action": "process_repair_fix_flow",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
-                "inputs": {
-                    "client": "client",
-                    "flow_id": "flow_id"
-                }
-            }
-        ]
-    },
-    {
-        "name": "test_open_wifi_ap_issue",
-        "device_type": "wifi",
+        "device_type": "Wall Display",
         "states": {
             "state0": {
                 "variables": {}
@@ -429,34 +376,24 @@
             },
             "state2": {
                 "variables": {
-                    "result['step_id']": "'init'",
-                    "result['type']": "'menu'"
+                    "result['step_id']": "'confirm'"
                 }
             },
             "state3": {
                 "variables": {
                     "result['type']": "'create_entry'",
-                    "mock_rpc_device.wifi_setconfig.call_count": "1",
-                    "mock_rpc_device.wifi_setconfig.call_args[1]": "{'ap_enable': False}",
-                    "mock_rpc_device.trigger_reboot.call_count": "1",
+                    "mock_rpc_device.trigger_ota_update.call_count": "1",
                     "len(issue_registry.issues)": "0"
                 }
             }
         },
         "transitions": [
             {
-                "action": "monkeypatch.setitem",
+                "action": "generate_issue_id",
                 "starting_state": "initial_state",
                 "ending_state": "state0",
                 "inputs": {
-                    "target": "mock_rpc_device.config",
-                    "key": "wifi",
-                    "value": {
-                        "ap": {
-                            "enable": true,
-                            "is_open": true
-                        }
-                    }
+                    "unique": "MOCK_MAC"
                 }
             },
             {
@@ -465,7 +402,14 @@
                 "ending_state": "state1",
                 "inputs": {
                     "hass": "hass",
-                    "value": 2
+                    "device_count": 2,
+                    "model": "MODEL_WALL_DISPLAY",
+                    "patch_DEPRECATED_FIRMWARES": {
+                        "MODEL_WALL_DISPLAY": {
+                            "min_firmware": "2.3.0",
+                            "ha_version": "2025.10.0"
+                        }
+                    }
                 }
             },
             {
@@ -484,97 +428,14 @@
                 "ending_state": "state3",
                 "inputs": {
                     "client": "client",
-                    "flow_id": "flow_id",
-                    "data": {
-                        "next_step_id": "confirm"
-                    }
+                    "flow_id": "flow_id"
                 }
             }
         ]
     },
     {
-        "name": "test_open_wifi_ap_issue_no_restart",
+        "name": "test_open_wifi_ap_issue",
         "device_type": "wifi_ap",
-        "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "config_applied": {
-                "variables": {}
-            },
-            "issue_registered": {
-                "variables": {
-                    "len(issue_registry.issues)": "1"
-                }
-            },
-            "repair_flow_started": {
-                "variables": {
-                    "result['step_id']": "'init'",
-                    "result['type']": "'menu'"
-                }
-            },
-            "repair_flow_completed": {
-                "variables": {
-                    "result['type']": "'create_entry'",
-                    "mock_rpc_device.wifi_setconfig.call_count": "1",
-                    "mock_rpc_device.wifi_setconfig.call_args[1]": "{'ap_enable': False}",
-                    "mock_rpc_device.trigger_reboot.call_count": "0",
-                    "len(issue_registry.issues)": "0"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "monkeypatch.setitem",
-                "starting_state": "initial_state",
-                "ending_state": "config_applied",
-                "inputs": {
-                    "target": "mock_rpc_device.config['wifi']",
-                    "value": {
-                        "ap": {
-                            "enable": true,
-                            "is_open": true
-                        }
-                    }
-                }
-            },
-            {
-                "action": "init_integration",
-                "starting_state": "config_applied",
-                "ending_state": "issue_registered",
-                "inputs": {
-                    "hass": "hass",
-                    "device_count": 2
-                }
-            },
-            {
-                "action": "start_repair_fix_flow",
-                "starting_state": "issue_registered",
-                "ending_state": "repair_flow_started",
-                "inputs": {
-                    "client": "client",
-                    "domain": "DOMAIN",
-                    "issue_id": "OPEN_WIFI_AP_ISSUE_ID.format(unique=MOCK_MAC)"
-                }
-            },
-            {
-                "action": "process_repair_fix_flow",
-                "starting_state": "repair_flow_started",
-                "ending_state": "repair_flow_completed",
-                "inputs": {
-                    "client": "client",
-                    "flow_id": "flow_id",
-                    "next_step_id": "confirm",
-                    "mock_rpc_device.wifi_setconfig.return_value": {
-                        "restart_required": false
-                    }
-                }
-            }
-        ]
-    },
-    {
-        "name": "test_open_wifi_ap_issue_exc",
-        "device_type": "wifi",
         "states": {
             "initial_state": {
                 "variables": {}
@@ -595,27 +456,22 @@
             },
             "state_4": {
                 "variables": {
-                    "result['type']": "abort",
-                    "result['reason']": "cannot_connect",
+                    "result['type']": "create_entry",
                     "mock_rpc_device.wifi_setconfig.call_count": "1",
-                    "len(issue_registry.issues)": "1"
+                    "mock_rpc_device.wifi_setconfig.call_args[1]": "{'ap_enable': False}",
+                    "mock_rpc_device.trigger_reboot.call_count": "1",
+                    "len(issue_registry.issues)": "0"
                 }
             }
         },
         "transitions": [
             {
-                "action": "monkeypatch.setitem",
+                "action": "setup",
                 "starting_state": "initial_state",
                 "ending_state": "state_1",
                 "inputs": {
-                    "target": "mock_rpc_device.config",
-                    "key": "wifi",
-                    "value": {
-                        "ap": {
-                            "enable": true,
-                            "is_open": true
-                        }
-                    }
+                    "monkeypatch.setitem": "mock_rpc_device.config['wifi'] = {'ap': {'enable': True, 'is_open': True}}",
+                    "issue_id_assignment": "issue_id = OPEN_WIFI_AP_ISSUE_ID.format(unique=MOCK_MAC)"
                 }
             },
             {
@@ -624,7 +480,7 @@
                 "ending_state": "state_2",
                 "inputs": {
                     "hass": "hass",
-                    "device_count": 2
+                    "device_count": "2"
                 }
             },
             {
@@ -652,11 +508,29 @@
         ]
     },
     {
-        "name": "test_no_open_wifi_ap_issue_with_password",
-        "device_type": "wifi_ap",
+        "name": "test_open_wifi_ap_issue_no_restart",
+        "device_type": "open_wifi_ap",
         "states": {
-            "state_1": {
+            "initial_state": {
+                "variables": {}
+            },
+            "issue_registered": {
                 "variables": {
+                    "len(issue_registry.issues)": "1"
+                }
+            },
+            "repair_flow_started": {
+                "variables": {
+                    "result['step_id']": "init",
+                    "result['type']": "menu"
+                }
+            },
+            "repair_flow_completed": {
+                "variables": {
+                    "result['type']": "create_entry",
+                    "mock_rpc_device.wifi_setconfig.call_count": "1",
+                    "mock_rpc_device.wifi_setconfig.call_args[1]": "{'ap_enable': False}",
+                    "mock_rpc_device.trigger_reboot.call_count": "0",
                     "len(issue_registry.issues)": "0"
                 }
             }
@@ -665,22 +539,110 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "issue_registered",
                 "inputs": {
                     "hass": "hass",
-                    "value": 2
+                    "device_count": 2
+                }
+            },
+            {
+                "action": "start_repair_fix_flow",
+                "starting_state": "issue_registered",
+                "ending_state": "repair_flow_started",
+                "inputs": {
+                    "client": "client",
+                    "domain": "DOMAIN",
+                    "issue_id": "issue_id"
+                }
+            },
+            {
+                "action": "process_repair_fix_flow",
+                "starting_state": "repair_flow_started",
+                "ending_state": "repair_flow_completed",
+                "inputs": {
+                    "client": "client",
+                    "flow_id": "flow_id",
+                    "data": {
+                        "next_step_id": "confirm"
+                    }
                 }
             }
         ]
     },
     {
-        "name": "test_no_open_wifi_ap_issue_when_disabled",
-        "device_type": "wifi",
+        "name": "test_open_wifi_ap_issue_exc",
+        "device_type": "wifi_ap",
         "states": {
             "initial_state": {
                 "variables": {}
             },
             "state_1": {
+                "variables": {
+                    "len(issue_registry.issues)": "1"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "result['step_id']": "'init'",
+                    "result['type']": "'menu'"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "result['type']": "'abort'",
+                    "result['reason']": "'cannot_connect'",
+                    "mock_rpc_device.wifi_setconfig.call_count": "1",
+                    "len(issue_registry.issues)": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "await init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": "2"
+                }
+            },
+            {
+                "action": "await start_repair_fix_flow",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "client": "client",
+                    "DOMAIN": "DOMAIN",
+                    "issue_id": "issue_id"
+                }
+            },
+            {
+                "action": "set mock_rpc_device.wifi_setconfig.side_effect",
+                "starting_state": "state_2",
+                "ending_state": "state_2",
+                "inputs": {
+                    "exception": "exception"
+                }
+            },
+            {
+                "action": "await process_repair_fix_flow",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "client": "client",
+                    "flow_id": "flow_id",
+                    "payload": {
+                        "next_step_id": "confirm"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_no_open_wifi_ap_issue_with_password",
+        "device_type": "wifi_ap",
+        "states": {
+            "assert_state": {
                 "variables": {
                     "len(issue_registry.issues)": "0"
                 }
@@ -696,8 +658,8 @@
                     "key": "wifi",
                     "value": {
                         "ap": {
-                            "enable": false,
-                            "is_open": true
+                            "enable": true,
+                            "is_open": false
                         }
                     }
                 }
@@ -705,10 +667,35 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "assert_state",
                 "inputs": {
                     "hass": "hass",
-                    "parameter": 2
+                    "device_count": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_no_open_wifi_ap_issue_when_disabled",
+        "device_type": "wifi_ap",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_init": {
+                "variables": {
+                    "len(issue_registry.issues)": "0"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_init",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 2
                 }
             }
         ]
@@ -720,18 +707,18 @@
             "initial_state": {
                 "variables": {}
             },
-            "state_after_init": {
+            "state_1": {
                 "variables": {
                     "len(issue_registry.issues)": "1"
                 }
             },
-            "state_flow_started": {
+            "state_2": {
                 "variables": {
                     "result['step_id']": "init",
                     "result['type']": "menu"
                 }
             },
-            "state_ignored": {
+            "state_3": {
                 "variables": {
                     "result['type']": "abort",
                     "result['reason']": "issue_ignored",
@@ -743,16 +730,16 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_after_init",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "parameter": 2
+                    "value": 2
                 }
             },
             {
                 "action": "start_repair_fix_flow",
-                "starting_state": "state_after_init",
-                "ending_state": "state_flow_started",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
                     "client": "client",
                     "domain": "DOMAIN",
@@ -761,14 +748,12 @@
             },
             {
                 "action": "process_repair_fix_flow",
-                "starting_state": "state_flow_started",
-                "ending_state": "state_ignored",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
                     "client": "client",
                     "flow_id": "flow_id",
-                    "payload": {
-                        "next_step_id": "ignore"
-                    }
+                    "next_step_id": "ignore"
                 }
             }
         ]
@@ -780,42 +765,53 @@
             "initial_state": {
                 "variables": {}
             },
-            "state_1": {
+            "state0": {
+                "variables": {}
+            },
+            "state1": {
                 "variables": {
                     "mock_rpc_device.initialized": "True"
                 }
             },
-            "state_2": {
+            "state2": {
                 "variables": {
                     "len(issue_registry.issues)": "1"
                 }
             },
-            "state_3": {
+            "state3": {
                 "variables": {
-                    "result['step_id']": "confirm",
-                    "result['type']": "form"
+                    "result['step_id']": "'confirm'",
+                    "result['type']": "'form'"
                 }
             },
-            "state_4": {
+            "state4": {
                 "variables": {
-                    "result['type']": "create_entry"
+                    "result['type']": "'create_entry'"
                 }
             }
         },
         "transitions": [
             {
-                "action": "entry = await init_integration(hass, 2)",
+                "action": "assignment",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "state0",
                 "inputs": {
-                    "hass": "hass",
-                    "integration_index": 2
+                    "issue_id": "other_issue"
                 }
             },
             {
-                "action": "ir.async_create_issue(hass, DOMAIN, issue_id, data={'entry_id': entry.entry_id}, is_fixable=True, severity=ir.IssueSeverity.ERROR, translation_key='other_issue')",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "await hass.async_block_till_done(); entry = await init_integration(hass, 2)",
+                "starting_state": "state0",
+                "ending_state": "state1",
+                "inputs": {
+                    "hass": "hass",
+                    "init_integration_param": 2
+                }
+            },
+            {
+                "action": "ir.async_create_issue",
+                "starting_state": "state1",
+                "ending_state": "state2",
                 "inputs": {
                     "hass": "hass",
                     "DOMAIN": "DOMAIN",
@@ -829,19 +825,19 @@
                 }
             },
             {
-                "action": "result = await start_repair_fix_flow(client, DOMAIN, issue_id)",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
+                "action": "client = await hass_client(); result = await start_repair_fix_flow(client, DOMAIN, issue_id); flow_id = result['flow_id']",
+                "starting_state": "state2",
+                "ending_state": "state3",
                 "inputs": {
-                    "client": "client",
+                    "client": "await hass_client()",
                     "DOMAIN": "DOMAIN",
                     "issue_id": "other_issue"
                 }
             },
             {
                 "action": "result = await process_repair_fix_flow(client, flow_id)",
-                "starting_state": "state_3",
-                "ending_state": "state_4",
+                "starting_state": "state3",
+                "ending_state": "state4",
                 "inputs": {
                     "client": "client",
                     "flow_id": "flow_id"
@@ -851,25 +847,25 @@
     },
     {
         "name": "test_coiot_disabled_or_wrong_peer_issue",
-        "device_type": "coiot",
+        "device_type": "CoIoT",
         "states": {
-            "state_0": {
+            "initial_state": {
                 "variables": {}
             },
-            "state_1": {
+            "issue_registered": {
                 "variables": {
                     "len(issue_registry.issues)": "1"
                 }
             },
-            "state_2": {
+            "repair_flow_started": {
                 "variables": {
-                    "result['step_id']": "'init'",
-                    "result['type']": "'menu'"
+                    "result['step_id']": "init",
+                    "result['type']": "menu"
                 }
             },
-            "state_3": {
+            "repair_flow_completed": {
                 "variables": {
-                    "result['type']": "'create_entry'",
+                    "result['type']": "create_entry",
                     "mock_block_device.configure_coiot_protocol.call_count": "1",
                     "len(issue_registry.issues)": "0"
                 }
@@ -877,48 +873,255 @@
         },
         "transitions": [
             {
-                "action": "setup",
+                "action": "mock_block_device_push_update_failure",
                 "starting_state": "initial_state",
-                "ending_state": "state_0",
+                "ending_state": "issue_registered",
                 "inputs": {
-                    "monkeypatch.setitem": "mock_block_device.settings, 'coiot', coiot",
-                    "issue_id_assignment": "COIOT_UNCONFIGURED_ISSUE_ID.format(unique=MOCK_MAC)"
+                    "hass": "hass",
+                    "mock_block_device": "mock_block_device"
                 }
             },
             {
-                "action": "initialize_and_fail_update",
-                "starting_state": "state_0",
-                "ending_state": "state_1",
+                "action": "start_repair_fix_flow",
+                "starting_state": "issue_registered",
+                "ending_state": "repair_flow_started",
                 "inputs": {
-                    "await_hass_async_block_till_done": null,
-                    "await_init_integration": "hass, 1",
-                    "await_mock_block_device_push_update_failure": "hass, mock_block_device"
+                    "client": "client",
+                    "DOMAIN": "DOMAIN",
+                    "issue_id": "issue_id"
                 }
             },
             {
-                "action": "start_repair_flow",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "process_repair_fix_flow",
+                "starting_state": "repair_flow_started",
+                "ending_state": "repair_flow_completed",
                 "inputs": {
-                    "client_creation": "await hass_client()",
-                    "start_repair_fix_flow": "client, DOMAIN, issue_id",
-                    "flow_id_extraction": "result['flow_id']"
-                }
-            },
-            {
-                "action": "process_repair_flow",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
-                "inputs": {
-                    "process_repair_fix_flow": "client, flow_id, {'next_step_id': 'confirm'}"
+                    "client": "client",
+                    "flow_id": "flow_id",
+                    "payload": {
+                        "next_step_id": "confirm"
+                    }
                 }
             }
         ]
     },
     {
         "name": "test_coiot_exception",
-        "device_type": "block_device",
+        "device_type": "coiot",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_update_failure": {
+                "variables": {
+                    "len(issue_registry.issues)": "1"
+                }
+            },
+            "repair_flow_started": {
+                "variables": {
+                    "result['step_id']": "init",
+                    "result['type']": "menu"
+                }
+            },
+            "repair_flow_aborted": {
+                "variables": {
+                    "result['type']": "abort",
+                    "result['reason']": "cannot_connect",
+                    "mock_block_device.configure_coiot_protocol.call_count": "1",
+                    "len(issue_registry.issues)": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialize_and_fail_update",
+                "starting_state": "initial_state",
+                "ending_state": "post_update_failure",
+                "inputs": {
+                    "hass": "hass",
+                    "mock_block_device": "mock_block_device"
+                }
+            },
+            {
+                "action": "start_repair_fix_flow",
+                "starting_state": "post_update_failure",
+                "ending_state": "repair_flow_started",
+                "inputs": {
+                    "client": "client",
+                    "DOMAIN": "DOMAIN",
+                    "issue_id": "issue_id"
+                }
+            },
+            {
+                "action": "process_repair_fix_flow",
+                "starting_state": "repair_flow_started",
+                "ending_state": "repair_flow_aborted",
+                "inputs": {
+                    "client": "client",
+                    "flow_id": "flow_id",
+                    "next_step_id": "confirm"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_coiot_configured_no_issue_created",
+        "device_type": "CoIoT",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_action_state": {
+                "variables": {
+                    "issue_registry.async_get_issue(DOMAIN, issue_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialize integration and simulate block device push update failure",
+                "starting_state": "initial_state",
+                "ending_state": "post_action_state",
+                "inputs": {
+                    "issue_id": "COIOT_UNCONFIGURED_ISSUE_ID.format(unique=MOCK_MAC)",
+                    "init_integration": [
+                        "hass",
+                        1
+                    ],
+                    "mock_block_device_push_update_failure": [
+                        "hass",
+                        "mock_block_device"
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_coiot_key_missing_no_issue_created",
+        "device_type": "coiot",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_init_state": {
+                "variables": {
+                    "issue_registry.async_get_issue(DOMAIN, issue_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_init_state",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_coiot_push_issue_when_missing_hass_url",
+        "device_type": "coiot",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_empty_snapshot": {
+                "variables": {}
+            },
+            "state_issue_created": {
+                "variables": {
+                    "len(issue_registry.issues)": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_issue_id",
+                "starting_state": "initial_state",
+                "ending_state": "state_empty_snapshot",
+                "inputs": {
+                    "issue_id": "PUSH_UPDATE_ISSUE_ID.format(unique=MOCK_MAC)"
+                }
+            },
+            {
+                "action": "process_push_update_failure",
+                "starting_state": "state_empty_snapshot",
+                "ending_state": "state_issue_created",
+                "inputs": {
+                    "await_hass_async_block_till_done": "await hass.async_block_till_done()",
+                    "init_integration": "await init_integration(hass, 1)",
+                    "patch_get_url_no_url_error": "NoURLAvailableError",
+                    "mock_block_device_push_update_failure": "await mock_block_device_push_update_failure(hass, mock_block_device)"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_coiot_fix_flow_no_hass_url",
+        "device_type": "coiot",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_push_update_failure": {
+                "variables": {
+                    "len(issue_registry.issues)": "1"
+                }
+            },
+            "repair_flow_started": {
+                "variables": {
+                    "result['step_id']": "init",
+                    "result['type']": "menu"
+                }
+            },
+            "repair_flow_aborted": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "mock_block_device_push_update_failure",
+                "starting_state": "initial_state",
+                "ending_state": "post_push_update_failure",
+                "inputs": {
+                    "hass": "hass",
+                    "mock_block_device": "mock_block_device"
+                }
+            },
+            {
+                "action": "start_repair_fix_flow",
+                "starting_state": "post_push_update_failure",
+                "ending_state": "repair_flow_started",
+                "inputs": {
+                    "client": "client",
+                    "DOMAIN": "DOMAIN",
+                    "issue_id": "issue_id"
+                }
+            },
+            {
+                "action": "process_repair_fix_flow",
+                "starting_state": "repair_flow_started",
+                "ending_state": "repair_flow_aborted",
+                "inputs": {
+                    "client": "client",
+                    "flow_id": "flow_id",
+                    "payload": {
+                        "next_step_id": "confirm"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_coiot_issue_ignore",
+        "device_type": "CoIoT",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state_0": {
                 "variables": {}
             },
@@ -936,298 +1139,41 @@
             "state_3": {
                 "variables": {
                     "result['type']": "abort",
-                    "result['reason']": "cannot_connect",
-                    "mock_block_device.configure_coiot_protocol.call_count": "1",
-                    "len(issue_registry.issues)": "1"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "setup_monkeypatch_and_issue_id",
-                "starting_state": "initial_state",
-                "ending_state": "state_0",
-                "inputs": {
-                    "mock_block_device.settings['coiot']": {
-                        "enabled": false,
-                        "update_period": 15,
-                        "peer": "7.7.7.7:5683"
-                    },
-                    "issue_id": "COIOT_UNCONFIGURED_ISSUE_ID.format(unique=MOCK_MAC)"
-                }
-            },
-            {
-                "action": "initialize_and_push_update_failure",
-                "starting_state": "state_0",
-                "ending_state": "state_1",
-                "inputs": {
-                    "await hass.async_block_till_done()": null,
-                    "await init_integration(hass, 1)": null,
-                    "await mock_block_device_push_update_failure(hass, mock_block_device)": null
-                }
-            },
-            {
-                "action": "start_repair_fix_flow",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
-                "inputs": {
-                    "client": "await hass_client()",
-                    "DOMAIN": "DOMAIN",
-                    "issue_id": "issue_id"
-                }
-            },
-            {
-                "action": "process_repair_fix_flow",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
-                "inputs": {
-                    "flow_id": "result['flow_id']",
-                    "next_step_id": "confirm"
-                }
-            }
-        ]
-    },
-    {
-        "name": "test_coiot_configured_no_issue_created",
-        "device_type": "CoIoT",
-        "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "post_check_state": {
-                "variables": {
-                    "issue_registry.async_get_issue(DOMAIN, issue_id)": "None"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "init_integration and mock_block_device_push_update_failure",
-                "starting_state": "initial_state",
-                "ending_state": "post_check_state",
-                "inputs": {
-                    "hass": "hass",
-                    "device_index": 1,
-                    "mock_block_device": "mock_block_device",
-                    "patch_get_url_return": "raw_url"
-                }
-            }
-        ]
-    },
-    {
-        "name": "test_coiot_key_missing_no_issue_created",
-        "device_type": "coiot",
-        "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state_without_issue": {
-                "variables": {}
-            },
-            "state_issue_none": {
-                "variables": {
-                    "issue_registry.async_get_issue(DOMAIN, issue_id)": "None"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "monkeypatch.delitem",
-                "starting_state": "initial_state",
-                "ending_state": "state_without_issue",
-                "inputs": {
-                    "target": "mock_block_device.settings",
-                    "key": "coiot"
-                }
-            },
-            {
-                "action": "init_integration",
-                "starting_state": "state_without_issue",
-                "ending_state": "state_issue_none",
-                "inputs": {
-                    "hass": "hass",
-                    "count": 1
-                }
-            }
-        ]
-    },
-    {
-        "name": "test_coiot_push_issue_when_missing_hass_url",
-        "device_type": "coiot",
-        "states": {
-            "state_0": {
-                "variables": {}
-            },
-            "state_1": {
-                "variables": {
-                    "len(issue_registry.issues)": "1"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "setup_issue_id",
-                "starting_state": "initial_state",
-                "ending_state": "state_0",
-                "inputs": {
-                    "issue_id_expression": "PUSH_UPDATE_ISSUE_ID.format(unique=MOCK_MAC)"
-                }
-            },
-            {
-                "action": "process_push_update_failure",
-                "starting_state": "state_0",
-                "ending_state": "state_1",
-                "inputs": {
-                    "await_hass_async_block_till_done": null,
-                    "await_init_integration": {
-                        "hass": "hass",
-                        "num_devices": 1
-                    },
-                    "patch_get_url": "NoURLAvailableError",
-                    "await_mock_block_device_push_update_failure": {
-                        "hass": "hass",
-                        "device": "mock_block_device"
-                    }
-                }
-            },
-            {
-                "action": "assert_snapshot",
-                "starting_state": "state_1",
-                "ending_state": "state_1",
-                "inputs": {
-                    "snapshot": [
-                        {
-                            "len(issue_registry.issues)": "1"
-                        }
-                    ]
-                }
-            }
-        ]
-    },
-    {
-        "name": "test_coiot_fix_flow_no_hass_url",
-        "device_type": "shelly",
-        "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "issue_registered_state": {
-                "variables": {
-                    "len(issue_registry.issues)": "1"
-                }
-            },
-            "start_flow_state": {
-                "variables": {
-                    "result['step_id']": "'init'",
-                    "result['type']": "'menu'"
-                }
-            },
-            "abort_state": {
-                "variables": {
-                    "result['type']": "'abort'",
-                    "result['reason']": "'cannot_configure'"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "setup_integration_and_failure",
-                "starting_state": "initial_state",
-                "ending_state": "issue_registered_state",
-                "inputs": {
-                    "hass": "hass",
-                    "mock_block_device": "mock_block_device"
-                }
-            },
-            {
-                "action": "start_repair_fix_flow",
-                "starting_state": "issue_registered_state",
-                "ending_state": "start_flow_state",
-                "inputs": {
-                    "client": "client",
-                    "DOMAIN": "DOMAIN",
-                    "issue_id": "issue_id"
-                }
-            },
-            {
-                "action": "process_repair_fix_flow_no_url",
-                "starting_state": "start_flow_state",
-                "ending_state": "abort_state",
-                "inputs": {
-                    "client": "client",
-                    "flow_id": "flow_id",
-                    "payload": {
-                        "next_step_id": "confirm"
-                    }
-                }
-            }
-        ]
-    },
-    {
-        "name": "test_coiot_issue_ignore",
-        "device_type": "coiot",
-        "states": {
-            "state0": {
-                "variables": {}
-            },
-            "state1": {
-                "variables": {
-                    "len(issue_registry.issues)": "1"
-                }
-            },
-            "state2": {
-                "variables": {
-                    "result['step_id']": "'init'",
-                    "result['type']": "'menu'"
-                }
-            },
-            "state3": {
-                "variables": {
-                    "result['type']": "'abort'",
-                    "result['reason']": "'issue_ignored'",
+                    "result['reason']": "issue_ignored",
                     "mock_block_device.configure_coiot_protocol.call_count": "0"
                 }
             }
         },
         "transitions": [
             {
-                "action": "monkeypatch.setitem",
+                "action": "await hass.async_block_till_done()",
                 "starting_state": "initial_state",
-                "ending_state": "state0",
-                "inputs": {
-                    "target": "mock_block_device.settings",
-                    "key": "coiot",
-                    "value": {
-                        "enabled": false,
-                        "update_period": 15,
-                        "peer": "7.7.7.7:5683"
-                    }
-                }
+                "ending_state": "state_0",
+                "inputs": {}
             },
             {
-                "action": "initialize_integration_and_simulate_update_failure",
-                "starting_state": "state0",
-                "ending_state": "state1",
+                "action": "await mock_block_device_push_update_failure(hass, mock_block_device)",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "integration_param": 1,
                     "mock_block_device": "mock_block_device"
                 }
             },
             {
-                "action": "start_repair_fix_flow",
-                "starting_state": "state1",
-                "ending_state": "state2",
+                "action": "await start_repair_fix_flow(client, DOMAIN, issue_id)",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
                     "client": "client",
-                    "domain": "DOMAIN",
+                    "DOMAIN": "DOMAIN",
                     "issue_id": "issue_id"
                 }
             },
             {
-                "action": "process_repair_fix_flow",
-                "starting_state": "state2",
-                "ending_state": "state3",
+                "action": "await process_repair_fix_flow(client, flow_id, {'next_step_id': 'ignore'})",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
                     "client": "client",
                     "flow_id": "flow_id",
@@ -1243,10 +1189,7 @@
             "initial_state": {
                 "variables": {}
             },
-            "integration_initialized": {
-                "variables": {}
-            },
-            "issue_created": {
+            "issue_created_state": {
                 "variables": {
                     "len(issue_registry.issues)": "1"
                 }
@@ -1254,19 +1197,9 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "await mock_block_device_push_update_failure",
                 "starting_state": "initial_state",
-                "ending_state": "integration_initialized",
-                "inputs": {
-                    "hass": "hass",
-                    "device_count": 1,
-                    "model": "MODEL_PLUG"
-                }
-            },
-            {
-                "action": "mock_block_device_push_update_failure",
-                "starting_state": "integration_initialized",
-                "ending_state": "issue_created",
+                "ending_state": "issue_created_state",
                 "inputs": {
                     "hass": "hass",
                     "mock_block_device": "mock_block_device"

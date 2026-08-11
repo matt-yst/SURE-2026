@@ -3,73 +3,228 @@
         "name": "test_shelly_2pm_gen3_no_relay_names",
         "device_type": "Shelly 2PM Gen3",
         "states": {
-            "state_1": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_fixture_state": {
+                "variables": {}
+            },
+            "post_force_uptime_state": {
+                "variables": {}
+            },
+            "post_init_state": {
+                "variables": {}
+            },
+            "switch_output_0_state": {
+                "variables": {}
+            },
+            "device_output_0_state": {
                 "variables": {
                     "device_entry.name": "Test name Output 0"
                 }
             },
-            "state_2": {
+            "sensor_output_0_power_state": {
+                "variables": {}
+            },
+            "device_output_0_state_repeat": {
                 "variables": {
                     "device_entry.name": "Test name Output 0"
                 }
             },
-            "state_3": {
+            "switch_output_1_state": {
+                "variables": {}
+            },
+            "device_output_1_state": {
                 "variables": {
                     "device_entry.name": "Test name Output 1"
                 }
             },
-            "state_4": {
+            "sensor_output_1_power_state": {
+                "variables": {}
+            },
+            "device_output_1_state_repeat": {
                 "variables": {
                     "device_entry.name": "Test name Output 1"
                 }
             },
-            "state_5": {
+            "update_firmware_state": {
+                "variables": {}
+            },
+            "device_firmware_state": {
                 "variables": {
                     "device_entry.name": "Test name"
                 }
+            },
+            "final_snapshot_state": {
+                "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "load_fixture",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "post_fixture_state",
+                "inputs": {
+                    "fixture_file": "2pm_gen3.json",
+                    "domain": "shelly"
+                }
+            },
+            {
+                "action": "apply_monkeypatches",
+                "starting_state": "post_fixture_state",
+                "ending_state": "post_force_uptime_state",
+                "inputs": {
+                    "mock_rpc_device.shelly": "device_fixture['shelly']",
+                    "mock_rpc_device.status": "device_fixture['status']",
+                    "mock_rpc_device.config": "device_fixture['config']"
+                }
+            },
+            {
+                "action": "force_uptime_value",
+                "starting_state": "post_force_uptime_state",
+                "ending_state": "post_init_state",
                 "inputs": {
                     "hass": "hass",
+                    "freezer": "freezer"
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "post_init_state",
+                "ending_state": "post_init_state",
+                "inputs": {
                     "gen": 3,
                     "model": "MODEL_2PM_G3"
                 }
             },
             {
-                "action": "check_entity",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "get_entity_state",
+                "starting_state": "post_init_state",
+                "ending_state": "switch_output_0_state",
+                "inputs": {
+                    "entity_id": "switch.test_name_output_0"
+                }
+            },
+            {
+                "action": "entity_registry_async_get",
+                "starting_state": "switch_output_0_state",
+                "ending_state": "device_output_0_state",
+                "inputs": {
+                    "entity_id": "switch.test_name_output_0"
+                }
+            },
+            {
+                "action": "device_registry_async_get",
+                "starting_state": "device_output_0_state",
+                "ending_state": "device_output_0_state",
+                "inputs": {
+                    "device_id": "entry.device_id"
+                }
+            },
+            {
+                "action": "get_entity_state",
+                "starting_state": "device_output_0_state",
+                "ending_state": "sensor_output_0_power_state",
                 "inputs": {
                     "entity_id": "sensor.test_name_output_0_power"
                 }
             },
             {
-                "action": "check_entity",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
+                "action": "entity_registry_async_get",
+                "starting_state": "sensor_output_0_power_state",
+                "ending_state": "device_output_0_state_repeat",
+                "inputs": {
+                    "entity_id": "sensor.test_name_output_0_power"
+                }
+            },
+            {
+                "action": "device_registry_async_get",
+                "starting_state": "device_output_0_state_repeat",
+                "ending_state": "device_output_0_state_repeat",
+                "inputs": {
+                    "device_id": "entry.device_id"
+                }
+            },
+            {
+                "action": "get_entity_state",
+                "starting_state": "device_output_0_state_repeat",
+                "ending_state": "switch_output_1_state",
                 "inputs": {
                     "entity_id": "switch.test_name_output_1"
                 }
             },
             {
-                "action": "check_entity",
-                "starting_state": "state_3",
-                "ending_state": "state_4",
+                "action": "entity_registry_async_get",
+                "starting_state": "switch_output_1_state",
+                "ending_state": "device_output_1_state",
+                "inputs": {
+                    "entity_id": "switch.test_name_output_1"
+                }
+            },
+            {
+                "action": "device_registry_async_get",
+                "starting_state": "device_output_1_state",
+                "ending_state": "device_output_1_state",
+                "inputs": {
+                    "device_id": "entry.device_id"
+                }
+            },
+            {
+                "action": "get_entity_state",
+                "starting_state": "device_output_1_state",
+                "ending_state": "sensor_output_1_power_state",
                 "inputs": {
                     "entity_id": "sensor.test_name_output_1_power"
                 }
             },
             {
-                "action": "check_entity",
-                "starting_state": "state_4",
-                "ending_state": "state_5",
+                "action": "entity_registry_async_get",
+                "starting_state": "sensor_output_1_power_state",
+                "ending_state": "device_output_1_state_repeat",
+                "inputs": {
+                    "entity_id": "sensor.test_name_output_1_power"
+                }
+            },
+            {
+                "action": "device_registry_async_get",
+                "starting_state": "device_output_1_state_repeat",
+                "ending_state": "device_output_1_state_repeat",
+                "inputs": {
+                    "device_id": "entry.device_id"
+                }
+            },
+            {
+                "action": "get_entity_state",
+                "starting_state": "device_output_1_state_repeat",
+                "ending_state": "update_firmware_state",
                 "inputs": {
                     "entity_id": "update.test_name_firmware"
+                }
+            },
+            {
+                "action": "entity_registry_async_get",
+                "starting_state": "update_firmware_state",
+                "ending_state": "device_firmware_state",
+                "inputs": {
+                    "entity_id": "update.test_name_firmware"
+                }
+            },
+            {
+                "action": "device_registry_async_get",
+                "starting_state": "device_firmware_state",
+                "ending_state": "device_firmware_state",
+                "inputs": {
+                    "device_id": "entry.device_id"
+                }
+            },
+            {
+                "action": "snapshot_device_entities",
+                "starting_state": "device_firmware_state",
+                "ending_state": "final_snapshot_state",
+                "inputs": {
+                    "entity_registry": "entity_registry",
+                    "snapshot": "snapshot",
+                    "config_entry_id": "config_entry.entry_id"
                 }
             }
         ]
@@ -81,69 +236,30 @@
             "initial_state": {
                 "variables": {}
             },
-            "after_fixture_load": {
+            "initialized": {
                 "variables": {}
             },
-            "after_name_modifications": {
-                "variables": {}
-            },
-            "after_monkeypatch": {
-                "variables": {}
-            },
-            "after_integration_init": {
-                "variables": {}
-            },
-            "switch_kitchen_light_state": {
-                "variables": {}
-            },
-            "switch_kitchen_light_registry_entry": {
-                "variables": {}
-            },
-            "switch_kitchen_light_device_entry": {
+            "switch.kitchen_light": {
                 "variables": {
                     "device_entry.name": "Kitchen light"
                 }
             },
-            "sensor_kitchen_light_power_state": {
-                "variables": {}
-            },
-            "sensor_kitchen_light_power_registry_entry": {
-                "variables": {}
-            },
-            "sensor_kitchen_light_power_device_entry": {
+            "sensor.kitchen_light_power": {
                 "variables": {
                     "device_entry.name": "Kitchen light"
                 }
             },
-            "switch_living_room_light_state": {
-                "variables": {}
-            },
-            "switch_living_room_light_registry_entry": {
-                "variables": {}
-            },
-            "switch_living_room_light_device_entry": {
+            "switch.living_room_light": {
                 "variables": {
                     "device_entry.name": "Living room light"
                 }
             },
-            "sensor_living_room_light_power_state": {
-                "variables": {}
-            },
-            "sensor_living_room_light_power_registry_entry": {
-                "variables": {}
-            },
-            "sensor_living_room_light_power_device_entry": {
+            "sensor.living_room_light_power": {
                 "variables": {
                     "device_entry.name": "Living room light"
                 }
             },
-            "update_test_name_firmware_state": {
-                "variables": {}
-            },
-            "update_test_name_firmware_registry_entry": {
-                "variables": {}
-            },
-            "update_test_name_firmware_device_entry": {
+            "update.test_name_firmware": {
                 "variables": {
                     "device_entry.name": "Test name"
                 }
@@ -151,38 +267,9 @@
         },
         "transitions": [
             {
-                "action": "async_load_json_object_fixture",
-                "starting_state": "initial_state",
-                "ending_state": "after_fixture_load",
-                "inputs": {
-                    "hass": "hass",
-                    "fixture_file": "2pm_gen3.json",
-                    "domain": "shelly"
-                }
-            },
-            {
-                "action": "modify_device_names",
-                "starting_state": "after_fixture_load",
-                "ending_state": "after_name_modifications",
-                "inputs": {
-                    "device_fixture['config']['switch:0']['name']": "Kitchen light",
-                    "device_fixture['config']['switch:1']['name']": "Living room light"
-                }
-            },
-            {
-                "action": "monkeypatch.setattr (shelly, status, config)",
-                "starting_state": "after_name_modifications",
-                "ending_state": "after_monkeypatch",
-                "inputs": {
-                    "mock_rpc_device.shelly": "device_fixture['shelly']",
-                    "mock_rpc_device.status": "device_fixture['status']",
-                    "mock_rpc_device.config": "device_fixture['config']"
-                }
-            },
-            {
                 "action": "init_integration",
-                "starting_state": "after_monkeypatch",
-                "ending_state": "after_integration_init",
+                "starting_state": "initial_state",
+                "ending_state": "initialized",
                 "inputs": {
                     "hass": "hass",
                     "gen": 3,
@@ -190,170 +277,93 @@
                 }
             },
             {
-                "action": "get_state",
-                "starting_state": "after_integration_init",
-                "ending_state": "switch_kitchen_light_state",
+                "action": "set_entity_id",
+                "starting_state": "initialized",
+                "ending_state": "switch.kitchen_light",
                 "inputs": {
                     "entity_id": "switch.kitchen_light"
                 }
             },
             {
-                "action": "entity_registry.async_get",
-                "starting_state": "switch_kitchen_light_state",
-                "ending_state": "switch_kitchen_light_registry_entry",
-                "inputs": {
-                    "entity_id": "switch.kitchen_light"
-                }
-            },
-            {
-                "action": "device_registry.async_get",
-                "starting_state": "switch_kitchen_light_registry_entry",
-                "ending_state": "switch_kitchen_light_device_entry",
-                "inputs": {
-                    "entry.device_id": "entry.device_id"
-                }
-            },
-            {
-                "action": "get_state",
-                "starting_state": "switch_kitchen_light_device_entry",
-                "ending_state": "sensor_kitchen_light_power_state",
+                "action": "set_entity_id",
+                "starting_state": "switch.kitchen_light",
+                "ending_state": "sensor.kitchen_light_power",
                 "inputs": {
                     "entity_id": "sensor.kitchen_light_power"
                 }
             },
             {
-                "action": "entity_registry.async_get",
-                "starting_state": "sensor_kitchen_light_power_state",
-                "ending_state": "sensor_kitchen_light_power_registry_entry",
-                "inputs": {
-                    "entity_id": "sensor.kitchen_light_power"
-                }
-            },
-            {
-                "action": "device_registry.async_get",
-                "starting_state": "sensor_kitchen_light_power_registry_entry",
-                "ending_state": "sensor_kitchen_light_power_device_entry",
-                "inputs": {
-                    "entry.device_id": "entry.device_id"
-                }
-            },
-            {
-                "action": "get_state",
-                "starting_state": "sensor_kitchen_light_power_device_entry",
-                "ending_state": "switch_living_room_light_state",
+                "action": "set_entity_id",
+                "starting_state": "sensor.kitchen_light_power",
+                "ending_state": "switch.living_room_light",
                 "inputs": {
                     "entity_id": "switch.living_room_light"
                 }
             },
             {
-                "action": "entity_registry.async_get",
-                "starting_state": "switch_living_room_light_state",
-                "ending_state": "switch_living_room_light_registry_entry",
-                "inputs": {
-                    "entity_id": "switch.living_room_light"
-                }
-            },
-            {
-                "action": "device_registry.async_get",
-                "starting_state": "switch_living_room_light_registry_entry",
-                "ending_state": "switch_living_room_light_device_entry",
-                "inputs": {
-                    "entry.device_id": "entry.device_id"
-                }
-            },
-            {
-                "action": "get_state",
-                "starting_state": "switch_living_room_light_device_entry",
-                "ending_state": "sensor_living_room_light_power_state",
+                "action": "set_entity_id",
+                "starting_state": "switch.living_room_light",
+                "ending_state": "sensor.living_room_light_power",
                 "inputs": {
                     "entity_id": "sensor.living_room_light_power"
                 }
             },
             {
-                "action": "entity_registry.async_get",
-                "starting_state": "sensor_living_room_light_power_state",
-                "ending_state": "sensor_living_room_light_power_registry_entry",
-                "inputs": {
-                    "entity_id": "sensor.living_room_light_power"
-                }
-            },
-            {
-                "action": "device_registry.async_get",
-                "starting_state": "sensor_living_room_light_power_registry_entry",
-                "ending_state": "sensor_living_room_light_power_device_entry",
-                "inputs": {
-                    "entry.device_id": "entry.device_id"
-                }
-            },
-            {
-                "action": "get_state",
-                "starting_state": "sensor_living_room_light_power_device_entry",
-                "ending_state": "update_test_name_firmware_state",
+                "action": "set_entity_id",
+                "starting_state": "sensor.living_room_light_power",
+                "ending_state": "update.test_name_firmware",
                 "inputs": {
                     "entity_id": "update.test_name_firmware"
-                }
-            },
-            {
-                "action": "entity_registry.async_get",
-                "starting_state": "update_test_name_firmware_state",
-                "ending_state": "update_test_name_firmware_registry_entry",
-                "inputs": {
-                    "entity_id": "update.test_name_firmware"
-                }
-            },
-            {
-                "action": "device_registry.async_get",
-                "starting_state": "update_test_name_firmware_registry_entry",
-                "ending_state": "update_test_name_firmware_device_entry",
-                "inputs": {
-                    "entry.device_id": "entry.device_id"
                 }
             }
         ]
     },
     {
         "name": "test_shelly_2pm_gen3_cover",
-        "device_type": "Shelly 2PM Gen3 (cover profile)",
+        "device_type": "Shelly 2PM Gen3",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "integration_initialized": {
+            "cover_entity": {
                 "variables": {}
             },
-            "cover_state": {
+            "cover_entry": {
                 "variables": {}
             },
-            "cover_device_state": {
+            "cover_device_entry": {
                 "variables": {
-                    "device_entry.name": "Test name"
+                    "device_entry.name": "'Test name'"
                 }
             },
-            "sensor_state": {
+            "sensor_entity": {
                 "variables": {}
             },
-            "sensor_device_state": {
+            "sensor_entry": {
+                "variables": {}
+            },
+            "sensor_device_entry": {
                 "variables": {
-                    "device_entry.name": "Test name"
+                    "device_entry.name": "'Test name'"
                 }
             },
-            "update_state": {
+            "update_entity": {
                 "variables": {}
             },
-            "update_device_state": {
+            "update_entry": {
+                "variables": {}
+            },
+            "update_device_entry": {
                 "variables": {
-                    "device_entry.name": "Test name"
+                    "device_entry.name": "'Test name'"
                 }
-            },
-            "final_state": {
-                "variables": {}
             }
         },
         "transitions": [
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "integration_initialized",
+                "ending_state": "cover_entity",
                 "inputs": {
                     "gen": 3,
                     "model": "MODEL_2PM_G3"
@@ -361,57 +371,83 @@
             },
             {
                 "action": "hass.states.get",
-                "starting_state": "integration_initialized",
-                "ending_state": "cover_state",
+                "starting_state": "cover_entity",
+                "ending_state": "cover_entity",
                 "inputs": {
                     "entity_id": "cover.test_name"
                 }
             },
             {
-                "action": "get_device_entry",
-                "starting_state": "cover_state",
-                "ending_state": "cover_device_state",
+                "action": "entity_registry.async_get",
+                "starting_state": "cover_entity",
+                "ending_state": "cover_entry",
                 "inputs": {
                     "entity_id": "cover.test_name"
                 }
             },
             {
+                "action": "device_registry.async_get",
+                "starting_state": "cover_entry",
+                "ending_state": "cover_device_entry",
+                "inputs": {
+                    "device_id": "entry.device_id"
+                }
+            },
+            {
                 "action": "hass.states.get",
-                "starting_state": "cover_device_state",
-                "ending_state": "sensor_state",
+                "starting_state": "cover_device_entry",
+                "ending_state": "sensor_entity",
                 "inputs": {
                     "entity_id": "sensor.test_name_power"
                 }
             },
             {
-                "action": "get_device_entry",
-                "starting_state": "sensor_state",
-                "ending_state": "sensor_device_state",
+                "action": "entity_registry.async_get",
+                "starting_state": "sensor_entity",
+                "ending_state": "sensor_entry",
                 "inputs": {
                     "entity_id": "sensor.test_name_power"
                 }
             },
             {
+                "action": "device_registry.async_get",
+                "starting_state": "sensor_entry",
+                "ending_state": "sensor_device_entry",
+                "inputs": {
+                    "device_id": "entry.device_id"
+                }
+            },
+            {
                 "action": "hass.states.get",
-                "starting_state": "sensor_device_state",
-                "ending_state": "update_state",
+                "starting_state": "sensor_device_entry",
+                "ending_state": "update_entity",
                 "inputs": {
                     "entity_id": "update.test_name_firmware"
                 }
             },
             {
-                "action": "get_device_entry",
-                "starting_state": "update_state",
-                "ending_state": "update_device_state",
+                "action": "entity_registry.async_get",
+                "starting_state": "update_entity",
+                "ending_state": "update_entry",
                 "inputs": {
                     "entity_id": "update.test_name_firmware"
+                }
+            },
+            {
+                "action": "device_registry.async_get",
+                "starting_state": "update_entry",
+                "ending_state": "update_device_entry",
+                "inputs": {
+                    "device_id": "entry.device_id"
                 }
             },
             {
                 "action": "snapshot_device_entities",
-                "starting_state": "update_device_state",
+                "starting_state": "update_device_entry",
                 "ending_state": "final_state",
                 "inputs": {
+                    "hass": "hass",
+                    "entity_registry": "entity_registry",
                     "snapshot": "snapshot",
                     "config_entry_id": "config_entry.entry_id"
                 }
@@ -425,49 +461,37 @@
             "initial_state": {
                 "variables": {}
             },
-            "fixture_loaded": {
-                "variables": {}
-            },
-            "cover_name_set": {
-                "variables": {}
-            },
-            "rpc_mocked": {
-                "variables": {}
-            },
-            "integration_initialized": {
-                "variables": {}
-            },
             "cover_state": {
                 "variables": {}
             },
-            "cover_entry_state": {
+            "cover_entity_entry_state": {
                 "variables": {}
             },
-            "cover_device_state": {
+            "cover_device_entry_state": {
                 "variables": {
-                    "device_entry.name": "Test name"
+                    "device_entry.name": "'Test name'"
                 }
             },
             "sensor_state": {
                 "variables": {}
             },
-            "sensor_entry_state": {
+            "sensor_entity_entry_state": {
                 "variables": {}
             },
-            "sensor_device_state": {
+            "sensor_device_entry_state": {
                 "variables": {
-                    "device_entry.name": "Test name"
+                    "device_entry.name": "'Test name'"
                 }
             },
             "update_state": {
                 "variables": {}
             },
-            "update_entry_state": {
+            "update_entity_entry_state": {
                 "variables": {}
             },
-            "update_device_state": {
+            "update_device_entry_state": {
                 "variables": {
-                    "device_entry.name": "Test name"
+                    "device_entry.name": "'Test name'"
                 }
             }
         },
@@ -475,7 +499,7 @@
             {
                 "action": "async_load_json_object_fixture",
                 "starting_state": "initial_state",
-                "ending_state": "fixture_loaded",
+                "ending_state": "initial_state",
                 "inputs": {
                     "hass": "hass",
                     "fixture_name": "2pm_gen3_cover.json",
@@ -483,28 +507,9 @@
                 }
             },
             {
-                "action": "set_cover_name_in_fixture",
-                "starting_state": "fixture_loaded",
-                "ending_state": "cover_name_set",
-                "inputs": {
-                    "fixture_path": "device_fixture['config']['cover:0']['name']",
-                    "value": "Bedroom blinds"
-                }
-            },
-            {
-                "action": "monkeypatch_shelly_rpc_device",
-                "starting_state": "cover_name_set",
-                "ending_state": "rpc_mocked",
-                "inputs": {
-                    "mock_rpc_device.shelly": "device_fixture['shelly']",
-                    "mock_rpc_device.status": "device_fixture['status']",
-                    "mock_rpc_device.config": "device_fixture['config']"
-                }
-            },
-            {
                 "action": "init_integration",
-                "starting_state": "rpc_mocked",
-                "ending_state": "integration_initialized",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
                 "inputs": {
                     "hass": "hass",
                     "gen": 3,
@@ -512,73 +517,73 @@
                 }
             },
             {
-                "action": "get_state_entity",
-                "starting_state": "integration_initialized",
+                "action": "hass.states.get",
+                "starting_state": "initial_state",
                 "ending_state": "cover_state",
                 "inputs": {
                     "entity_id": "cover.test_name_bedroom_blinds"
                 }
             },
             {
-                "action": "get_registry_entry",
+                "action": "entity_registry.async_get",
                 "starting_state": "cover_state",
-                "ending_state": "cover_entry_state",
+                "ending_state": "cover_entity_entry_state",
                 "inputs": {
                     "entity_id": "cover.test_name_bedroom_blinds"
                 }
             },
             {
-                "action": "get_device_entry_from_registry",
-                "starting_state": "cover_entry_state",
-                "ending_state": "cover_device_state",
+                "action": "device_registry.async_get",
+                "starting_state": "cover_entity_entry_state",
+                "ending_state": "cover_device_entry_state",
                 "inputs": {
                     "device_id": "entry.device_id"
                 }
             },
             {
-                "action": "get_state_entity",
-                "starting_state": "cover_device_state",
+                "action": "hass.states.get",
+                "starting_state": "cover_device_entry_state",
                 "ending_state": "sensor_state",
                 "inputs": {
                     "entity_id": "sensor.test_name_bedroom_blinds_power"
                 }
             },
             {
-                "action": "get_registry_entry",
+                "action": "entity_registry.async_get",
                 "starting_state": "sensor_state",
-                "ending_state": "sensor_entry_state",
+                "ending_state": "sensor_entity_entry_state",
                 "inputs": {
                     "entity_id": "sensor.test_name_bedroom_blinds_power"
                 }
             },
             {
-                "action": "get_device_entry_from_registry",
-                "starting_state": "sensor_entry_state",
-                "ending_state": "sensor_device_state",
+                "action": "device_registry.async_get",
+                "starting_state": "sensor_entity_entry_state",
+                "ending_state": "sensor_device_entry_state",
                 "inputs": {
                     "device_id": "entry.device_id"
                 }
             },
             {
-                "action": "get_state_entity",
-                "starting_state": "sensor_device_state",
+                "action": "hass.states.get",
+                "starting_state": "sensor_device_entry_state",
                 "ending_state": "update_state",
                 "inputs": {
                     "entity_id": "update.test_name_firmware"
                 }
             },
             {
-                "action": "get_registry_entry",
+                "action": "entity_registry.async_get",
                 "starting_state": "update_state",
-                "ending_state": "update_entry_state",
+                "ending_state": "update_entity_entry_state",
                 "inputs": {
                     "entity_id": "update.test_name_firmware"
                 }
             },
             {
-                "action": "get_device_entry_from_registry",
-                "starting_state": "update_entry_state",
-                "ending_state": "update_device_state",
+                "action": "device_registry.async_get",
+                "starting_state": "update_entity_entry_state",
+                "ending_state": "update_device_entry_state",
                 "inputs": {
                     "device_id": "entry.device_id"
                 }
@@ -592,58 +597,213 @@
             "initial_state": {
                 "variables": {}
             },
-            "main_device_state": {
+            "fixture_loaded": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "main_state_retrieved": {
+                "variables": {}
+            },
+            "main_entry_retrieved": {
+                "variables": {}
+            },
+            "main_device_entry": {
                 "variables": {
-                    "device_entry.name": "'Test name'"
+                    "device_entry.name": "Test name"
                 }
             },
-            "phase_a_state": {
+            "phase_a_state_retrieved": {
+                "variables": {}
+            },
+            "phase_a_entry_retrieved": {
+                "variables": {}
+            },
+            "phase_a_device_entry": {
                 "variables": {
-                    "device_entry.name": "'Test name Phase A'"
+                    "device_entry.name": "Test name Phase A"
                 }
             },
-            "phase_b_state": {
+            "phase_b_state_retrieved": {
+                "variables": {}
+            },
+            "phase_b_entry_retrieved": {
+                "variables": {}
+            },
+            "phase_b_device_entry": {
                 "variables": {
-                    "device_entry.name": "'Test name Phase B'"
+                    "device_entry.name": "Test name Phase B"
                 }
             },
-            "phase_c_state": {
+            "phase_c_state_retrieved": {
+                "variables": {}
+            },
+            "phase_c_entry_retrieved": {
+                "variables": {}
+            },
+            "phase_c_device_entry": {
                 "variables": {
-                    "device_entry.name": "'Test name Phase C'"
+                    "device_entry.name": "Test name Phase C"
                 }
+            },
+            "final_snapshot": {
+                "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "initialize_main_device",
+                "action": "async_load_json_object_fixture",
                 "starting_state": "initial_state",
-                "ending_state": "main_device_state",
+                "ending_state": "fixture_loaded",
+                "inputs": {
+                    "hass": "hass",
+                    "fixture_file": "pro_3em.json",
+                    "domain": "DOMAIN"
+                }
+            },
+            {
+                "action": "monkeypatch.setattr (shelly, status, config)",
+                "starting_state": "fixture_loaded",
+                "ending_state": "fixture_loaded",
+                "inputs": {
+                    "mock_rpc_device": "mock_rpc_device",
+                    "attributes": [
+                        "shelly",
+                        "status",
+                        "config"
+                    ],
+                    "values": [
+                        "device_fixture['shelly']",
+                        "device_fixture['status']",
+                        "device_fixture['config']"
+                    ]
+                }
+            },
+            {
+                "action": "force_uptime_value",
+                "starting_state": "fixture_loaded",
+                "ending_state": "fixture_loaded",
+                "inputs": {
+                    "hass": "hass",
+                    "freezer": "freezer"
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "fixture_loaded",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "gen": 2,
+                    "model": "MODEL_PRO_EM3"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "integration_initialized",
+                "ending_state": "main_state_retrieved",
                 "inputs": {
                     "entity_id": "sensor.test_name_power"
                 }
             },
             {
-                "action": "initialize_phase_a_device",
-                "starting_state": "main_device_state",
-                "ending_state": "phase_a_state",
+                "action": "entity_registry.async_get",
+                "starting_state": "main_state_retrieved",
+                "ending_state": "main_entry_retrieved",
+                "inputs": {
+                    "entity_id": "sensor.test_name_power"
+                }
+            },
+            {
+                "action": "device_registry.async_get",
+                "starting_state": "main_entry_retrieved",
+                "ending_state": "main_device_entry",
+                "inputs": {
+                    "device_id": "entry.device_id"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "main_device_entry",
+                "ending_state": "phase_a_state_retrieved",
                 "inputs": {
                     "entity_id": "sensor.test_name_phase_a_power"
                 }
             },
             {
-                "action": "initialize_phase_b_device",
-                "starting_state": "phase_a_state",
-                "ending_state": "phase_b_state",
+                "action": "entity_registry.async_get",
+                "starting_state": "phase_a_state_retrieved",
+                "ending_state": "phase_a_entry_retrieved",
+                "inputs": {
+                    "entity_id": "sensor.test_name_phase_a_power"
+                }
+            },
+            {
+                "action": "device_registry.async_get",
+                "starting_state": "phase_a_entry_retrieved",
+                "ending_state": "phase_a_device_entry",
+                "inputs": {
+                    "device_id": "entry.device_id"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "phase_a_device_entry",
+                "ending_state": "phase_b_state_retrieved",
                 "inputs": {
                     "entity_id": "sensor.test_name_phase_b_power"
                 }
             },
             {
-                "action": "initialize_phase_c_device",
-                "starting_state": "phase_b_state",
-                "ending_state": "phase_c_state",
+                "action": "entity_registry.async_get",
+                "starting_state": "phase_b_state_retrieved",
+                "ending_state": "phase_b_entry_retrieved",
+                "inputs": {
+                    "entity_id": "sensor.test_name_phase_b_power"
+                }
+            },
+            {
+                "action": "device_registry.async_get",
+                "starting_state": "phase_b_entry_retrieved",
+                "ending_state": "phase_b_device_entry",
+                "inputs": {
+                    "device_id": "entry.device_id"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "phase_b_device_entry",
+                "ending_state": "phase_c_state_retrieved",
                 "inputs": {
                     "entity_id": "sensor.test_name_phase_c_power"
+                }
+            },
+            {
+                "action": "entity_registry.async_get",
+                "starting_state": "phase_c_state_retrieved",
+                "ending_state": "phase_c_entry_retrieved",
+                "inputs": {
+                    "entity_id": "sensor.test_name_phase_c_power"
+                }
+            },
+            {
+                "action": "device_registry.async_get",
+                "starting_state": "phase_c_entry_retrieved",
+                "ending_state": "phase_c_device_entry",
+                "inputs": {
+                    "device_id": "entry.device_id"
+                }
+            },
+            {
+                "action": "snapshot_device_entities",
+                "starting_state": "phase_c_device_entry",
+                "ending_state": "final_snapshot",
+                "inputs": {
+                    "hass": "hass",
+                    "entity_registry": "entity_registry",
+                    "snapshot": "snapshot",
+                    "config_entry_id": "config_entry.entry_id"
                 }
             }
         ]
@@ -655,27 +815,24 @@
             "initial_state": {
                 "variables": {}
             },
-            "integration_initialized": {
-                "variables": {}
-            },
             "main_device_state": {
                 "variables": {
-                    "device_entry.name": "'Test name'"
+                    "device_entry.name": "Test name"
                 }
             },
             "phase_a_state": {
                 "variables": {
-                    "device_entry.name": "'Test name Phase A'"
+                    "device_entry.name": "Test name Phase A"
                 }
             },
             "phase_b_state": {
                 "variables": {
-                    "device_entry.name": "'Test name Phase B'"
+                    "device_entry.name": "Test name Phase B"
                 }
             },
             "phase_c_state": {
                 "variables": {
-                    "device_entry.name": "'Test name Phase C'"
+                    "device_entry.name": "Test name Phase C"
                 }
             }
         },
@@ -683,22 +840,15 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "integration_initialized",
+                "ending_state": "main_device_state",
                 "inputs": {
+                    "hass": "hass",
                     "gen": 2,
                     "model": "MODEL_PRO_EM3"
                 }
             },
             {
-                "action": "retrieve_entity",
-                "starting_state": "integration_initialized",
-                "ending_state": "main_device_state",
-                "inputs": {
-                    "entity_id": "sensor.test_name_power"
-                }
-            },
-            {
-                "action": "retrieve_entity",
+                "action": "entity_registry.async_get / device_registry.async_get",
                 "starting_state": "main_device_state",
                 "ending_state": "phase_a_state",
                 "inputs": {
@@ -706,16 +856,16 @@
                 }
             },
             {
-                "action": "retrieve_entity",
-                "starting_state": "phase_a_state",
+                "action": "entity_registry.async_get / device_registry.async_get",
+                "starting_state": "main_device_state",
                 "ending_state": "phase_b_state",
                 "inputs": {
                     "entity_id": "sensor.test_name_phase_b_power"
                 }
             },
             {
-                "action": "retrieve_entity",
-                "starting_state": "phase_b_state",
+                "action": "entity_registry.async_get / device_registry.async_get",
+                "starting_state": "main_device_state",
                 "ending_state": "phase_c_state",
                 "inputs": {
                     "entity_id": "sensor.test_name_phase_c_power"
@@ -725,7 +875,7 @@
     },
     {
         "name": "test_shelly_fk_06x_with_zone_names",
-        "device_type": "Shelly Irrigation controller FK\u201106X",
+        "device_type": "Shelly Irrigation Controller FK\u201106X",
         "states": {
             "initial_state": {
                 "variables": {}
@@ -733,22 +883,40 @@
             "fixture_loaded": {
                 "variables": {}
             },
-            "integration_initialized": {
-                "variables": {}
-            },
-            "sensor_retrieved": {
-                "variables": {}
-            },
-            "entity_entry_obtained": {
-                "variables": {}
-            },
-            "device_entry_obtained": {
+            "main_device_entry": {
                 "variables": {
                     "device_entry.name": "Test name"
                 }
             },
-            "zone_validated": {
-                "variables": {}
+            "zone_device_Zone Name 1": {
+                "variables": {
+                    "device_entry.name": "Zone Name 1"
+                }
+            },
+            "zone_device_Zone Name 2": {
+                "variables": {
+                    "device_entry.name": "Zone Name 2"
+                }
+            },
+            "zone_device_Zone Name 3": {
+                "variables": {
+                    "device_entry.name": "Zone Name 3"
+                }
+            },
+            "zone_device_Zone 4": {
+                "variables": {
+                    "device_entry.name": "Zone 4"
+                }
+            },
+            "zone_device_Zone 5": {
+                "variables": {
+                    "device_entry.name": "Zone 5"
+                }
+            },
+            "zone_device_Zone 6": {
+                "variables": {
+                    "device_entry.name": "Zone 6"
+                }
             }
         },
         "transitions": [
@@ -757,111 +925,87 @@
                 "starting_state": "initial_state",
                 "ending_state": "fixture_loaded",
                 "inputs": {
-                    "hass": "<hass>",
+                    "hass": "hass",
                     "filename": "fk-06x_gen3_irrigation.json",
                     "domain": "DOMAIN"
                 }
             },
             {
-                "action": "monkeypatch.setattr (shelly)",
-                "starting_state": "fixture_loaded",
-                "ending_state": "fixture_loaded",
-                "inputs": {
-                    "target": "mock_rpc_device.shelly",
-                    "value": "device_fixture['shelly']"
-                }
-            },
-            {
-                "action": "monkeypatch.setattr (status)",
-                "starting_state": "fixture_loaded",
-                "ending_state": "fixture_loaded",
-                "inputs": {
-                    "target": "mock_rpc_device.status",
-                    "value": "device_fixture['status']"
-                }
-            },
-            {
-                "action": "monkeypatch.setattr (config)",
-                "starting_state": "fixture_loaded",
-                "ending_state": "fixture_loaded",
-                "inputs": {
-                    "target": "mock_rpc_device.config",
-                    "value": "device_fixture['config']"
-                }
-            },
-            {
                 "action": "init_integration",
                 "starting_state": "fixture_loaded",
-                "ending_state": "integration_initialized",
+                "ending_state": "main_device_entry",
                 "inputs": {
-                    "hass": "<hass>",
+                    "hass": "hass",
                     "gen": 3,
                     "model": "MODEL_FRANKEVER_IRRIGATION_CONTROLLER"
                 }
             },
             {
-                "action": "hass.states.get",
-                "starting_state": "integration_initialized",
-                "ending_state": "sensor_retrieved",
+                "action": "process_zone",
+                "starting_state": "main_device_entry",
+                "ending_state": "zone_device_Zone Name 1",
                 "inputs": {
-                    "entity_id": "sensor.test_name_average_temperature"
+                    "zone_name": "Zone Name 1"
                 }
             },
             {
-                "action": "entity_registry.async_get",
-                "starting_state": "sensor_retrieved",
-                "ending_state": "entity_entry_obtained",
+                "action": "process_zone",
+                "starting_state": "zone_device_Zone Name 1",
+                "ending_state": "zone_device_Zone Name 2",
                 "inputs": {
-                    "entity_id": "sensor.test_name_average_temperature"
+                    "zone_name": "Zone Name 2"
                 }
             },
             {
-                "action": "device_registry.async_get",
-                "starting_state": "entity_entry_obtained",
-                "ending_state": "device_entry_obtained",
+                "action": "process_zone",
+                "starting_state": "zone_device_Zone Name 2",
+                "ending_state": "zone_device_Zone Name 3",
                 "inputs": {
-                    "device_id": "entry.device_id"
+                    "zone_name": "Zone Name 3"
                 }
             },
             {
-                "action": "zone_validation_loop",
-                "starting_state": "device_entry_obtained",
-                "ending_state": "zone_validated",
+                "action": "process_zone",
+                "starting_state": "zone_device_Zone Name 3",
+                "ending_state": "zone_device_Zone 4",
                 "inputs": {
-                    "zone_names": [
-                        "Zone Name 1",
-                        "Zone Name 2",
-                        "Zone Name 3",
-                        "Zone 4",
-                        "Zone 5",
-                        "Zone 6"
-                    ]
+                    "zone_name": "Zone 4"
+                }
+            },
+            {
+                "action": "process_zone",
+                "starting_state": "zone_device_Zone 4",
+                "ending_state": "zone_device_Zone 5",
+                "inputs": {
+                    "zone_name": "Zone 5"
+                }
+            },
+            {
+                "action": "process_zone",
+                "starting_state": "zone_device_Zone 5",
+                "ending_state": "zone_device_Zone 6",
+                "inputs": {
+                    "zone_name": "Zone 6"
                 }
             }
         ]
     },
     {
         "name": "test_block_channel_with_name",
-        "device_type": "switch",
+        "device_type": "block_device (relay)",
         "states": {
-            "state_1": {
+            "initial_state": {
                 "variables": {}
             },
-            "state_2": {
+            "state_after_init": {
                 "variables": {}
             },
-            "state_3": {
+            "state_kitchen_light": {
                 "variables": {
                     "device_entry.name": "Kitchen light"
                 }
             },
-            "state_4": {
-                "variables": {}
-            },
-            "state_5": {
-                "variables": {}
-            },
-            "state_6": {
+            "state_firmware_update": {
                 "variables": {
                     "device_entry.name": "Test name"
                 }
@@ -869,50 +1013,36 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "monkeypatch.setitem",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "initial_state",
                 "inputs": {
-                    "hass": "<hass object>",
-                    "arg": 1
+                    "target": "mock_block_device.settings['relays'][0]",
+                    "key": "name",
+                    "value": "Kitchen light"
                 }
             },
             {
-                "action": "entity_registry.async_get",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_after_init",
                 "inputs": {
-                    "entity_id": "switch.kitchen_light"
+                    "hass": "hass",
+                    "parameter": 1
                 }
             },
             {
                 "action": "device_registry.async_get",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
+                "starting_state": "state_after_init",
+                "ending_state": "state_kitchen_light",
                 "inputs": {
                     "device_id": "entry.device_id"
                 }
             },
             {
-                "action": "hass.states.get",
-                "starting_state": "state_3",
-                "ending_state": "state_4",
-                "inputs": {
-                    "entity_id": "update.test_name_firmware"
-                }
-            },
-            {
-                "action": "entity_registry.async_get",
-                "starting_state": "state_4",
-                "ending_state": "state_5",
-                "inputs": {
-                    "entity_id": "update.test_name_firmware"
-                }
-            },
-            {
                 "action": "device_registry.async_get",
-                "starting_state": "state_5",
-                "ending_state": "state_6",
+                "starting_state": "state_after_init",
+                "ending_state": "state_firmware_update",
                 "inputs": {
                     "device_id": "entry.device_id"
                 }
@@ -923,6 +1053,9 @@
         "name": "test_blu_trv_device_info",
         "device_type": "TRV",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state_1": {
                 "variables": {}
             },
@@ -945,8 +1078,8 @@
                 "starting_state": "initial_state",
                 "ending_state": "state_1",
                 "inputs": {
-                    "hass": "<hass\u2011instance>",
-                    "num_devices": 3,
+                    "hass": "<hass>",
+                    "port": 3,
                     "model": "MODEL_BLU_GATEWAY_G3"
                 }
             },
@@ -971,46 +1104,74 @@
                 "starting_state": "state_2",
                 "ending_state": "state_3",
                 "inputs": {
-                    "identifier": "(DOMAIN, MOCK_MAC)",
+                    "identifier": [
+                        "DOMAIN",
+                        "MOCK_MAC"
+                    ],
                     "config_entry_id": "config_entry.entry_id"
+                }
+            },
+            {
+                "action": "snapshot_assert",
+                "starting_state": "state_2",
+                "ending_state": "state_2",
+                "inputs": {
+                    "snapshot": [
+                        {
+                            "device_entry.name": "TRV-Name"
+                        },
+                        {
+                            "device_entry.model_id": "SBTR-001AEU"
+                        },
+                        {
+                            "device_entry.sw_version": "v1.2.10"
+                        }
+                    ]
+                }
+            },
+            {
+                "action": "snapshot_assert",
+                "starting_state": "state_3",
+                "ending_state": "state_3",
+                "inputs": {
+                    "snapshot": [
+                        {
+                            "device_entry.via_device_id": "gateway_device_entry.id"
+                        }
+                    ]
                 }
             }
         ]
     },
     {
         "name": "test_device",
-        "device_type": "shelly",
+        "device_type": "generic",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "fixture_loaded": {
+            "fixture_loaded_state": {
                 "variables": {
-                    "device_fixture": "result of async_load_json_object_fixture"
+                    "device_fixture": "await async_load_json_object_fixture(hass, f'{fixture}.json', DOMAIN)"
                 }
             },
-            "device_patched": {
+            "device_patched_state": {
                 "variables": {
-                    "shelly": "device_fixture['shelly']",
-                    "status": "device_fixture['status']",
-                    "config": "device_fixture['config']"
+                    "mock_rpc_device.shelly": "device_fixture['shelly']",
+                    "mock_rpc_device.status": "device_fixture['status']",
+                    "mock_rpc_device.config": "device_fixture['config']"
                 }
             },
-            "uptime_forced": {
+            "integration_initialized_state": {
                 "variables": {
-                    "uptime": "forced value set by force_uptime_value"
+                    "gen": "device_fixture['shelly']['gen']",
+                    "model": "device_fixture['shelly']['model']",
+                    "config_entry": "await init_integration(hass, gen=gen, model=model)"
                 }
             },
-            "integration_initialized": {
+            "snapshot_state": {
                 "variables": {
-                    "config_entry": "result of init_integration",
-                    "gen": "gen",
-                    "model": "model"
-                }
-            },
-            "snapshot_taken": {
-                "variables": {
-                    "entities_snapshot": "result of snapshot_device_entities"
+                    "snapshot": "result of snapshot_device_entities (entries not provided in source)"
                 }
             }
         },
@@ -1018,7 +1179,7 @@
             {
                 "action": "async_load_json_object_fixture",
                 "starting_state": "initial_state",
-                "ending_state": "fixture_loaded",
+                "ending_state": "fixture_loaded_state",
                 "inputs": {
                     "hass": "hass",
                     "file": "f'{fixture}.json'",
@@ -1026,22 +1187,19 @@
                 }
             },
             {
-                "action": "monkeypatch.setattr (shelly, status, config)",
-                "starting_state": "fixture_loaded",
-                "ending_state": "device_patched",
+                "action": "monkeypatch.setattr (multiple attributes)",
+                "starting_state": "fixture_loaded_state",
+                "ending_state": "device_patched_state",
                 "inputs": {
-                    "target_object": "mock_rpc_device",
-                    "attributes": {
-                        "shelly": "device_fixture['shelly']",
-                        "status": "device_fixture['status']",
-                        "config": "device_fixture['config']"
-                    }
+                    "mock_rpc_device.shelly": "device_fixture['shelly']",
+                    "mock_rpc_device.status": "device_fixture['status']",
+                    "mock_rpc_device.config": "device_fixture['config']"
                 }
             },
             {
                 "action": "force_uptime_value",
-                "starting_state": "device_patched",
-                "ending_state": "uptime_forced",
+                "starting_state": "device_patched_state",
+                "ending_state": "device_patched_state",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer"
@@ -1049,8 +1207,8 @@
             },
             {
                 "action": "init_integration",
-                "starting_state": "uptime_forced",
-                "ending_state": "integration_initialized",
+                "starting_state": "device_patched_state",
+                "ending_state": "integration_initialized_state",
                 "inputs": {
                     "hass": "hass",
                     "gen": "gen",
@@ -1059,8 +1217,8 @@
             },
             {
                 "action": "snapshot_device_entities",
-                "starting_state": "integration_initialized",
-                "ending_state": "snapshot_taken",
+                "starting_state": "integration_initialized_state",
+                "ending_state": "snapshot_state",
                 "inputs": {
                     "hass": "hass",
                     "entity_registry": "entity_registry",

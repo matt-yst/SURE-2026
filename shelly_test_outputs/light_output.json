@@ -49,36 +49,51 @@
                 }
             },
             {
-                "action": "SERVICE_TURN_OFF",
+                "action": "hass.services.async_call",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
-                    "entity_id": "light.test_name"
+                    "domain": "LIGHT_DOMAIN",
+                    "service": "SERVICE_TURN_OFF",
+                    "service_data": {
+                        "entity_id": "entity_id"
+                    },
+                    "blocking": true
                 }
             },
             {
-                "action": "SERVICE_TURN_ON",
+                "action": "hass.services.async_call",
                 "starting_state": "state_2",
                 "ending_state": "state_3",
                 "inputs": {
-                    "entity_id": "light.test_name",
-                    "rgbw_color": [
-                        70,
-                        80,
-                        90,
-                        30
-                    ],
-                    "brightness": 33,
-                    "effect": "Flash"
+                    "domain": "LIGHT_DOMAIN",
+                    "service": "SERVICE_TURN_ON",
+                    "service_data": {
+                        "entity_id": "entity_id",
+                        "rgbw_color": [
+                            70,
+                            80,
+                            90,
+                            30
+                        ],
+                        "brightness": 33,
+                        "effect": "Flash"
+                    },
+                    "blocking": true
                 }
             },
             {
-                "action": "SERVICE_TURN_ON",
+                "action": "hass.services.async_call",
                 "starting_state": "state_3",
                 "ending_state": "state_4",
                 "inputs": {
-                    "entity_id": "light.test_name",
-                    "color_temp_kelvin": 3500
+                    "domain": "LIGHT_DOMAIN",
+                    "service": "SERVICE_TURN_ON",
+                    "service_data": {
+                        "entity_id": "entity_id",
+                        "color_temp_kelvin": 3500
+                    },
+                    "blocking": true
                 }
             }
         ]
@@ -87,10 +102,7 @@
         "name": "test_block_device_rgb_bulb",
         "device_type": "RGB bulb",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state1": {
+            "state_1": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_RGB_COLOR]": "(45, 55, 65)",
@@ -101,12 +113,12 @@
                     "state.attributes[ATTR_EFFECT]": "'Off'"
                 }
             },
-            "state2": {
+            "state_2": {
                 "variables": {
                     "state.state": "STATE_OFF"
                 }
             },
-            "state3": {
+            "state_3": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_COLOR_MODE]": "ColorMode.RGB",
@@ -115,14 +127,14 @@
                     "state.attributes[ATTR_EFFECT]": "'Flash'"
                 }
             },
-            "state4": {
+            "state_4": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_COLOR_MODE]": "ColorMode.COLOR_TEMP",
                     "state.attributes[ATTR_COLOR_TEMP_KELVIN]": "3500"
                 }
             },
-            "state5": {
+            "state_5": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_EFFECT]": "'Off'",
@@ -135,7 +147,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state1",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
                     "num_devices": 1,
@@ -144,43 +156,39 @@
             },
             {
                 "action": "light.turn_off",
-                "starting_state": "state1",
-                "ending_state": "state2",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "entity_id": "light.test_name"
+                    "ATTR_ENTITY_ID": "entity_id"
                 }
             },
             {
                 "action": "light.turn_on",
-                "starting_state": "state2",
-                "ending_state": "state3",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
-                    "entity_id": "light.test_name",
-                    "rgb_color": [
-                        70,
-                        80,
-                        90
-                    ],
-                    "brightness": 33,
-                    "effect": "Flash"
+                    "ATTR_ENTITY_ID": "entity_id",
+                    "ATTR_RGB_COLOR": "[70, 80, 90]",
+                    "ATTR_BRIGHTNESS": "33",
+                    "ATTR_EFFECT": "'Flash'"
                 }
             },
             {
                 "action": "light.turn_on",
-                "starting_state": "state3",
-                "ending_state": "state4",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
                 "inputs": {
-                    "entity_id": "light.test_name",
-                    "color_temp_kelvin": 3500
+                    "ATTR_ENTITY_ID": "entity_id",
+                    "ATTR_COLOR_TEMP_KELVIN": "3500"
                 }
             },
             {
                 "action": "light.turn_on",
-                "starting_state": "state4",
-                "ending_state": "state5",
+                "starting_state": "state_4",
+                "ending_state": "state_5",
                 "inputs": {
-                    "entity_id": "light.test_name",
-                    "effect": "Breath"
+                    "ATTR_ENTITY_ID": "entity_id",
+                    "ATTR_EFFECT": "'Breath'"
                 }
             }
         ]
@@ -189,7 +197,10 @@
         "name": "test_block_device_white_bulb",
         "device_type": "light",
         "states": {
-            "state1": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_on_initial": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_BRIGHTNESS]": "128",
@@ -197,12 +208,12 @@
                     "state.attributes[ATTR_SUPPORTED_FEATURES]": "LightEntityFeature.TRANSITION"
                 }
             },
-            "state2": {
+            "state_off": {
                 "variables": {
                     "state.state": "STATE_OFF"
                 }
             },
-            "state3": {
+            "state_on_brightness": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_BRIGHTNESS]": "33",
@@ -214,7 +225,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state1",
+                "ending_state": "state_on_initial",
                 "inputs": {
                     "hass": "hass",
                     "device_count": 1,
@@ -222,23 +233,21 @@
                 }
             },
             {
-                "action": "SERVICE_TURN_OFF",
-                "starting_state": "state1",
-                "ending_state": "state2",
+                "action": "service_call",
+                "starting_state": "state_on_initial",
+                "ending_state": "state_off",
                 "inputs": {
-                    "domain": "LIGHT_DOMAIN",
-                    "service": "turn_off",
-                    "entity_id": "light.test_name"
+                    "service": "light.turn_off",
+                    "entity_id": "entity_id"
                 }
             },
             {
-                "action": "SERVICE_TURN_ON",
-                "starting_state": "state2",
-                "ending_state": "state3",
+                "action": "service_call",
+                "starting_state": "state_off",
+                "ending_state": "state_on_brightness",
                 "inputs": {
-                    "domain": "LIGHT_DOMAIN",
-                    "service": "turn_on",
-                    "entity_id": "light.test_name",
+                    "service": "light.turn_on",
+                    "entity_id": "entity_id",
                     "brightness": 33
                 }
             }
@@ -246,17 +255,17 @@
     },
     {
         "name": "test_block_device_support_transition",
-        "device_type": "block_device",
+        "device_type": "light",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "state_on": {
+            "STATE_ON": {
                 "variables": {
                     "state.state": "STATE_ON"
                 }
             },
-            "state_off": {
+            "STATE_OFF": {
                 "variables": {
                     "state.state": "STATE_OFF",
                     "entry.unique_id": "'123456789ABC-light_1'"
@@ -265,18 +274,18 @@
         },
         "transitions": [
             {
-                "action": "turn_on",
+                "action": "service_call",
                 "starting_state": "initial_state",
-                "ending_state": "state_on",
+                "ending_state": "STATE_ON",
                 "inputs": {
                     "entity_id": "light.test_name_channel_1",
                     "transition": 4
                 }
             },
             {
-                "action": "turn_off",
-                "starting_state": "state_on",
-                "ending_state": "state_off",
+                "action": "service_call",
+                "starting_state": "STATE_ON",
+                "ending_state": "STATE_OFF",
                 "inputs": {
                     "entity_id": "light.test_name_channel_1",
                     "transition": 6
@@ -286,11 +295,8 @@
     },
     {
         "name": "test_block_device_relay_app_type_light",
-        "device_type": "light",
+        "device_type": "relay",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
             "state_1": {
                 "variables": {
                     "hass.states.get('switch.test_name_channel_1')": "None",
@@ -318,32 +324,28 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "device_count": 1
+                    "param": 1
                 }
             },
             {
-                "action": "hass.services.async_call",
+                "action": "service_call",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
                     "domain": "light",
                     "service": "turn_off",
-                    "service_data": {
-                        "entity_id": "light.test_name_channel_1"
-                    },
+                    "entity_id": "light.test_name_channel_1",
                     "blocking": true
                 }
             },
             {
-                "action": "hass.services.async_call",
+                "action": "service_call",
                 "starting_state": "state_2",
                 "ending_state": "state_3",
                 "inputs": {
                     "domain": "light",
                     "service": "turn_on",
-                    "service_data": {
-                        "entity_id": "light.test_name_channel_1"
-                    },
+                    "entity_id": "light.test_name_channel_1",
                     "blocking": true
                 }
             }
@@ -356,7 +358,10 @@
             "initial_state": {
                 "variables": {}
             },
-            "state_1": {
+            "patched_state": {
+                "variables": {}
+            },
+            "post_init": {
                 "variables": {
                     "hass.states.get('light.test_name_channel_1')": "None"
                 }
@@ -364,12 +369,22 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "monkeypatch.setattr",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "patched_state",
+                "inputs": {
+                    "target": "mock_block_device.blocks[LIGHT_BLOCK_ID]",
+                    "attribute": "type",
+                    "value": "roller"
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "patched_state",
+                "ending_state": "post_init",
                 "inputs": {
                     "hass": "hass",
-                    "value": 1
+                    "config_entry_id": 1
                 }
             }
         ]
@@ -378,9 +393,6 @@
         "name": "test_rpc_device_switch_type_lights_mode",
         "device_type": "switch",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
             "state_on": {
                 "variables": {
                     "state.state": "STATE_ON"
@@ -389,31 +401,25 @@
             "state_off": {
                 "variables": {
                     "state.state": "STATE_OFF",
-                    "entry.unique_id": "'123456789ABC-switch:0'"
+                    "entry.unique_id": "123456789ABC-switch:0"
                 }
             }
         },
         "transitions": [
             {
-                "action": "service_call",
+                "action": "LIGHT_DOMAIN.SERVICE_TURN_ON",
                 "starting_state": "initial_state",
                 "ending_state": "state_on",
                 "inputs": {
-                    "domain": "light",
-                    "service": "turn_on",
-                    "entity_id": "light.test_name_test_switch_0",
-                    "blocking": true
+                    "entity_id": "light.test_name_test_switch_0"
                 }
             },
             {
-                "action": "service_call",
+                "action": "LIGHT_DOMAIN.SERVICE_TURN_OFF",
                 "starting_state": "state_on",
                 "ending_state": "state_off",
                 "inputs": {
-                    "domain": "light",
-                    "service": "turn_off",
-                    "entity_id": "light.test_name_test_switch_0",
-                    "blocking": true
+                    "entity_id": "light.test_name_test_switch_0"
                 }
             }
         ]
@@ -457,7 +463,7 @@
                 "starting_state": "initial_state",
                 "ending_state": "state_1",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "entity_id"
+                    "entity_id": "light.test_light_0"
                 }
             },
             {
@@ -465,7 +471,7 @@
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "entity_id"
+                    "entity_id": "light.test_light_0"
                 }
             },
             {
@@ -473,8 +479,8 @@
                 "starting_state": "state_2",
                 "ending_state": "state_3",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "entity_id",
-                    "ATTR_BRIGHTNESS": 33
+                    "entity_id": "light.test_light_0",
+                    "brightness": 33
                 }
             },
             {
@@ -482,8 +488,8 @@
                 "starting_state": "state_3",
                 "ending_state": "state_4",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "entity_id",
-                    "ATTR_TRANSITION": 10.1
+                    "entity_id": "light.test_light_0",
+                    "transition": 10.1
                 }
             },
             {
@@ -491,17 +497,17 @@
                 "starting_state": "state_4",
                 "ending_state": "state_5",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "entity_id",
-                    "ATTR_TRANSITION": 0.4
+                    "entity_id": "light.test_light_0",
+                    "transition": 0.4
                 }
             }
         ]
     },
     {
         "name": "test_rpc_device_rgb_profile",
-        "device_type": "rgb",
+        "device_type": "rpc_device_rgb",
         "states": {
-            "state0": {
+            "state_1": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_RGB_COLOR]": "(45, 55, 65)",
@@ -509,7 +515,7 @@
                     "state.attributes[ATTR_SUPPORTED_FEATURES]": "LightEntityFeature.TRANSITION"
                 }
             },
-            "state1": {
+            "state_2": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_COLOR_MODE]": "ColorMode.RGB",
@@ -522,32 +528,34 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state0",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "value": 2
+                    "config_entry": 2
                 }
             },
             {
-                "action": "LIGHT_DOMAIN.SERVICE_TURN_ON",
-                "starting_state": "state0",
-                "ending_state": "state1",
+                "action": "light.turn_on",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "entity_id": "entity_id",
+                    "entity_id": "light.test_name_test_rgb_0",
                     "rgb_color": [
                         70,
                         80,
                         90
-                    ],
-                    "blocking": true
+                    ]
                 }
             }
         ]
     },
     {
         "name": "test_rpc_device_rgbw_profile",
-        "device_type": "RGBW",
+        "device_type": "rgbw",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state_1": {
                 "variables": {
                     "state.state": "STATE_ON",
@@ -572,36 +580,43 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "parameter": 2
+                    "device_count": 2
                 }
             },
             {
-                "action": "LIGHT_DOMAIN.SERVICE_TURN_ON",
+                "action": "SERVICE_TURN_ON",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
-                    "entity_id": "light.test_name_test_rgbw_0",
-                    "ATTR_RGBW_COLOR": [
-                        72,
-                        82,
-                        92,
-                        128
-                    ]
+                    "domain": "light",
+                    "service": "turn_on",
+                    "service_data": {
+                        "entity_id": "light.test_name_test_rgbw_0",
+                        "rgbw_color": [
+                            72,
+                            82,
+                            92,
+                            128
+                        ]
+                    }
                 }
             }
         ]
     },
     {
         "name": "test_rpc_rgbw_device_light_mode_remove_others",
-        "device_type": "Shelly RPC RGBW (light mode)",
+        "device_type": "Shelly RPC RGBW",
         "states": {
-            "pre_setup_snapshot": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
                 "variables": {
                     "get_entity(hass, LIGHT_DOMAIN, 'rgb:0')": "None",
                     "get_entity(hass, LIGHT_DOMAIN, 'rgbw:0')": "None"
                 }
             },
-            "post_setup_snapshot": {
+            "state_2": {
                 "variables": {
                     "get_entity(hass, LIGHT_DOMAIN, 'rgb:0')": "None",
                     "get_entity(hass, LIGHT_DOMAIN, 'rgbw:0')": "None"
@@ -612,92 +627,98 @@
             {
                 "action": "initialize_and_register_entities",
                 "starting_state": "initial_state",
-                "ending_state": "pre_setup_snapshot",
+                "ending_state": "state_1",
                 "inputs": {
-                    "monkeypatch_operations": [
-                        "delitem(mock_rpc_device.status, 'rgb:0')",
-                        "delitem(mock_rpc_device.status, 'rgbw:0')"
+                    "monkeypatch_delitem": [
+                        "mock_rpc_device.status, 'rgb:0'",
+                        "mock_rpc_device.status, 'rgbw:0'"
                     ],
-                    "integration_initialisation": "config_entry = await init_integration(hass, 2, skip_setup=True)",
-                    "device_registration": "device_entry = register_device(device_registry, config_entry)",
-                    "entity_registrations": [
-                        "register_entity(hass, LIGHT_DOMAIN, 'test_rgb_0', 'rgb:0', config_entry, device_id=device_entry.id)",
-                        "register_entity(hass, LIGHT_DOMAIN, 'test_rgbw_0', 'rgbw:0', config_entry, device_id=device_entry.id)"
+                    "init_integration": {
+                        "hass": "hass",
+                        "device_count": 2,
+                        "skip_setup": true
+                    },
+                    "register_device": {
+                        "device_registry": "device_registry",
+                        "config_entry": "config_entry"
+                    },
+                    "register_entity": [
+                        {
+                            "hass": "hass",
+                            "domain": "LIGHT_DOMAIN",
+                            "entity_name": "test_rgb_0",
+                            "entity_key": "rgb:0",
+                            "config_entry": "config_entry",
+                            "device_id": "device_entry.id"
+                        },
+                        {
+                            "hass": "hass",
+                            "domain": "LIGHT_DOMAIN",
+                            "entity_name": "test_rgbw_0",
+                            "entity_key": "rgbw:0",
+                            "config_entry": "config_entry",
+                            "device_id": "device_entry.id"
+                        }
                     ]
                 }
             },
             {
-                "action": "setup_and_verify_entities",
-                "starting_state": "pre_setup_snapshot",
-                "ending_state": "post_setup_snapshot",
+                "action": "setup_integration",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "config_entry_setup": "await hass.config_entries.async_setup(config_entry.entry_id)",
-                    "await_block": "await hass.async_block_till_done()",
-                    "entity_state_assertions": [
-                        "for i in range(SHELLY_PLUS_RGBW_CHANNELS):",
-                        "    entity_id = f'light.test_light_{i}'",
-                        "    assert (state := hass.states.get(entity_id))",
-                        "    assert state.state == STATE_ON",
-                        "    assert (entry := entity_registry.async_get(entity_id))",
-                        "    assert entry.unique_id == f'123456789ABC-light:{i}'"
-                    ]
+                    "async_setup": "config_entry.entry_id",
+                    "async_block_till_done": null
                 }
             }
         ]
     },
     {
         "name": "test_rpc_rgbw_device_rgb_w_modes_remove_others",
-        "device_type": "rgbw",
+        "device_type": "RGBW",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "state_1": {
+            "removed_state": {
                 "variables": {
                     "get_entity(hass, LIGHT_DOMAIN, removed_key)": "None"
                 }
             },
-            "state_2": {
+            "active_state": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "entry.unique_id": "f'123456789ABC-{active_mode}:0'"
-                }
-            },
-            "state_3": {
-                "variables": {
-                    "get_entity(hass, LIGHT_DOMAIN, removed_key)": "None"
                 }
             }
         },
         "transitions": [
             {
-                "action": "setup_and_register_entities",
+                "action": "monkeypatch.delitem",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "removed_state",
                 "inputs": {
-                    "config_entry": "await init_integration(hass, 2, skip_setup=True)",
-                    "device_entry": "register_device(device_registry, config_entry)",
-                    "remove_mode_status": "monkeypatch.delitem(mock_rpc_device.status, f'{removed_mode}:0')",
-                    "register_removed_entity": "register_entity(hass, LIGHT_DOMAIN, f'test_{removed_key}', removed_key, config_entry, device_id=device_entry.id)",
-                    "assert_initial_entities": "for i in range(SHELLY_PLUS_RGBW_CHANNELS): assert get_entity(hass, LIGHT_DOMAIN, f'light:{i}') is not None"
+                    "removed_items": [
+                        "light:{i} for i in range(SHELLY_PLUS_RGBW_CHANNELS)",
+                        "{removed_mode}:0"
+                    ]
                 }
             },
             {
-                "action": "setup_config_entry_and_activate_mode",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "setup_and_activate",
+                "starting_state": "removed_state",
+                "ending_state": "active_state",
                 "inputs": {
-                    "setup_entry": "await hass.config_entries.async_setup(config_entry.entry_id)",
-                    "block_till_done": "await hass.async_block_till_done()",
-                    "activate_mode_entity": "entity_id = f'light.test_name_test_{active_mode}_0'"
+                    "config_entry.entry_id": "config_entry.entry_id",
+                    "active_mode": "active_mode"
                 }
             },
             {
-                "action": "verify_other_lights_removed",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
+                "action": "mode_switch_cleanup",
+                "starting_state": "active_state",
+                "ending_state": "removed_state",
                 "inputs": {
-                    "assert_removed_lights": "for i in range(SHELLY_PLUS_RGBW_CHANNELS): assert get_entity(hass, LIGHT_DOMAIN, f'light:{i}') is None"
+                    "active_mode": "active_mode"
                 }
             }
         ]
@@ -706,17 +727,20 @@
         "name": "test_rpc_cct_light",
         "device_type": "cct_light",
         "states": {
-            "state_0": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
                 "variables": {
                     "entry.unique_id": "'123456789ABC-cct:0'"
                 }
             },
-            "state_1": {
+            "state_2": {
                 "variables": {
                     "state.state": "STATE_OFF"
                 }
             },
-            "state_2": {
+            "state_3": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_COLOR_MODE]": "ColorMode.COLOR_TEMP",
@@ -726,13 +750,13 @@
                     "state.attributes[ATTR_MAX_COLOR_TEMP_KELVIN]": "5555"
                 }
             },
-            "state_3": {
+            "state_4": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_BRIGHTNESS]": "224"
                 }
             },
-            "state_4": {
+            "state_5": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_COLOR_TEMP_KELVIN]": "4444"
@@ -743,71 +767,59 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_0",
-                "inputs": {
-                    "hass": "hass",
-                    "device_count": 2
-                }
-            },
-            {
-                "action": "hass.services.async_call",
-                "starting_state": "state_0",
                 "ending_state": "state_1",
                 "inputs": {
-                    "domain": "LIGHT_DOMAIN",
-                    "service": "SERVICE_TURN_OFF",
-                    "service_data": {
-                        "ATTR_ENTITY_ID": "entity_id"
-                    },
-                    "blocking": true
+                    "hass": "hass",
+                    "param": 2
                 }
             },
             {
-                "action": "hass.services.async_call",
+                "action": "service_call",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
-                    "domain": "LIGHT_DOMAIN",
-                    "service": "SERVICE_TURN_ON",
-                    "service_data": {
-                        "ATTR_ENTITY_ID": "entity_id"
-                    },
-                    "blocking": true
+                    "domain": "light",
+                    "service": "turn_off",
+                    "entity_id": "entity_id"
                 }
             },
             {
-                "action": "hass.services.async_call",
+                "action": "service_call",
                 "starting_state": "state_2",
                 "ending_state": "state_3",
                 "inputs": {
-                    "domain": "LIGHT_DOMAIN",
-                    "service": "SERVICE_TURN_ON",
-                    "service_data": {
-                        "ATTR_ENTITY_ID": "entity_id",
-                        "ATTR_BRIGHTNESS_PCT": 88
-                    },
-                    "blocking": true
+                    "domain": "light",
+                    "service": "turn_on",
+                    "entity_id": "entity_id"
                 }
             },
             {
-                "action": "hass.services.async_call",
+                "action": "service_call",
                 "starting_state": "state_3",
                 "ending_state": "state_4",
                 "inputs": {
-                    "domain": "LIGHT_DOMAIN",
-                    "service": "SERVICE_TURN_ON",
-                    "service_data": {
-                        "ATTR_ENTITY_ID": "entity_id",
-                        "ATTR_COLOR_TEMP_KELVIN": 4444
-                    },
-                    "blocking": true
+                    "domain": "light",
+                    "service": "turn_on",
+                    "entity_id": "entity_id",
+                    "brightness_pct": 88
+                }
+            },
+            {
+                "action": "service_call",
+                "starting_state": "state_4",
+                "ending_state": "state_5",
+                "inputs": {
+                    "domain": "light",
+                    "service": "turn_on",
+                    "entity_id": "entity_id",
+                    "color_temp_kelvin": 4444
                 }
             }
         ]
     },
     {
         "name": "test_rpc_remove_cct_light",
-        "device_type": "CCT Light",
+        "device_type": "cct_light",
         "states": {
             "state_before_setup": {
                 "variables": {
@@ -822,30 +834,39 @@
         },
         "transitions": [
             {
-                "action": "register_entity",
+                "action": "initialise_and_register",
                 "starting_state": "initial_state",
                 "ending_state": "state_before_setup",
                 "inputs": {
-                    "domain": "LIGHT_DOMAIN",
-                    "entity_id": "cct_light_0",
-                    "unique_id": "cct:0",
-                    "config_entry": "config_entry",
-                    "device_id": "device_entry.id"
+                    "init_integration": {
+                        "hass": "hass",
+                        "param": 2,
+                        "skip_setup": true
+                    },
+                    "register_device": {
+                        "device_registry": "device_registry",
+                        "config_entry": "config_entry"
+                    },
+                    "register_entity": {
+                        "hass": "hass",
+                        "domain": "LIGHT_DOMAIN",
+                        "entity_name": "cct_light_0",
+                        "entity_id": "cct:0",
+                        "config_entry": "config_entry",
+                        "device_id": "device_entry.id"
+                    }
                 }
             },
             {
-                "action": "hass.config_entries.async_setup",
+                "action": "setup_config_entry",
                 "starting_state": "state_before_setup",
                 "ending_state": "state_after_setup",
                 "inputs": {
-                    "entry_id": "config_entry.entry_id"
+                    "async_setup": {
+                        "config_entry_id": "config_entry.entry_id"
+                    },
+                    "async_block_till_done": {}
                 }
-            },
-            {
-                "action": "hass.async_block_till_done",
-                "starting_state": "state_after_setup",
-                "ending_state": "state_after_setup",
-                "inputs": {}
             }
         ]
     },
@@ -853,7 +874,7 @@
         "name": "test_rpc_cct_light_without_ct_range",
         "device_type": "cct_light",
         "states": {
-            "post_init_state": {
+            "asserted_state": {
                 "variables": {
                     "state.state": "STATE_OFF",
                     "state.attributes[ATTR_MIN_COLOR_TEMP_KELVIN]": "2700",
@@ -865,29 +886,32 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "post_init_state",
+                "ending_state": "asserted_state",
                 "inputs": {
                     "hass": "hass",
-                    "entity_count": 3
+                    "parameter": 3
                 }
             }
         ]
     },
     {
         "name": "test_rpc_rgbcct_light",
-        "device_type": "RGBCCT light",
+        "device_type": "RGBCCT",
         "states": {
-            "initialized": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state0": {
                 "variables": {
                     "entry.unique_id": "'123456789ABC-rgbcct:0'"
                 }
             },
-            "off": {
+            "state1": {
                 "variables": {
                     "state.state": "STATE_OFF"
                 }
             },
-            "on_color_temp": {
+            "state2": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_COLOR_MODE]": "ColorMode.COLOR_TEMP",
@@ -897,19 +921,19 @@
                     "state.attributes[ATTR_MAX_COLOR_TEMP_KELVIN]": "6500"
                 }
             },
-            "on_brightness": {
+            "state3": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_BRIGHTNESS]": "224"
                 }
             },
-            "on_color_temp_4444": {
+            "state4": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_COLOR_TEMP_KELVIN]": "4444"
                 }
             },
-            "on_rgb": {
+            "state5": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_COLOR_MODE]": "ColorMode.RGB",
@@ -921,53 +945,63 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "initialized",
+                "ending_state": "state0",
                 "inputs": {
                     "hass": "hass",
-                    "port": 3,
+                    "model_number": 3,
                     "model": "MODEL_MULTICOLOR_BULB_G3"
                 }
             },
             {
-                "action": "light.turn_off",
-                "starting_state": "initialized",
-                "ending_state": "off",
+                "action": "SERVICE_TURN_OFF",
+                "starting_state": "state0",
+                "ending_state": "state1",
                 "inputs": {
-                    "entity_id": "entity_id"
+                    "domain": "light",
+                    "service": "turn_off",
+                    "entity_id": "light.test_name"
                 }
             },
             {
-                "action": "light.turn_on",
-                "starting_state": "off",
-                "ending_state": "on_color_temp",
+                "action": "SERVICE_TURN_ON",
+                "starting_state": "state1",
+                "ending_state": "state2",
                 "inputs": {
-                    "entity_id": "entity_id"
+                    "domain": "light",
+                    "service": "turn_on",
+                    "entity_id": "light.test_name"
                 }
             },
             {
-                "action": "light.turn_on",
-                "starting_state": "on_color_temp",
-                "ending_state": "on_brightness",
+                "action": "SERVICE_TURN_ON",
+                "starting_state": "state2",
+                "ending_state": "state3",
                 "inputs": {
-                    "entity_id": "entity_id",
+                    "domain": "light",
+                    "service": "turn_on",
+                    "entity_id": "light.test_name",
                     "brightness_pct": 88
                 }
             },
             {
-                "action": "light.turn_on",
-                "starting_state": "on_brightness",
-                "ending_state": "on_color_temp_4444",
+                "action": "SERVICE_TURN_ON",
+                "starting_state": "state3",
+                "ending_state": "state4",
                 "inputs": {
-                    "entity_id": "entity_id",
+                    "domain": "light",
+                    "service": "turn_on",
+                    "entity_id": "light.test_name",
                     "color_temp_kelvin": 4444
                 }
             },
             {
-                "action": "light.turn_on",
-                "starting_state": "on_color_temp_4444",
-                "ending_state": "on_rgb",
+                "action": "SERVICE_TURN_ON",
+                "starting_state": "state4",
+                "ending_state": "state5",
                 "inputs": {
-                    "entity_id": "entity_id",
+                    "domain": "light",
+                    "service": "turn_on",
+                    "entity_id": "light.test_name",
                     "rgb_color": [
                         100,
                         150,

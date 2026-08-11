@@ -1,31 +1,41 @@
 [
     {
         "name": "test_humanify_shelly_click_event_block_device",
-        "device_type": "shelly",
+        "device_type": "Shelly",
         "states": {
-            "initial_state": {
+            "state_0": {
                 "variables": {}
             },
-            "final_state": {
+            "state_1": {
                 "variables": {
                     "event1['name']": "'Shelly'",
                     "event1['domain']": "DOMAIN",
-                    "event1['message']": "'single' click event for Test name channel 1 Input was fired",
+                    "event1['message']": "\"'single' click event for Test name channel 1 Input was fired\"",
                     "event2['name']": "'Shelly'",
                     "event2['domain']": "DOMAIN",
-                    "event2['message']": "'long' click event for shellyswitch25-12345678 channel 2 Input was fired"
+                    "event2['message']": "\"'long' click event for shellyswitch25-12345678 channel 2 Input was fired\""
                 }
             }
         },
         "transitions": [
             {
-                "action": "mock_humanify",
+                "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "final_state",
+                "ending_state": "state_0",
                 "inputs": {
-                    "events": [
+                    "hass": "hass",
+                    "config_entry_count": 1
+                }
+            },
+            {
+                "action": "mock_humanify",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "rows": [
                         {
-                            "event_type": "EVENT_SHELLY_CLICK",
+                            "event": "EVENT_SHELLY_CLICK",
                             "attributes": {
                                 "ATTR_DEVICE_ID": "device.id",
                                 "ATTR_DEVICE": "shellyix3-12345678",
@@ -34,7 +44,7 @@
                             }
                         },
                         {
-                            "event_type": "EVENT_SHELLY_CLICK",
+                            "event": "EVENT_SHELLY_CLICK",
                             "attributes": {
                                 "ATTR_DEVICE_ID": "no_device_id",
                                 "ATTR_DEVICE": "shellyswitch25-12345678",
@@ -54,14 +64,14 @@
             "initial_state": {
                 "variables": {}
             },
-            "humanified_events": {
+            "post_events_state": {
                 "variables": {
-                    "event1['name']": "'Shelly'",
-                    "event1['domain']": "DOMAIN",
-                    "event1['message']": "\"'single_push' click event for Test name Test input 0 Input was fired\"",
-                    "event2['name']": "'Shelly'",
-                    "event2['domain']": "DOMAIN",
-                    "event2['message']": "\"'btn_down' click event for shellypro4pm-12345678 channel 2 Input was fired\""
+                    "event1_name": "'Shelly'",
+                    "event1_domain": "DOMAIN",
+                    "event1_message": "\"'single_push' click event for Test name Test input 0 Input was fired\"",
+                    "event2_name": "'Shelly'",
+                    "event2_domain": "DOMAIN",
+                    "event2_message": "\"'btn_down' click event for shellypro4pm-12345678 channel 2 Input was fired\""
                 }
             }
         },
@@ -69,27 +79,11 @@
             {
                 "action": "mock_humanify",
                 "starting_state": "initial_state",
-                "ending_state": "humanified_events",
+                "ending_state": "post_events_state",
                 "inputs": {
-                    "event_definitions": [
-                        {
-                            "event_type": "EVENT_SHELLY_CLICK",
-                            "attributes": {
-                                "ATTR_DEVICE_ID": "device.id",
-                                "ATTR_DEVICE": "shellyplus1pm-12345678",
-                                "ATTR_CLICK_TYPE": "single_push",
-                                "ATTR_CHANNEL": 1
-                            }
-                        },
-                        {
-                            "event_type": "EVENT_SHELLY_CLICK",
-                            "attributes": {
-                                "ATTR_DEVICE_ID": "no_device_id",
-                                "ATTR_DEVICE": "shellypro4pm-12345678",
-                                "ATTR_CLICK_TYPE": "btn_down",
-                                "ATTR_CHANNEL": 2
-                            }
-                        }
+                    "rows": [
+                        "MockRow(EVENT_SHELLY_CLICK, {ATTR_DEVICE_ID: device.id, ATTR_DEVICE: 'shellyplus1pm-12345678', ATTR_CLICK_TYPE: 'single_push', ATTR_CHANNEL: 1})",
+                        "MockRow(EVENT_SHELLY_CLICK, {ATTR_DEVICE_ID: 'no_device_id', ATTR_DEVICE: 'shellypro4pm-12345678', ATTR_CLICK_TYPE: 'btn_down', ATTR_CHANNEL: 2})"
                     ]
                 }
             }

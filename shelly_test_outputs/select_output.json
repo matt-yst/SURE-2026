@@ -3,21 +3,24 @@
         "name": "test_rpc_device_virtual_enum",
         "device_type": "rpc_device",
         "states": {
-            "state0": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_0": {
                 "variables": {
                     "state.state": "expected_state",
                     "state.attributes.get(ATTR_OPTIONS)": "['Title 1', 'option 2', 'option 3']",
-                    "entry.unique_id": "123456789ABC-enum:203-enum_generic"
+                    "entry.unique_id": "'123456789ABC-enum:203-enum_generic'"
                 }
             },
-            "state1": {
+            "state_1": {
                 "variables": {
-                    "state.state": "option 2"
+                    "state.state": "'option 2'"
                 }
             },
-            "state2": {
+            "state_2": {
                 "variables": {
-                    "state.state": "Title 1"
+                    "state.state": "'Title 1'"
                 }
             }
         },
@@ -25,25 +28,26 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state0",
+                "ending_state": "state_0",
                 "inputs": {
                     "hass": "hass",
-                    "device_index": 3
+                    "device_id": 3
                 }
             },
             {
-                "action": "set_status_value_and_update",
-                "starting_state": "state0",
-                "ending_state": "state1",
+                "action": "set_status_and_update",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
                 "inputs": {
                     "entity": "enum:203",
+                    "field": "value",
                     "value": "option 2"
                 }
             },
             {
-                "action": "select_option_service",
-                "starting_state": "state1",
-                "ending_state": "state2",
+                "action": "select_option_service_call",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
                     "domain": "SELECT_DOMAIN",
                     "service": "SERVICE_SELECT_OPTION",
@@ -57,7 +61,10 @@
         "name": "test_rpc_remove_virtual_enum_when_mode_label",
         "device_type": "rpc",
         "states": {
-            "snapshot_state": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_setup_state": {
                 "variables": {
                     "entity_registry.async_get(entity_id)": "None"
                 }
@@ -65,47 +72,98 @@
         },
         "transitions": [
             {
-                "action": "initialize and configure device, register entity, setup config entry",
+                "action": "apply_config",
                 "starting_state": "initial_state",
-                "ending_state": "snapshot_state",
+                "ending_state": "config_applied",
                 "inputs": {
-                    "config": "deepcopy(mock_rpc_device.config)",
-                    "config['enum:200']": {
-                        "name": null,
-                        "options": [
-                            "one",
-                            "two"
-                        ],
-                        "meta": {
-                            "ui": {
-                                "view": "label",
-                                "titles": {
-                                    "one": "Title 1",
-                                    "two": "Title 2"
+                    "config": {
+                        "enum:200": {
+                            "name": null,
+                            "options": [
+                                "one",
+                                "two"
+                            ],
+                            "meta": {
+                                "ui": {
+                                    "view": "label",
+                                    "titles": {
+                                        "one": "Title 1",
+                                        "two": "Title 2"
+                                    }
                                 }
                             }
                         }
-                    },
-                    "monkeypatch.setattr(mock_rpc_device, 'config', config)": null,
-                    "status": "deepcopy(mock_rpc_device.status)",
-                    "status['enum:200']": {
-                        "value": "one"
-                    },
-                    "monkeypatch.setattr(mock_rpc_device, 'status', status)": null,
-                    "config_entry": "await init_integration(hass, 3, skip_setup=True)",
-                    "device_entry": "register_device(device_registry, config_entry)",
-                    "entity_id": "register_entity(hass, SELECT_DOMAIN, 'test_name_enum_200', 'enum:200-enum_generic', config_entry, device_id=device_entry.id)",
-                    "await hass.config_entries.async_setup(config_entry.entry_id)": null,
-                    "await hass.async_block_till_done()": null
+                    }
+                }
+            },
+            {
+                "action": "apply_status",
+                "starting_state": "config_applied",
+                "ending_state": "status_applied",
+                "inputs": {
+                    "status": {
+                        "enum:200": {
+                            "value": "one"
+                        }
+                    }
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "status_applied",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "rpc_version": 3,
+                    "skip_setup": true
+                }
+            },
+            {
+                "action": "register_device",
+                "starting_state": "integration_initialized",
+                "ending_state": "device_registered",
+                "inputs": {
+                    "device_registry": "device_registry",
+                    "config_entry": "config_entry"
+                }
+            },
+            {
+                "action": "register_entity",
+                "starting_state": "device_registered",
+                "ending_state": "entity_registered",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "SELECT_DOMAIN",
+                    "entity_name": "test_name_enum_200",
+                    "entity_key": "enum:200-enum_generic",
+                    "config_entry": "config_entry",
+                    "device_id": "device_entry.id"
+                }
+            },
+            {
+                "action": "setup_and_wait",
+                "starting_state": "entity_registered",
+                "ending_state": "post_setup_state",
+                "inputs": {
+                    "config_entry_id": "config_entry.entry_id"
                 }
             }
         ]
     },
     {
         "name": "test_rpc_remove_virtual_enum_when_orphaned",
-        "device_type": "select",
+        "device_type": "virtual_enum",
         "states": {
             "initial_state": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "device_registered": {
+                "variables": {}
+            },
+            "entity_registered": {
                 "variables": {}
             },
             "post_removal_state": {
@@ -116,31 +174,43 @@
         },
         "transitions": [
             {
-                "action": "run_test_steps",
+                "action": "init_integration",
                 "starting_state": "initial_state",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 3,
+                    "skip_setup": true
+                }
+            },
+            {
+                "action": "register_device",
+                "starting_state": "integration_initialized",
+                "ending_state": "device_registered",
+                "inputs": {
+                    "device_registry": "device_registry",
+                    "config_entry": "config_entry"
+                }
+            },
+            {
+                "action": "register_entity",
+                "starting_state": "device_registered",
+                "ending_state": "entity_registered",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "SELECT_DOMAIN",
+                    "name": "test_name_enum_200",
+                    "entity_id": "enum:200-enum_generic",
+                    "config_entry": "config_entry",
+                    "device_id": "device_entry.id"
+                }
+            },
+            {
+                "action": "async_setup_and_block",
+                "starting_state": "entity_registered",
                 "ending_state": "post_removal_state",
                 "inputs": {
-                    "init_integration": {
-                        "hass": "hass",
-                        "parameter": 3,
-                        "skip_setup": true
-                    },
-                    "register_device": {
-                        "device_registry": "device_registry",
-                        "config_entry": "config_entry"
-                    },
-                    "register_entity": {
-                        "hass": "hass",
-                        "domain": "SELECT_DOMAIN",
-                        "entity_name": "test_name_enum_200",
-                        "entity_type": "enum:200-enum_generic",
-                        "config_entry": "config_entry",
-                        "device_id": "device_entry.id"
-                    },
-                    "async_setup": {
-                        "config_entry_id": "config_entry.entry_id"
-                    },
-                    "async_block_till_done": {}
+                    "config_entry_id": "config_entry.entry_id"
                 }
             }
         ]
@@ -152,39 +222,33 @@
             "initial_state": {
                 "variables": {}
             },
-            "initialized_state": {
-                "variables": {
-                    "config.enum:203": ".{\"name\": null, \"options\": [\"option 1\", \"option 2\", \"option 3\"], \"meta\": {\"ui\": {\"view\": \"dropdown\", \"titles\": {\"option 1\": \"Title 1\", \"option 2\": null}}}}",
-                    "status.enum:203": ".{\"value\": \"option 1\"}"
-                }
+            "initialized": {
+                "variables": {}
             },
             "error_state": {
-                "variables": {
-                    "config.enum:203": ".{\"name\": null, \"options\": [\"option 1\", \"option 2\", \"option 3\"], \"meta\": {\"ui\": {\"view\": \"dropdown\", \"titles\": {\"option 1\": \"Title 1\", \"option 2\": null}}}}",
-                    "status.enum:203": ".{\"value\": \"option 1\"}"
-                }
+                "variables": {}
             }
         },
         "transitions": [
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "initialized_state",
+                "ending_state": "initialized",
                 "inputs": {
                     "hass": "hass",
                     "device_id": 3
                 }
             },
             {
-                "action": "select_option",
-                "starting_state": "initialized_state",
+                "action": "select_option_service_call",
+                "starting_state": "initialized",
                 "ending_state": "error_state",
                 "inputs": {
-                    "domain": "SELECT_DOMAIN",
-                    "service": "SERVICE_SELECT_OPTION",
-                    "entity_id": "SELECT_DOMAIN.test_name_enum_203",
+                    "domain": "select",
+                    "service": "select_option",
+                    "entity_id": "select.test_name_enum_203",
                     "option": "option 2",
-                    "side_effect": "exception"
+                    "blocking": true
                 }
             }
         ]
@@ -193,21 +257,27 @@
         "name": "test_select_set_reauth_error",
         "device_type": "select",
         "states": {
-            "entry_loaded": {
+            "initial_state": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "service_called": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "flows_present": {
+            "flows_retrieved": {
                 "variables": {
                     "len(flows)": "1"
                 }
             },
             "reauth_flow": {
                 "variables": {
-                    "flow.get('step_id')": "'reauth_confirm'",
+                    "flow.get('step_id')": "reauth_confirm",
                     "flow.get('handler')": "DOMAIN",
-                    "'context'": "flow",
+                    "context": "flow",
                     "flow['context'].get('source')": "SOURCE_REAUTH",
                     "flow['context'].get('entry_id')": "entry.entry_id"
                 }
@@ -217,16 +287,25 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "entry_loaded",
+                "ending_state": "integration_initialized",
                 "inputs": {
                     "hass": "hass",
-                    "param": 3
+                    "parameter": 3
+                }
+            },
+            {
+                "action": "set_mock_side_effect",
+                "starting_state": "integration_initialized",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "target": "mock_rpc_device.enum_set",
+                    "side_effect": "InvalidAuthError"
                 }
             },
             {
                 "action": "hass.services.async_call",
-                "starting_state": "entry_loaded",
-                "ending_state": "flows_present",
+                "starting_state": "integration_initialized",
+                "ending_state": "service_called",
                 "inputs": {
                     "domain": "SELECT_DOMAIN",
                     "service": "SERVICE_SELECT_OPTION",
@@ -239,7 +318,13 @@
             },
             {
                 "action": "hass.config_entries.flow.async_progress",
-                "starting_state": "flows_present",
+                "starting_state": "service_called",
+                "ending_state": "flows_retrieved",
+                "inputs": {}
+            },
+            {
+                "action": "access_flow[0]",
+                "starting_state": "flows_retrieved",
                 "ending_state": "reauth_flow",
                 "inputs": {}
             }
@@ -249,28 +334,28 @@
         "name": "test_rpc_cury_mode_select",
         "device_type": "cury",
         "states": {
-            "state_0": {
+            "hall": {
                 "variables": {
-                    "state.state": "hall",
+                    "state.state": "'hall'",
                     "state.attributes.get(ATTR_OPTIONS)": "['hall', 'bedroom', 'living_room', 'lavatory_room', 'none', 'reception', 'workplace']",
-                    "state.attributes.get(ATTR_FRIENDLY_NAME)": "Test name Mode",
-                    "entry.unique_id": "123456789ABC-cury:0-cury_mode",
-                    "entry.translation_key": "cury_mode"
+                    "state.attributes.get(ATTR_FRIENDLY_NAME)": "'Test name Mode'",
+                    "entry.unique_id": "'123456789ABC-cury:0-cury_mode'",
+                    "entry.translation_key": "'cury_mode'"
                 }
             },
-            "state_1": {
+            "living_room": {
                 "variables": {
-                    "state.state": "living_room"
+                    "state.state": "'living_room'"
                 }
             },
-            "state_2": {
+            "reception": {
                 "variables": {
-                    "state.state": "reception"
+                    "state.state": "'reception'"
                 }
             },
-            "state_3": {
+            "none": {
                 "variables": {
-                    "state.state": "none"
+                    "state.state": "'none'"
                 }
             }
         },
@@ -278,36 +363,34 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_0",
+                "ending_state": "hall",
                 "inputs": {
                     "hass": "hass",
-                    "parameter": 3
+                    "param": 3
                 }
             },
             {
-                "action": "set_status_and_update",
-                "starting_state": "state_0",
-                "ending_state": "state_1",
+                "action": "set_mode",
+                "starting_state": "hall",
+                "ending_state": "living_room",
                 "inputs": {
-                    "status_key": "cury:0",
                     "mode": "living_room"
                 }
             },
             {
-                "action": "SERVICE_SELECT_OPTION",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "select_option",
+                "starting_state": "living_room",
+                "ending_state": "reception",
                 "inputs": {
                     "entity_id": "select.test_name_mode",
                     "option": "reception"
                 }
             },
             {
-                "action": "set_status_and_update",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
+                "action": "set_mode_none",
+                "starting_state": "reception",
+                "ending_state": "none",
                 "inputs": {
-                    "status_key": "cury:0",
                     "mode": null
                 }
             }

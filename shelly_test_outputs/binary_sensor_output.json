@@ -1,0 +1,1215 @@
+[
+    {
+        "name": "test_block_binary_sensor",
+        "device_type": "binary_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_off": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "state_on": {
+                "variables": {
+                    "state.state": "STATE_ON",
+                    "entry.unique_id": "'123456789ABC-relay_0-overpower'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_off",
+                "inputs": {
+                    "hass": "hass",
+                    "num_devices": 1
+                }
+            },
+            {
+                "action": "set_overpower_and_update",
+                "starting_state": "state_off",
+                "ending_state": "state_on",
+                "inputs": {
+                    "overpower": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_binary_gas_sensor_creation",
+        "device_type": "binary_gas_sensor",
+        "states": {
+            "STATE_ON": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            },
+            "STATE_OFF": {
+                "variables": {
+                    "state.state": "STATE_OFF",
+                    "entry.unique_id": "123456789ABC-sensor_0-gas"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_ON",
+                "inputs": {
+                    "hass": "hass",
+                    "device_count": 1
+                }
+            },
+            {
+                "action": "setattr",
+                "starting_state": "STATE_ON",
+                "ending_state": "STATE_OFF",
+                "inputs": {
+                    "target": "mock_block_device.blocks[SENSOR_BLOCK_ID]",
+                    "attribute": "gas",
+                    "value": "none"
+                }
+            },
+            {
+                "action": "mock_update",
+                "starting_state": "STATE_OFF",
+                "ending_state": "STATE_OFF",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_block_rest_binary_sensor",
+        "device_type": "binary_sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "STATE_ON",
+                    "entry.unique_id": "'123456789ABC-cloud'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 1
+                }
+            },
+            {
+                "action": "mock_rest_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "freezer": "freezer"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_rest_binary_sensor_connected_battery_devices",
+        "device_type": "binary_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.state": "STATE_ON",
+                    "entry.unique_id": "123456789ABC-cloud"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 1,
+                    "model": "MODEL_MOTION"
+                }
+            },
+            {
+                "action": "mock_rest_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "freezer": "freezer"
+                }
+            },
+            {
+                "action": "mock_rest_update",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "hass": "hass",
+                    "freezer": "freezer",
+                    "seconds": "UPDATE_PERIOD_MULTIPLIER * 3600"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_sleeping_binary_sensor",
+        "device_type": "binary_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.state": "STATE_ON",
+                    "entry.unique_id": "'123456789ABC-sensor_0-motion'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "device_count": 1,
+                    "sleep_period": 1000
+                }
+            },
+            {
+                "action": "async_block_till_done",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "wait_background_tasks": true
+                }
+            },
+            {
+                "action": "mock_update",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "motion": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_restored_sleeping_binary_sensor",
+        "device_type": "binary_sensor",
+        "states": {
+            "STATE_ON": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            },
+            "STATE_OFF": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.config_entries.async_setup",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_ON",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "mock_block_device.mock_online",
+                "starting_state": "STATE_ON",
+                "ending_state": "STATE_OFF",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_block_restored_sleeping_binary_sensor_no_last_state",
+        "device_type": "binary_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_unknown": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN"
+                }
+            },
+            "state_off": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup",
+                "starting_state": "initial_state",
+                "ending_state": "state_unknown",
+                "inputs": {
+                    "entry_id": "entry.entry_id",
+                    "initialized": false
+                }
+            },
+            {
+                "action": "mock_online",
+                "starting_state": "state_unknown",
+                "ending_state": "state_off",
+                "inputs": {
+                    "initialized": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_binary_sensor",
+        "device_type": "binary_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "STATE_ON",
+                    "entry.unique_id": "123456789ABC-cover:0-overpower"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "param_2": 2
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "device": "cover:0",
+                    "status_category": "errors",
+                    "status_value": "overpower"
+                }
+            },
+            {
+                "action": "mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_binary_sensor_input_custom_name",
+        "device_type": "binary_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_on": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_on",
+                "inputs": {
+                    "hass": "hass",
+                    "device_count": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_binary_sensor_removal",
+        "device_type": "binary_sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "register_entity",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "domain": "binary_sensor",
+                    "entity_name": "test_cover_0_input",
+                    "entity_id_str": "input:0-input"
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_sleeping_binary_sensor",
+        "device_type": "binary_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.state": "STATE_ON",
+                    "entry.unique_id": "123456789ABC-devicepower:0-external_power"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "config_version": 2,
+                    "sleep_period": 1000,
+                    "mock_rpc_device.connected": false,
+                    "mock_rpc_device.status.sys.wakeup_period": 1000,
+                    "initialize.side_effect": "DeviceConnectionError"
+                }
+            },
+            {
+                "action": "register_entity_and_online",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "domain": "binary_sensor",
+                    "entity_name": "test_name_cloud",
+                    "unique_id": "cloud-cloud",
+                    "config_entry": "config_entry",
+                    "mock_rpc_device.mock_online": null,
+                    "await_hass.async_block_till_done.wait_background_tasks": true
+                }
+            },
+            {
+                "action": "mutate_and_update",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "component": "cloud",
+                    "property": "connected",
+                    "value": true,
+                    "mock_rpc_device.mock_update": null
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_sleeping_binary_sensor_with_channel_name",
+        "device_type": "binary_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "no_entity": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None"
+                }
+            },
+            "idle_off": {
+                "variables": {
+                    "state.attributes['friendly_name']": "Test name test channel name smoke",
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "alarm_on": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "no_entity",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 2,
+                    "sleep_period": 1000,
+                    "model": "MODEL_PLUS_SMOKE",
+                    "side_effect": "DeviceConnectionError"
+                }
+            },
+            {
+                "action": "mock_online",
+                "starting_state": "no_entity",
+                "ending_state": "idle_off",
+                "inputs": {}
+            },
+            {
+                "action": "set_alarm",
+                "starting_state": "idle_off",
+                "ending_state": "alarm_on",
+                "inputs": {
+                    "device": "smoke:0",
+                    "property": "alarm",
+                    "value": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_restored_sleeping_binary_sensor",
+        "device_type": "binary_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "STATE_ON": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            },
+            "STATE_OFF": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mock_restore_cache",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_ON",
+                "inputs": {
+                    "cache": [
+                        {
+                            "entity_id": "<entity_id>",
+                            "state": "STATE_ON"
+                        }
+                    ]
+                }
+            },
+            {
+                "action": "mock_rpc_device.mock_update",
+                "starting_state": "STATE_ON",
+                "ending_state": "STATE_OFF",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_restored_sleeping_binary_sensor_no_last_state",
+        "device_type": "binary_sensor",
+        "states": {
+            "STATE_UNKNOWN": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN"
+                }
+            },
+            "STATE_OFF": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_entry",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_UNKNOWN",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "restore_device",
+                "starting_state": "STATE_UNKNOWN",
+                "ending_state": "STATE_OFF",
+                "inputs": {
+                    "initialized": true,
+                    "online": true,
+                    "update": true
+                }
+            },
+            {
+                "action": "await_async_block_till_done",
+                "starting_state": "STATE_UNKNOWN",
+                "ending_state": "STATE_UNKNOWN",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_virtual_binary_sensor",
+        "device_type": "binary_sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "STATE_ON",
+                    "entry.unique_id": "'123456789ABC-boolean:203-boolean_generic'"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 3
+                }
+            },
+            {
+                "action": "update_status",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "entity_id": "boolean:203",
+                    "new_value": false,
+                    "method": [
+                        "monkeypatch.setitem(mock_rpc_device.status['boolean:203'], 'value', False)",
+                        "mock_rpc_device.mock_update()"
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_remove_virtual_binary_sensor_when_mode_toggle",
+        "device_type": "binary_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "entity_removed_state": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup integration and register entity with toggle mode",
+                "starting_state": "initial_state",
+                "ending_state": "entity_removed_state",
+                "inputs": {
+                    "description": "'Test virtual binary sensor removal when mode changes to toggle.'",
+                    "config_modification": [
+                        "config = deepcopy(mock_rpc_device.config)",
+                        "config['boolean:200'] = {'name': None, 'meta': {'ui': {'view': 'toggle'}}}",
+                        "monkeypatch.setattr(mock_rpc_device, 'config', config)"
+                    ],
+                    "status_modification": [
+                        "status = deepcopy(mock_rpc_device.status)",
+                        "status['boolean:200'] = {'value': True}",
+                        "monkeypatch.setattr(mock_rpc_device, 'status', status)"
+                    ],
+                    "integration_setup": [
+                        "config_entry = await init_integration(hass, 3, skip_setup=True)",
+                        "device_entry = register_device(device_registry, config_entry)",
+                        "entity_id = register_entity(hass, BINARY_SENSOR_DOMAIN, 'test_name_boolean_200', 'boolean:200-boolean_generic', config_entry, device_id=device_entry.id)",
+                        "await hass.config_entries.async_setup(config_entry.entry_id)",
+                        "await hass.async_block_till_done()"
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_remove_virtual_binary_sensor_when_orphaned",
+        "device_type": "binary_sensor",
+        "states": {
+            "pre_setup_state": {
+                "variables": {
+                    "entity_registry.async_get(entity_id1)": "None",
+                    "entity_registry.async_get(entity_id2)": "None"
+                }
+            },
+            "post_setup_state": {
+                "variables": {
+                    "entity_registry.async_get(entity_id1)": "None",
+                    "entity_registry.async_get(entity_id2)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialize_and_register_entities",
+                "starting_state": "initial_state",
+                "ending_state": "pre_setup_state",
+                "inputs": {
+                    "init_integration": "await init_integration(hass, 3, skip_setup=True)",
+                    "register_device": "register_device(device_registry, config_entry)",
+                    "register_entity_1": "register_entity(hass, BINARY_SENSOR_DOMAIN, 'test_name_boolean_200', 'boolean:200-boolean_generic', config_entry, device_id=device_entry.id)",
+                    "register_sub_device": "register_sub_device(device_registry, config_entry, 'boolean:201-boolean_generic')",
+                    "register_entity_2": "register_entity(hass, BINARY_SENSOR_DOMAIN, 'boolean_201', 'boolean:201-boolean_generic', config_entry, device_id=sub_device_entry.id)"
+                }
+            },
+            {
+                "action": "await hass.config_entries.async_setup",
+                "starting_state": "pre_setup_state",
+                "ending_state": "post_setup_state",
+                "inputs": {
+                    "config_entry.entry_id": "config_entry.entry_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_blu_trv_binary_sensor_entity",
+        "device_type": "TRV binary sensor",
+        "states": {
+            "binary_sensor.trv_name_calibration-state": {
+                "variables": {}
+            },
+            "binary_sensor.trv_name_calibration-entry": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "binary_sensor.trv_name_calibration-state",
+                "inputs": {
+                    "hass": "<hass>",
+                    "device_count": 3,
+                    "model": "MODEL_BLU_GATEWAY_G3"
+                }
+            },
+            {
+                "action": "entity_registry.async_get",
+                "starting_state": "binary_sensor.trv_name_calibration-state",
+                "ending_state": "binary_sensor.trv_name_calibration-entry",
+                "inputs": {
+                    "entity_id": "binary_sensor.trv_name_calibration"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_flood_entities",
+        "device_type": "flood sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "initialized": {
+                "variables": {}
+            },
+            "flood_state": {
+                "variables": {}
+            },
+            "flood_entry": {
+                "variables": {}
+            },
+            "mute_state": {
+                "variables": {}
+            },
+            "mute_entry": {
+                "variables": {}
+            },
+            "cable_unplugged_state": {
+                "variables": {}
+            },
+            "cable_unplugged_entry": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "device_count": 4,
+                    "model": "MODEL_FLOOD_G4"
+                }
+            },
+            {
+                "action": "retrieve_entity_state_and_entry",
+                "starting_state": "initialized",
+                "ending_state": "flood_state",
+                "inputs": {
+                    "entity": "flood",
+                    "entity_id": "binary_sensor.test_name_kitchen_flood"
+                }
+            },
+            {
+                "action": "retrieve_entity_state_and_entry",
+                "starting_state": "flood_state",
+                "ending_state": "flood_entry",
+                "inputs": {
+                    "entity": "flood",
+                    "entity_id": "binary_sensor.test_name_kitchen_flood"
+                }
+            },
+            {
+                "action": "retrieve_entity_state_and_entry",
+                "starting_state": "flood_entry",
+                "ending_state": "mute_state",
+                "inputs": {
+                    "entity": "mute",
+                    "entity_id": "binary_sensor.test_name_kitchen_mute"
+                }
+            },
+            {
+                "action": "retrieve_entity_state_and_entry",
+                "starting_state": "mute_state",
+                "ending_state": "mute_entry",
+                "inputs": {
+                    "entity": "mute",
+                    "entity_id": "binary_sensor.test_name_kitchen_mute"
+                }
+            },
+            {
+                "action": "retrieve_entity_state_and_entry",
+                "starting_state": "mute_entry",
+                "ending_state": "cable_unplugged_state",
+                "inputs": {
+                    "entity": "cable_unplugged",
+                    "entity_id": "binary_sensor.test_name_kitchen_cable_unplugged"
+                }
+            },
+            {
+                "action": "retrieve_entity_state_and_entry",
+                "starting_state": "cable_unplugged_state",
+                "ending_state": "cable_unplugged_entry",
+                "inputs": {
+                    "entity": "cable_unplugged",
+                    "entity_id": "binary_sensor.test_name_kitchen_cable_unplugged"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_flood_cable_unplugged",
+        "device_type": "flood",
+        "states": {
+            "STATE_OFF": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "STATE_ON": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_OFF",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 4,
+                    "model": "MODEL_FLOOD_G4"
+                }
+            },
+            {
+                "action": "mock_rpc_device.mock_update",
+                "starting_state": "STATE_OFF",
+                "ending_state": "STATE_ON",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_presence_component",
+        "device_type": "presence",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "on_state": {
+                "variables": {
+                    "state.state": "STATE_ON",
+                    "entry.unique_id": "123456789ABC-presence-presence_num_objects"
+                }
+            },
+            "off_state": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "unavailable_state": {
+                "variables": {
+                    "state.state": "STATE_UNAVAILABLE"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "on_state",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 4
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "on_state",
+                "ending_state": "off_state",
+                "inputs": {
+                    "component": "presence",
+                    "attribute": "num_objects",
+                    "value": 0
+                }
+            },
+            {
+                "action": "disable_presence_and_reload",
+                "starting_state": "off_state",
+                "ending_state": "unavailable_state",
+                "inputs": {
+                    "presence.enable": false
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_presencezone_component",
+        "device_type": "presencezone",
+        "states": {
+            "STATE_ON": {
+                "variables": {
+                    "state.state": "STATE_ON",
+                    "entry.unique_id": "123456789ABC-presencezone:200-presencezone_state"
+                }
+            },
+            "STATE_OFF": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "STATE_UNAVAILABLE": {
+                "variables": {
+                    "state.state": "STATE_UNAVAILABLE"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_ON",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 4,
+                    "config": {
+                        "presencezone:200": {
+                            "name": "Main zone",
+                            "enable": true
+                        }
+                    },
+                    "status": {
+                        "presencezone:200": {
+                            "value": true,
+                            "num_objects": 3
+                        }
+                    }
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status + mock_update",
+                "starting_state": "STATE_ON",
+                "ending_state": "STATE_OFF",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "zone": "presencezone:200",
+                    "field": "value",
+                    "new_value": false,
+                    "monkeypatch": "monkeypatch"
+                }
+            },
+            {
+                "action": "disable_presencezone_and_reload + mock_update",
+                "starting_state": "STATE_OFF",
+                "ending_state": "STATE_UNAVAILABLE",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "zone": "presencezone:200",
+                    "config_change": {
+                        "enable": false
+                    },
+                    "async_reload_entry_id": "mock_config_entry.entry_id",
+                    "monkeypatch": "monkeypatch"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_migrate_unique_id_virtual_components_roles",
+        "device_type": "binary_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "pre_migration": {
+                "variables": {
+                    "entity.unique_id": "old_unique_id"
+                }
+            },
+            "post_migration": {
+                "variables": {
+                    "entity_entry.unique_id": "new_unique_id",
+                    "'Migrating unique_id for binary_sensor.test_name_test_sensor' in caplog.text": "old_id != new_id"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "entity_registry.async_get_or_create",
+                "starting_state": "initial_state",
+                "ending_state": "pre_migration",
+                "inputs": {
+                    "suggested_object_id": "test_name_test_sensor",
+                    "disabled_by": null,
+                    "domain": "binary_sensor",
+                    "platform": "DOMAIN",
+                    "unique_id": "old_unique_id",
+                    "config_entry": "entry"
+                }
+            },
+            {
+                "action": "hass.config_entries.async_setup",
+                "starting_state": "pre_migration",
+                "ending_state": "post_migration",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "hass.async_block_till_done",
+                "starting_state": "pre_migration",
+                "ending_state": "post_migration",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_cury_orientation_errors",
+        "device_type": "cury",
+        "states": {
+            "state_off": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "state_on": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialize_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_off",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 4,
+                    "model": "MODEL_CURY_G4",
+                    "status": {
+                        "cury:0": {
+                            "id": 0,
+                            "slots": {
+                                "left": {
+                                    "intensity": 70,
+                                    "on": true,
+                                    "vial": {
+                                        "level": 27,
+                                        "name": "Forest Dream"
+                                    }
+                                },
+                                "right": {
+                                    "intensity": 70,
+                                    "on": false,
+                                    "vial": {
+                                        "level": 84,
+                                        "name": "Velvet Rose"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "action": "mock_rpc_device.mock_update",
+                "starting_state": "state_off",
+                "ending_state": "state_on",
+                "inputs": {
+                    "errors_added": [
+                        "orientation_tilt",
+                        "orientation_plug_rotated"
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_occupancy_component",
+        "device_type": "binary_sensor",
+        "states": {
+            "state_off": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "state_on": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_off",
+                "inputs": {
+                    "hass": "hass",
+                    "device_count": 2,
+                    "model": "MODEL_WALL_DISPLAY"
+                }
+            },
+            {
+                "action": "mock_update",
+                "starting_state": "state_off",
+                "ending_state": "state_on",
+                "inputs": {
+                    "occupancy_value": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_cb_binary_sensors",
+        "device_type": "circuit_breaker",
+        "states": {
+            "initial_state": {
+                "variables": {
+                    "output_state": "STATE_OFF",
+                    "safety_state": "STATE_ON",
+                    "output_unique_id": "123456789ABC-cb:0-cb_output",
+                    "safety_unique_id": "123456789ABC-cb:0-cb_safety"
+                }
+            },
+            "output_on_state": {
+                "variables": {
+                    "output_state": "STATE_ON"
+                }
+            },
+            "safety_off_state": {
+                "variables": {
+                    "safety_state": "STATE_OFF"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "initial_state",
+                "ending_state": "output_on_state",
+                "inputs": {
+                    "device_id": "cb:0",
+                    "field": "output",
+                    "value": true
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "output_on_state",
+                "ending_state": "safety_off_state",
+                "inputs": {
+                    "device_id": "cb:0",
+                    "field": "safety",
+                    "value": true
+                }
+            }
+        ]
+    }
+]

@@ -3,14 +3,11 @@
         "name": "test_block_update",
         "device_type": "block_device",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
             "state_1": {
                 "variables": {
                     "state.state": "STATE_ON",
-                    "state.attributes[ATTR_INSTALLED_VERSION]": "'1.0.0'",
-                    "state.attributes[ATTR_LATEST_VERSION]": "'2.0.0'",
+                    "state.attributes[ATTR_INSTALLED_VERSION]": "1.0.0",
+                    "state.attributes[ATTR_LATEST_VERSION]": "2.0.0",
                     "state.attributes[ATTR_IN_PROGRESS]": "False",
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "None",
                     "state.attributes[ATTR_SUPPORTED_FEATURES]": "UpdateEntityFeature.INSTALL | UpdateEntityFeature.PROGRESS"
@@ -20,8 +17,8 @@
                 "variables": {
                     "mock_block_device.trigger_ota_update.call_count": "1",
                     "state.state": "STATE_ON",
-                    "state.attributes[ATTR_INSTALLED_VERSION]": "'1.0.0'",
-                    "state.attributes[ATTR_LATEST_VERSION]": "'2.0.0'",
+                    "state.attributes[ATTR_INSTALLED_VERSION]": "1.0.0",
+                    "state.attributes[ATTR_LATEST_VERSION]": "2.0.0",
                     "state.attributes[ATTR_IN_PROGRESS]": "True",
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "None",
                     "state.attributes[ATTR_RELEASE_URL]": "GEN1_RELEASE_URL"
@@ -30,11 +27,11 @@
             "state_3": {
                 "variables": {
                     "state.state": "STATE_OFF",
-                    "state.attributes[ATTR_INSTALLED_VERSION]": "'2.0.0'",
-                    "state.attributes[ATTR_LATEST_VERSION]": "'2.0.0'",
+                    "state.attributes[ATTR_INSTALLED_VERSION]": "2.0.0",
+                    "state.attributes[ATTR_LATEST_VERSION]": "2.0.0",
                     "state.attributes[ATTR_IN_PROGRESS]": "False",
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "None",
-                    "entry.unique_id": "'123456789ABC-fwupdate'"
+                    "entry.unique_id": "123456789ABC-fwupdate"
                 }
             }
         },
@@ -44,8 +41,8 @@
                 "starting_state": "initial_state",
                 "ending_state": "state_1",
                 "inputs": {
-                    "hass": "hass",
-                    "param": "1"
+                    "hass": "<hass>",
+                    "arg": 1
                 }
             },
             {
@@ -56,7 +53,7 @@
                     "domain": "UPDATE_DOMAIN",
                     "service": "SERVICE_INSTALL",
                     "service_data": {
-                        "ATTR_ENTITY_ID": "entity_id"
+                        "ATTR_ENTITY_ID": "update.test_name_firmware"
                     },
                     "blocking": true
                 }
@@ -66,53 +63,56 @@
                 "starting_state": "state_2",
                 "ending_state": "state_3",
                 "inputs": {
-                    "hass": "hass",
-                    "freezer": "freezer"
+                    "hass": "<hass>",
+                    "freezer": "<freezer>"
                 }
             }
         ]
     },
     {
         "name": "test_block_beta_update",
-        "device_type": "block",
+        "device_type": "block_device",
         "states": {
-            "state_1_initial_off": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_off_before_beta": {
                 "variables": {
                     "state.state": "STATE_OFF",
-                    "state.attributes[ATTR_INSTALLED_VERSION]": "'1.0.0'",
-                    "state.attributes[ATTR_LATEST_VERSION]": "'1.0.0'",
+                    "state.attributes[ATTR_INSTALLED_VERSION]": "1.0.0",
+                    "state.attributes[ATTR_LATEST_VERSION]": "1.0.0",
                     "state.attributes[ATTR_IN_PROGRESS]": "False",
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "None"
                 }
             },
-            "state_2_beta_available_on": {
+            "state_on_beta_available": {
                 "variables": {
                     "state.state": "STATE_ON",
-                    "state.attributes[ATTR_INSTALLED_VERSION]": "'1.0.0'",
-                    "state.attributes[ATTR_LATEST_VERSION]": "'2.0.0-beta'",
+                    "state.attributes[ATTR_INSTALLED_VERSION]": "1.0.0",
+                    "state.attributes[ATTR_LATEST_VERSION]": "2.0.0-beta",
                     "state.attributes[ATTR_IN_PROGRESS]": "False",
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "None",
                     "state.attributes[ATTR_RELEASE_URL]": "None"
                 }
             },
-            "state_3_updating": {
+            "state_on_updating": {
                 "variables": {
                     "mock_block_device.trigger_ota_update.call_count": "1",
                     "state.state": "STATE_ON",
-                    "state.attributes[ATTR_INSTALLED_VERSION]": "'1.0.0'",
-                    "state.attributes[ATTR_LATEST_VERSION]": "'2.0.0-beta'",
+                    "state.attributes[ATTR_INSTALLED_VERSION]": "1.0.0",
+                    "state.attributes[ATTR_LATEST_VERSION]": "2.0.0-beta",
                     "state.attributes[ATTR_IN_PROGRESS]": "True",
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "None"
                 }
             },
-            "state_4_updated_off": {
+            "state_off_updated": {
                 "variables": {
                     "state.state": "STATE_OFF",
-                    "state.attributes[ATTR_INSTALLED_VERSION]": "'2.0.0-beta'",
-                    "state.attributes[ATTR_LATEST_VERSION]": "'2.0.0-beta'",
+                    "state.attributes[ATTR_INSTALLED_VERSION]": "2.0.0-beta",
+                    "state.attributes[ATTR_LATEST_VERSION]": "2.0.0-beta",
                     "state.attributes[ATTR_IN_PROGRESS]": "False",
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "None",
-                    "entry.unique_id": "'123456789ABC-fwupdate_beta'"
+                    "entry.unique_id": "123456789ABC-fwupdate_beta"
                 }
             }
         },
@@ -120,16 +120,16 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1_initial_off",
+                "ending_state": "state_off_before_beta",
                 "inputs": {
                     "hass": "hass",
-                    "arg": 1
+                    "param": 1
                 }
             },
             {
                 "action": "mock_rest_update",
-                "starting_state": "state_1_initial_off",
-                "ending_state": "state_2_beta_available_on",
+                "starting_state": "state_off_before_beta",
+                "ending_state": "state_on_beta_available",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer"
@@ -137,8 +137,8 @@
             },
             {
                 "action": "hass.services.async_call",
-                "starting_state": "state_2_beta_available_on",
-                "ending_state": "state_3_updating",
+                "starting_state": "state_on_beta_available",
+                "ending_state": "state_on_updating",
                 "inputs": {
                     "domain": "UPDATE_DOMAIN",
                     "service": "SERVICE_INSTALL",
@@ -150,10 +150,10 @@
             },
             {
                 "action": "mock_rest_update",
-                "starting_state": "state_3_updating",
-                "ending_state": "state_4_updated_off",
+                "starting_state": "state_on_updating",
+                "ending_state": "state_off_updated",
                 "inputs": {
-                    "hair": "hass",
+                    "hass": "hass",
                     "freezer": "freezer"
                 }
             }
@@ -166,22 +166,32 @@
             "initial_state": {
                 "variables": {}
             },
-            "connection_error": {
-                "variables": {
-                    "error_message": "Device communication error occurred while triggering OTA update for Test name"
-                }
+            "integration_initialized": {
+                "variables": {}
+            },
+            "error_state": {
+                "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "hass.services.async_call",
+                "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "connection_error",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 1
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "integration_initialized",
+                "ending_state": "error_state",
                 "inputs": {
                     "domain": "UPDATE_DOMAIN",
                     "service": "SERVICE_INSTALL",
                     "service_data": {
-                        "entity_id": "update.test_name_firmware"
+                        "ATTR_ENTITY_ID": "update.test_name_firmware"
                     },
                     "blocking": true
                 }
@@ -190,33 +200,100 @@
     },
     {
         "name": "test_block_update_auth_error",
-        "device_type": "block",
+        "device_type": "block_device",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state_1": {
+            "state1": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "state_2": {
+            "state2": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "state_3": {
+            "state3": {
                 "variables": {
                     "len(flows)": "1"
                 }
             },
-            "state_4": {
+            "state4": {
                 "variables": {
                     "flow.get('step_id')": "'reauth_confirm'",
                     "flow.get('handler')": "DOMAIN",
-                    "'context'": "flow",
+                    "context": "flow",
                     "flow['context'].get('source')": "SOURCE_REAUTH",
                     "flow['context'].get('entry_id')": "entry.entry_id"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state1",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 1
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "state1",
+                "ending_state": "state2",
+                "inputs": {
+                    "domain": "UPDATE_DOMAIN",
+                    "service": "SERVICE_INSTALL",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "update.test_name_firmware"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "hass.config_entries.flow.async_progress",
+                "starting_state": "state2",
+                "ending_state": "state3",
+                "inputs": {}
+            },
+            {
+                "action": "access_first_flow",
+                "starting_state": "state3",
+                "ending_state": "state4",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_block_version_compare",
+        "device_type": "block",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "STATE_OFF",
+                    "state.attributes[ATTR_INSTALLED_VERSION]": "STABLE",
+                    "state.attributes[ATTR_LATEST_VERSION]": "STABLE"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "STATE_ON",
+                    "state.attributes[ATTR_INSTALLED_VERSION]": "STABLE",
+                    "state.attributes[ATTR_LATEST_VERSION]": "BETA"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.state": "STATE_OFF",
+                    "state.attributes[ATTR_INSTALLED_VERSION]": "BETA",
+                    "state.attributes[ATTR_LATEST_VERSION]": "STABLE"
+                }
+            },
+            "state_4": {
+                "variables": {
+                    "state.state": "STATE_OFF",
+                    "state.attributes[ATTR_INSTALLED_VERSION]": "BETA",
+                    "state.attributes[ATTR_LATEST_VERSION]": "BETA"
                 }
             }
         },
@@ -227,80 +304,13 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "device_index": 1
-                }
-            },
-            {
-                "action": "hass.services.async_call",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
-                "inputs": {
-                    "domain": "UPDATE_DOMAIN",
-                    "service": "SERVICE_INSTALL",
-                    "service_data": {
-                        "ATTR_ENTITY_ID": "'update.test_name_firmware'"
-                    },
-                    "blocking": true
-                }
-            },
-            {
-                "action": "hass.config_entries.flow.async_progress",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
-                "inputs": {}
-            },
-            {
-                "action": "retrieve_flow",
-                "starting_state": "state_3",
-                "ending_state": "state_4",
-                "inputs": {
-                    "flow_index": 0
-                }
-            }
-        ]
-    },
-    {
-        "name": "test_block_version_compare",
-        "device_type": "block",
-        "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state_after_init": {
-                "variables": {
-                    "state.state_1": "STATE_OFF",
-                    "state.attributes[ATTR_INSTALLED_VERSION]_1": "STABLE",
-                    "state.attributes[ATTR_LATEST_VERSION]_1": "STABLE",
-                    "state.state_2": "STATE_ON",
-                    "state.attributes[ATTR_INSTALLED_VERSION]_2": "STABLE",
-                    "state.attributes[ATTR_LATEST_VERSION]_2": "BETA"
-                }
-            },
-            "state_after_update": {
-                "variables": {
-                    "state.state_1": "STATE_OFF",
-                    "state.attributes[ATTR_INSTALLED_VERSION]_1": "BETA",
-                    "state.attributes[ATTR_LATEST_VERSION]_1": "STABLE",
-                    "state.state_2": "STATE_OFF",
-                    "state.attributes[ATTR_INSTALLED_VERSION]_2": "BETA",
-                    "state.attributes[ATTR_LATEST_VERSION]_2": "BETA"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "init_integration",
-                "starting_state": "initial_state",
-                "ending_state": "state_after_init",
-                "inputs": {
-                    "hass": "hass",
-                    "timeout": 1
+                    "param": 1
                 }
             },
             {
                 "action": "mock_rest_update",
-                "starting_state": "state_after_init",
-                "ending_state": "state_after_update",
+                "starting_state": "state_1",
+                "ending_state": "state_3",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer"
@@ -310,9 +320,9 @@
     },
     {
         "name": "test_rpc_update",
-        "device_type": "rpc",
+        "device_type": "rpc_device",
         "states": {
-            "State1": {
+            "post_init": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_INSTALLED_VERSION]": "'1'",
@@ -321,12 +331,12 @@
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "None"
                 }
             },
-            "State2": {
+            "supported_features": {
                 "variables": {
                     "supported_feat": "UpdateEntityFeature.INSTALL | UpdateEntityFeature.PROGRESS"
                 }
             },
-            "State3": {
+            "after_install_call": {
                 "variables": {
                     "mock_rpc_device.trigger_ota_update.call_count": "1",
                     "state.state": "STATE_ON",
@@ -337,19 +347,19 @@
                     "state.attributes[ATTR_RELEASE_URL]": "GEN2_RELEASE_URL"
                 }
             },
-            "State4": {
+            "after_ota_begin": {
                 "variables": {
                     "state.attributes[ATTR_IN_PROGRESS]": "True",
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "0"
                 }
             },
-            "State5": {
+            "after_ota_progress": {
                 "variables": {
                     "state.attributes[ATTR_IN_PROGRESS]": "True",
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "50"
                 }
             },
-            "State6": {
+            "final_state": {
                 "variables": {
                     "state.state": "STATE_OFF",
                     "state.attributes[ATTR_INSTALLED_VERSION]": "'2'",
@@ -364,22 +374,22 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "State1",
+                "ending_state": "post_init",
                 "inputs": {
-                    "hass": "hass",
-                    "device_count": 2
+                    "hass": "<hass>",
+                    "device_index": 2
                 }
             },
             {
-                "action": "retrieve_supported_features",
-                "starting_state": "State1",
-                "ending_state": "State2",
+                "action": "extract_supported_features",
+                "starting_state": "post_init",
+                "ending_state": "supported_features",
                 "inputs": {}
             },
             {
                 "action": "service_call",
-                "starting_state": "State2",
-                "ending_state": "State3",
+                "starting_state": "supported_features",
+                "ending_state": "after_install_call",
                 "inputs": {
                     "domain": "UPDATE_DOMAIN",
                     "service": "SERVICE_INSTALL",
@@ -389,42 +399,43 @@
                 }
             },
             {
-                "action": "inject_rpc_device_event",
-                "starting_state": "State3",
-                "ending_state": "State4",
+                "action": "inject_rpc_event",
+                "starting_state": "after_install_call",
+                "ending_state": "after_ota_begin",
                 "inputs": {
                     "event": "ota_begin",
                     "id": 1,
-                    "timestamp": 1668522399.2
+                    "ts": 1668522399.2
                 }
             },
             {
-                "action": "inject_rpc_device_event",
-                "starting_state": "State4",
-                "ending_state": "State5",
+                "action": "inject_rpc_event",
+                "starting_state": "after_ota_begin",
+                "ending_state": "after_ota_progress",
                 "inputs": {
                     "event": "ota_progress",
                     "id": 1,
-                    "timestamp": 1668522399.2,
+                    "ts": 1668522399.2,
                     "progress_percent": 50
                 }
             },
             {
-                "action": "inject_rpc_device_event",
-                "starting_state": "State5",
-                "ending_state": "State6",
+                "action": "inject_rpc_event_success_and_update",
+                "starting_state": "after_ota_progress",
+                "ending_state": "final_state",
                 "inputs": {
                     "event": "ota_success",
                     "id": 1,
-                    "timestamp": 1668522399.2
-                }
-            },
-            {
-                "action": "set_device_version_and_update",
-                "starting_state": "State5",
-                "ending_state": "State6",
-                "inputs": {
-                    "new_version": "2"
+                    "ts": 1668522399.2,
+                    "post_actions": [
+                        {
+                            "action": "set_device_version",
+                            "value": "2"
+                        },
+                        {
+                            "action": "mock_update"
+                        }
+                    ]
                 }
             }
         ]
@@ -433,14 +444,18 @@
         "name": "test_rpc_lora_update",
         "device_type": "LoRa",
         "states": {
-            "idle_state": {
+            "state_1": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_INSTALLED_VERSION]": "1",
                     "state.attributes[ATTR_LATEST_VERSION]": "2",
                     "state.attributes[ATTR_IN_PROGRESS]": "False",
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "None",
-                    "state.attributes[ATTR_RELEASE_URL]": "None",
+                    "state.attributes[ATTR_RELEASE_URL]": "None"
+                }
+            },
+            "state_2": {
+                "variables": {
                     "supported_feat": "UpdateEntityFeature.INSTALL | UpdateEntityFeature.PROGRESS",
                     "entry.unique_id": "123456789ABC-lora-loraupdate"
                 }
@@ -450,23 +465,29 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "idle_state",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "num_devices": 2
+                    "count": 2
                 }
+            },
+            {
+                "action": "assign_supported_feat",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
             }
         ]
     },
     {
         "name": "test_rpc_lora_update_no_update_available",
-        "device_type": "rpc_device",
+        "device_type": "rpc_lora",
         "states": {
-            "expected_state": {
+            "asserted_state": {
                 "variables": {
                     "state.state": "STATE_OFF",
-                    "state.attributes[ATTR_INSTALLED_VERSION]": "1",
-                    "state.attributes[ATTR_LATEST_VERSION]": "1"
+                    "state.attributes[ATTR_INSTALLED_VERSION]": "'1'",
+                    "state.attributes[ATTR_LATEST_VERSION]": "'1'"
                 }
             }
         },
@@ -474,24 +495,27 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "expected_state",
+                "ending_state": "asserted_state",
                 "inputs": {
                     "hass": "hass",
-                    "arg": 2
+                    "device_count": 2
                 }
             }
         ]
     },
     {
         "name": "test_rpc_lora_update_in_progress",
-        "device_type": "lora",
+        "device_type": "LoRa",
         "states": {
-            "state_1": {
+            "initial_state": {
+                "variables": {}
+            },
+            "install_triggered": {
                 "variables": {
                     "mock_rpc_device.trigger_add_on_ota_update.call_count": "1"
                 }
             },
-            "state_2": {
+            "updating": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_IN_PROGRESS]": "True",
@@ -503,20 +527,20 @@
             {
                 "action": "hass.services.async_call",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "install_triggered",
                 "inputs": {
                     "domain": "UPDATE_DOMAIN",
                     "service": "SERVICE_INSTALL",
                     "service_data": {
-                        "entity_id": "update.test_name_lora_add_on_firmware"
+                        "ATTR_ENTITY_ID": "entity_id"
                     },
                     "blocking": true
                 }
             },
             {
                 "action": "mock_rpc_device.mock_update",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "starting_state": "install_triggered",
+                "ending_state": "updating",
                 "inputs": {}
             }
         ]
@@ -525,6 +549,9 @@
         "name": "test_rpc_lora_update_success",
         "device_type": "LoRa",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "updating_state": {
                 "variables": {
                     "ATTR_IN_PROGRESS": "True",
@@ -534,8 +561,8 @@
             "final_state": {
                 "variables": {
                     "state": "STATE_OFF",
-                    "ATTR_INSTALLED_VERSION": "2",
-                    "ATTR_LATEST_VERSION": "2",
+                    "ATTR_INSTALLED_VERSION": "'2'",
+                    "ATTR_LATEST_VERSION": "'2'",
                     "ATTR_IN_PROGRESS": "False",
                     "ATTR_UPDATE_PERCENTAGE": "None"
                 }
@@ -543,19 +570,33 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "set_lora_status",
                 "starting_state": "initial_state",
                 "ending_state": "updating_state",
                 "inputs": {
-                    "hass": "hass",
-                    "param": 2
+                    "fw_version": "1",
+                    "update_state": "updating",
+                    "progress": 90,
+                    "available_updates": {
+                        "stable": {
+                            "version": "2"
+                        }
+                    }
                 }
             },
             {
                 "action": "mock_update",
                 "starting_state": "updating_state",
                 "ending_state": "final_state",
-                "inputs": {}
+                "inputs": {
+                    "fw_version": "2",
+                    "update_state": "idle",
+                    "available_updates": {
+                        "stable": {
+                            "version": "2"
+                        }
+                    }
+                }
             }
         ]
     },
@@ -566,14 +607,29 @@
             "initial_state": {
                 "variables": {}
             },
+            "integration_initialized": {
+                "variables": {
+                    "status.lora.fw_version": "1",
+                    "status.lora.available_updates.stable.version": "2"
+                }
+            },
             "error_state": {
                 "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "hass.services.async_call",
+                "action": "init_integration",
                 "starting_state": "initial_state",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 2
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "integration_initialized",
                 "ending_state": "error_state",
                 "inputs": {
                     "domain": "UPDATE_DOMAIN",
@@ -581,7 +637,11 @@
                     "service_data": {
                         "entity_id": "update.test_name_lora_add_on_firmware"
                     },
-                    "blocking": true
+                    "blocking": true,
+                    "expected_exception": {
+                        "type": "HomeAssistantError",
+                        "match": "error"
+                    }
                 }
             }
         ]
@@ -621,17 +681,17 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "parameter": 2
+                    "config_entry_id": 2
                 }
             },
             {
-                "action": "async_call",
+                "action": "service_call",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
                     "domain": "UPDATE_DOMAIN",
                     "service": "SERVICE_INSTALL",
-                    "service_data": {
+                    "data": {
                         "ATTR_ENTITY_ID": "update.test_name_lora_add_on_firmware"
                     },
                     "blocking": true
@@ -644,28 +704,23 @@
                 "inputs": {}
             },
             {
-                "action": "access_flow",
+                "action": "get_first_flow",
                 "starting_state": "state_3",
                 "ending_state": "state_4",
-                "inputs": {
-                    "index": 0
-                }
+                "inputs": {}
             }
         ]
     },
     {
         "name": "test_rpc_sleeping_update",
-        "device_type": "rpc_device",
+        "device_type": "rpc",
         "states": {
             "initial_state": {
-                "variables": {}
-            },
-            "state_none": {
                 "variables": {
                     "hass.states.get(entity_id)": "None"
                 }
             },
-            "state_online": {
+            "online_state": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_INSTALLED_VERSION]": "'1'",
@@ -676,7 +731,7 @@
                     "state.attributes[ATTR_RELEASE_URL]": "GEN2_RELEASE_URL"
                 }
             },
-            "state_updated": {
+            "updated_state": {
                 "variables": {
                     "state.state": "STATE_OFF",
                     "state.attributes[ATTR_INSTALLED_VERSION]": "'2'",
@@ -692,27 +747,19 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_none",
+                "ending_state": "online_state",
                 "inputs": {
                     "hass": "hass",
                     "config_entry_id": 2,
                     "sleep_period": 1000,
-                    "initialize_side_effect": "DeviceConnectionError"
+                    "side_effect": "DeviceConnectionError"
                 }
-            },
-            {
-                "action": "mock_online",
-                "starting_state": "state_none",
-                "ending_state": "state_online",
-                "inputs": {}
             },
             {
                 "action": "mock_update",
-                "starting_state": "state_online",
-                "ending_state": "state_updated",
-                "inputs": {
-                    "new_version": "2"
-                }
+                "starting_state": "online_state",
+                "ending_state": "updated_state",
+                "inputs": {}
             }
         ]
     },
@@ -720,10 +767,7 @@
         "name": "test_rpc_restored_sleeping_update",
         "device_type": "rpc",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state_1": {
+            "STATE_ON": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_INSTALLED_VERSION]": "1",
@@ -733,7 +777,7 @@
                     "state.attributes[ATTR_SUPPORTED_FEATURES]": "UpdateEntityFeature(0)"
                 }
             },
-            "state_2": {
+            "STATE_OFF": {
                 "variables": {
                     "state.state": "STATE_OFF",
                     "state.attributes[ATTR_INSTALLED_VERSION]": "2",
@@ -746,17 +790,36 @@
         },
         "transitions": [
             {
-                "action": "config_entry_setup",
+                "action": "setup",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "STATE_ON",
                 "inputs": {
-                    "entry_id": "entry.entry_id"
+                    "init_integration": {
+                        "sleep_period": 1000,
+                        "skip_setup": true
+                    },
+                    "register_device": true,
+                    "register_entity": {
+                        "domain": "UPDATE_DOMAIN",
+                        "name": "test_name_firmware",
+                        "unique_id": "sys-fwupdate"
+                    },
+                    "mock_restore_cache": {
+                        "entity_id": "entity_id",
+                        "state": "STATE_ON",
+                        "attributes": {
+                            "installed_version": "1",
+                            "latest_version": "2"
+                        }
+                    },
+                    "rpc_version": "2",
+                    "available_updates": {}
                 }
             },
             {
                 "action": "mock_update",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "starting_state": "STATE_ON",
+                "ending_state": "STATE_OFF",
                 "inputs": {}
             }
         ]
@@ -765,15 +828,12 @@
         "name": "test_rpc_restored_sleeping_update_no_last_state",
         "device_type": "rpc",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state_unknown": {
+            "STATE_UNKNOWN": {
                 "variables": {
                     "state.state": "STATE_UNKNOWN"
                 }
             },
-            "state_on": {
+            "STATE_ON": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_INSTALLED_VERSION]": "'1'",
@@ -786,45 +846,35 @@
         },
         "transitions": [
             {
-                "action": "initialize_integration",
+                "action": "setup_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_unknown",
+                "ending_state": "STATE_UNKNOWN",
                 "inputs": {
-                    "description": "Set up the integration, register the device and entity, and start the integration in a non\u2011initialized state.",
-                    "steps": [
-                        "monkeypatch.setitem(mock_rpc_device.shelly, 'ver', '1')",
-                        "monkeypatch.setitem(mock_rpc_device.status['sys'], 'available_updates', {'stable': {'version': '2'}})",
-                        "entry = await init_integration(hass, 2, sleep_period=1000, skip_setup=True)",
-                        "device = register_device(device_registry, entry)",
-                        "entity_id = register_entity(hass, UPDATE_DOMAIN, 'test_name_firmware', 'sys-fwupdate', entry, device_id=device.id)",
-                        "monkeypatch.setattr(mock_rpc_device, 'initialized', False)",
-                        "await hass.config_entries.async_setup(entry.entry_id)",
-                        "await hass.async_block_till_done()"
-                    ]
+                    "entry_id": "<entry.entry_id>",
+                    "skip_setup": true,
+                    "initialized": false
                 }
             },
             {
-                "action": "restore_and_update",
-                "starting_state": "state_unknown",
-                "ending_state": "state_on",
+                "action": "device_becomes_online_and_updates",
+                "starting_state": "STATE_UNKNOWN",
+                "ending_state": "STATE_ON",
                 "inputs": {
-                    "description": "Mark the RPC device as initialized, bring it online and trigger an update.",
-                    "steps": [
-                        "monkeypatch.setattr(mock_rpc_device, 'initialized', True)",
-                        "mock_rpc_device.mock_online()",
-                        "await hass.async_block_till_done(wait_background_tasks=True)",
-                        "mock_rpc_device.mock_update()",
-                        "await hass.async_block_till_done()"
-                    ]
+                    "initialized": true,
+                    "online": true,
+                    "update": true
                 }
             }
         ]
     },
     {
         "name": "test_rpc_beta_update",
-        "device_type": "rpc_device",
+        "device_type": "rpc",
         "states": {
-            "state_1_initial": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
                 "variables": {
                     "state.state": "STATE_OFF",
                     "state.attributes[ATTR_INSTALLED_VERSION]": "'1'",
@@ -833,7 +883,7 @@
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "None"
                 }
             },
-            "state_2_update_available": {
+            "state_2": {
                 "variables": {
                     "state.state": "STATE_ON",
                     "state.attributes[ATTR_INSTALLED_VERSION]": "'1'",
@@ -842,7 +892,7 @@
                     "state.attributes[ATTR_RELEASE_URL]": "GEN2_BETA_RELEASE_URL"
                 }
             },
-            "state_3_ota_begin": {
+            "state_3": {
                 "variables": {
                     "mock_rpc_device.trigger_ota_update.call_count": "1",
                     "state.state": "STATE_ON",
@@ -852,13 +902,13 @@
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "0"
                 }
             },
-            "state_4_ota_progress": {
+            "state_4": {
                 "variables": {
                     "state.attributes[ATTR_IN_PROGRESS]": "True",
                     "state.attributes[ATTR_UPDATE_PERCENTAGE]": "40"
                 }
             },
-            "state_5_final": {
+            "state_5": {
                 "variables": {
                     "state.state": "STATE_OFF",
                     "state.attributes[ATTR_INSTALLED_VERSION]": "'2b'",
@@ -873,7 +923,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1_initial",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
                     "param": 2
@@ -881,46 +931,59 @@
             },
             {
                 "action": "mock_rest_update",
-                "starting_state": "state_1_initial",
-                "ending_state": "state_2_update_available",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer"
                 }
             },
             {
-                "action": "hass.services.async_call",
-                "starting_state": "state_2_update_available",
-                "ending_state": "state_3_ota_begin",
+                "action": "install_update_service_call",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
                     "domain": "UPDATE_DOMAIN",
                     "service": "SERVICE_INSTALL",
-                    "service_data": {
-                        "ATTR_ENTITY_ID": "entity_id"
-                    },
-                    "blocking": true
+                    "entity_id": "entity_id"
                 }
             },
             {
-                "action": "inject_rpc_device_event",
-                "starting_state": "state_3_ota_begin",
-                "ending_state": "state_4_ota_progress",
+                "action": "inject_rpc_device_event_ota_begin",
+                "starting_state": "state_3",
+                "ending_state": "state_3",
                 "inputs": {
-                    "event": "ota_progress",
+                    "event": "ota_begin",
                     "id": 1,
-                    "progress_percent": 40,
                     "ts": 1668522399.2
                 }
             },
             {
-                "action": "ota_success_sequence",
-                "starting_state": "state_4_ota_progress",
-                "ending_state": "state_5_final",
+                "action": "inject_rpc_device_event_ota_progress",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
+                "inputs": {
+                    "event": "ota_progress",
+                    "id": 1,
+                    "ts": 1668522399.2,
+                    "progress_percent": 40
+                }
+            },
+            {
+                "action": "inject_rpc_device_event_ota_success",
+                "starting_state": "state_4",
+                "ending_state": "state_5",
                 "inputs": {
                     "event": "ota_success",
                     "id": 1,
-                    "ts": 1668522399.2,
-                    "new_version": "2b",
+                    "ts": 1668522399.2
+                }
+            },
+            {
+                "action": "final_mock_rest_update",
+                "starting_state": "state_5",
+                "ending_state": "state_5",
+                "inputs": {
                     "hass": "hass",
                     "freezer": "freezer"
                 }
@@ -929,39 +992,25 @@
     },
     {
         "name": "test_rpc_update_errors",
-        "device_type": "rpc",
+        "device_type": "rpc_device",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "initialized": {
-                "variables": {}
-            },
             "error_state": {
-                "variables": {
-                    "error": "HomeAssistantError"
-                }
+                "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "hass.services.async_call",
                 "starting_state": "initial_state",
-                "ending_state": "initialized",
-                "inputs": {
-                    "hass": "hass",
-                    "version": 2
-                }
-            },
-            {
-                "action": "services.async_call",
-                "starting_state": "initialized",
                 "ending_state": "error_state",
                 "inputs": {
                     "domain": "UPDATE_DOMAIN",
                     "service": "SERVICE_INSTALL",
-                    "data": {
-                        "entity_id": "update.test_name_firmware"
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "update.test_name_firmware"
                     },
                     "blocking": true
                 }
@@ -970,24 +1019,24 @@
     },
     {
         "name": "test_rpc_update_auth_error",
-        "device_type": "rpc_device",
+        "device_type": "rpc",
         "states": {
-            "state1": {
+            "state_1": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "state2": {
+            "state_2": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "state3": {
+            "state_3": {
                 "variables": {
                     "len(flows)": "1"
                 }
             },
-            "state4": {
+            "state_4": {
                 "variables": {
                     "flow.get('step_id')": "'reauth_confirm'",
                     "flow.get('handler')": "DOMAIN",
@@ -1001,38 +1050,36 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state1",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "parameter": 2
+                    "param": 2
                 }
             },
             {
                 "action": "hass.services.async_call",
-                "starting_state": "state1",
-                "ending_state": "state2",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
                     "domain": "UPDATE_DOMAIN",
                     "service": "SERVICE_INSTALL",
                     "service_data": {
-                        "entity_id": "update.test_name_firmware"
+                        "ATTR_ENTITY_ID": "update.test_name_firmware"
                     },
                     "blocking": true
                 }
             },
             {
                 "action": "hass.config_entries.flow.async_progress",
-                "starting_state": "state2",
-                "ending_state": "state3",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {}
             },
             {
-                "action": "select flow",
-                "starting_state": "state3",
-                "ending_state": "state4",
-                "inputs": {
-                    "index": 0
-                }
+                "action": "select_flow",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
+                "inputs": {}
             }
         ]
     }

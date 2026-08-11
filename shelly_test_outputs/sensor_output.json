@@ -1,0 +1,3024 @@
+[
+    {
+        "name": "test_block_sensor",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "53.4"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "60.1",
+                    "entry.unique_id": "123456789ABC-relay_0-power"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 1
+                }
+            },
+            {
+                "action": "monkeypatch.setattr",
+                "starting_state": "state_1",
+                "ending_state": "state_1",
+                "inputs": {
+                    "target": "mock_block_device.blocks[RELAY_BLOCK_ID].power",
+                    "value": 60.1
+                }
+            },
+            {
+                "action": "mock_block_device.mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_block_sensor_em3",
+        "device_type": "EM3",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "initialized": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "entry_id": 1,
+                    "model": "MODEL_EM3"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_energy_sensor",
+        "device_type": "energy_sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "20.5761315",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "UnitOfEnergy.KILO_WATT_HOUR",
+                    "entry.unique_id": "123456789ABC-relay_0-energy"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "<hass\u2011instance>",
+                    "count": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_power_factory_unit_migration",
+        "device_type": "power_factory",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "migrated_state": {
+                "variables": {
+                    "state.state": "98.0",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "PERCENTAGE",
+                    "entry.unique_id": "123456789ABC-emeter_0-powerFactor"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "migrated_state",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_power_factory_without_unit_migration",
+        "device_type": "power_factory",
+        "states": {
+            "snapshot_state_1": {
+                "variables": {
+                    "state.state": "0.98",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "None",
+                    "entry.unique_id": "123456789ABC-emeter_0-powerFactor"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot_state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_rest_sensor",
+        "device_type": "sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "-64"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "-71"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 1
+                }
+            },
+            {
+                "action": "mock_rest_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "freezer": "freezer"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_sleeping_sensor",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_0": {
+                "variables": {
+                    "hass.states.get(entity_id)": "null"
+                }
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "22.1"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "23.4",
+                    "entry.unique_id": "123456789ABC-sensor_0-temp"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_0",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 1,
+                    "sleep_period": 1000
+                }
+            },
+            {
+                "action": "mock_online_and_process",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
+                "inputs": {}
+            },
+            {
+                "action": "mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "temp": 23.4
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_restored_sleeping_sensor",
+        "device_type": "sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "'20.4'",
+                    "state.attributes[ATTR_STATE_CLASS]": "SensorStateClass.MEASUREMENT",
+                    "state.attributes[ATTR_DEVICE_CLASS]": "SensorDeviceClass.TEMPERATURE"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "'22.1'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "await hass.config_entries.async_setup(entry.entry_id)",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "mock_block_device.mock_online()",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_block_restored_sleeping_sensor_no_last_state",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "unknown_state": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN"
+                }
+            },
+            "value_state": {
+                "variables": {
+                    "state.state": "22.1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup_entry",
+                "starting_state": "initial_state",
+                "ending_state": "unknown_state",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "restore_and_online",
+                "starting_state": "unknown_state",
+                "ending_state": "value_state",
+                "inputs": {
+                    "initialized": true,
+                    "mock_online": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_sensor_error",
+        "device_type": "block",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "98"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "STATE_UNAVAILABLE",
+                    "entry.unique_id": "123456789ABC-device_0-battery"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 1
+                }
+            },
+            {
+                "action": "setattr_and_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "target": "mock_block_device.blocks[DEVICE_BLOCK_ID].battery",
+                    "value": -1,
+                    "post_action": "mock_block_device.mock_update()"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_sensor_removal",
+        "device_type": "block_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_after_register": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            },
+            "state_after_init": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "register_entity",
+                "starting_state": "initial_state",
+                "ending_state": "state_after_register",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "SENSOR_DOMAIN",
+                    "name": "test_name_battery",
+                    "device_id": "device_0-battery"
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "state_after_register",
+                "ending_state": "state_after_init",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_not_matched_restored_sleeping_sensor",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "'20.4'"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "'20.4'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup_entry",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "mock_device_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "block_description": "other_desc",
+                    "initialized": true,
+                    "online": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_sensor_without_value",
+        "device_type": "block",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "<hass instance>",
+                    "count": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_sensor_values",
+        "device_type": "block_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {
+                    "hass.states.get(entity_id).state": "initial_state"
+                }
+            },
+            "final_state": {
+                "variables": {
+                    "state.state": "final_value"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "null",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 1
+                }
+            },
+            {
+                "action": "mock_block_device.mock_update",
+                "starting_state": "initial_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "block_id": "block_id",
+                    "attribute": "attribute",
+                    "value": "value"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_shelly_air_lamp_life",
+        "device_type": "Shelly Air",
+        "states": {
+            "percentage_state": {
+                "variables": {
+                    "state.state": "percentage"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "percentage_state",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_sensor",
+        "device_type": "sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "'85.3'"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "'88.2'"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": null,
+                    "count": 2
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "monkeypatch": null,
+                    "mock_rpc_device": null,
+                    "entity": "cover:0",
+                    "attribute": "apower",
+                    "value": "'88.2'"
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "monkeypatch": null,
+                    "mock_rpc_device": null,
+                    "entity": "cover:0",
+                    "attribute": "apower",
+                    "value": null
+                }
+            },
+            {
+                "action": "mock_rpc_device.mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
+            },
+            {
+                "action": "mock_rpc_device.mock_update",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_rssi_sensor_removal",
+        "device_type": "rpc_rssi_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "-63"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.state": "-63"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 2
+                }
+            },
+            {
+                "action": "disable_sta_and_reload",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "target": "mock_rpc_device.config['wifi']['sta']",
+                    "key": "enable",
+                    "value": false,
+                    "reload_entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "enable_sta1_and_reload",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "target": "mock_rpc_device.config['wifi']['sta1']",
+                    "key": "enable",
+                    "value": true,
+                    "reload_entry_id": "entry.entry_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_illuminance_sensor",
+        "device_type": "illuminance_sensor",
+        "states": {
+            "post_init_state": {
+                "variables": {
+                    "state.state": "345",
+                    "entry.unique_id": "123456789ABC-illuminance:0-illuminance"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_init_state",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_sensor_error",
+        "device_type": "voltmeter",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "4.321"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "STATE_UNAVAILABLE",
+                    "entry.unique_id": "123456789ABC-voltmeter:100-voltmeter"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 2
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status + mock_rpc_device.mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "device_id": "voltmeter:100",
+                    "attribute": "voltage",
+                    "value": null
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_polling_sensor",
+        "device_type": "sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "-63"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "-70",
+                    "entry.unique_id": "123456789ABC-wifi-rssi"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "register_entity",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "SENSOR_DOMAIN",
+                    "name": "test_name_rssi",
+                    "entity_suffix": "wifi-rssi"
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "state_1",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "poll_interval": 2
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "state_1",
+                "ending_state": "state_1",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "interface": "wifi",
+                    "parameter": "rssi",
+                    "value": "-70"
+                }
+            },
+            {
+                "action": "mock_polling_rpc_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "freezer": "freezer"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_sleeping_sensor",
+        "device_type": "sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "22.9"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "23.4"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialize",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "init_integration": {
+                        "hass": "hass",
+                        "param": 2,
+                        "sleep_period": 1000
+                    },
+                    "mock_online": true,
+                    "await_block_till_done": true
+                }
+            },
+            {
+                "action": "update_status",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "mutate_rpc_device_status": {
+                        "path": "temperature:0",
+                        "unit": "tC",
+                        "value": 23.4
+                    },
+                    "mock_update": true
+                }
+            },
+            {
+                "action": "noop",
+                "starting_state": "state_2",
+                "ending_state": "state_2",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_sleeping_sensor_with_channel_name",
+        "device_type": "sleeping_sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.attributes['friendly_name']": "f'Test name {name} temperature'",
+                    "state.state": "'22.9'"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "'23.4'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration + mock_rpc_device.mock_online + async_block_till_done",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "integration_id": 2,
+                    "sleep_period": 1000,
+                    "mock_rpc_device.connected": false,
+                    "mock_rpc_device.status['sys']['wakeup_period']": 1000
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status + mock_rpc_device.mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "entity_id": "temperature:0",
+                    "unit": "tC",
+                    "new_value": 23.4
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_restored_sleeping_sensor",
+        "device_type": "sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "'21.0'"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "'22.9'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_and_restore",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "init_integration": {
+                        "hass": "hass",
+                        "parameter": 2,
+                        "sleep_period": 1000,
+                        "skip_setup": true
+                    },
+                    "register_device": {
+                        "device_registry": "device_registry",
+                        "entry": "entry"
+                    },
+                    "register_entity": {
+                        "hass": "hass",
+                        "domain": "SENSOR_DOMAIN",
+                        "name": "test_name_temperature",
+                        "uid": "temperature:0-temperature_tc",
+                        "entry": "entry",
+                        "device_id": "device.id"
+                    },
+                    "extra_data": {
+                        "native_value": "21.0",
+                        "native_unit_of_measurement": "\u00b0C"
+                    },
+                    "mock_restore_cache_with_extra_data": {
+                        "hass": "hass",
+                        "data": "((State(entity_id, ''), extra_data),)"
+                    },
+                    "mock_rpc_device_properties_initial": {
+                        "shelly": "NotInitialized()",
+                        "config": "NotInitialized()",
+                        "status": "NotInitialized()",
+                        "initialized": false
+                    },
+                    "config_entry_setup": {
+                        "entry_id": "entry.entry_id"
+                    }
+                }
+            },
+            {
+                "action": "rpc_initialize_and_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "mock_rpc_device_properties_final": {
+                        "shelly": "MOCK_SHELLY_RPC",
+                        "config": "MOCK_CONFIG",
+                        "status": "MOCK_STATUS_RPC",
+                        "initialized": true
+                    },
+                    "mock_online": true,
+                    "await_async_block_till_done": {
+                        "wait_background_tasks": true
+                    },
+                    "mock_update": true,
+                    "await_async_block_till_done_after_update": {}
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_restored_sensor_when_not_initialized",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "unavailable_state": {
+                "variables": {
+                    "state.state": "STATE_UNAVAILABLE"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup",
+                "starting_state": "initial_state",
+                "ending_state": "unavailable_state",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_restored_sleeping_sensor_no_last_state",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_unknown": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN"
+                }
+            },
+            "state_22_9": {
+                "variables": {
+                    "state.state": "'22.9'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_unknown",
+                "inputs": {
+                    "hass": "hass",
+                    "device_count": 2,
+                    "sleep_period": 1000,
+                    "skip_setup": true
+                }
+            },
+            {
+                "action": "restore_device_and_update",
+                "starting_state": "state_unknown",
+                "ending_state": "state_22_9",
+                "inputs": {
+                    "initialized": true,
+                    "online": true,
+                    "update_triggered": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_energy_meter_1_sensors",
+        "device_type": "energy_meter",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "85.3",
+                    "entry.unique_id": "123456789ABC-em1:0-power_em1"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "123.3",
+                    "entry.unique_id": "123456789ABC-em1:1-power_em1"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.state": "123.4564",
+                    "entry.unique_id": "123456789ABC-em1data:0-total_act_energy"
+                }
+            },
+            "state_4": {
+                "variables": {
+                    "state.state": "987.6543",
+                    "entry.unique_id": "123456789ABC-em1data:1-total_act_energy"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_sleeping_update_entity_service",
+        "device_type": "rpc_sleeping",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "22.9"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "22.9",
+                    "entry.unique_id": "123456789ABC-temperature:0-temperature_tc",
+                    "log_message": "<captured caplog text containing \"Entity sensor.test_name_temperature comes from a sleeping device\">"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_and_initialize_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "async_setup_component": {
+                        "domain": "homeassistant",
+                        "config": {}
+                    },
+                    "init_integration": {
+                        "hass": "hass",
+                        "device_index": 2,
+                        "sleep_period": 1000
+                    },
+                    "mock_rpc_device": {
+                        "connected": false,
+                        "status.sys.wakeup_period": 1000,
+                        "mock_online_called": true
+                    },
+                    "await_hass_block_till_done": {
+                        "wait_background_tasks": true
+                    }
+                }
+            },
+            {
+                "action": "call_update_entity_service",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "domain": "homeassistant",
+                    "service": "update_entity",
+                    "service_data": {
+                        "entity_id": "sensor.test_name_temperature"
+                    },
+                    "blocking": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_sleeping_update_entity_service",
+        "device_type": "block_sleeping_device",
+        "states": {
+            "state_0": {
+                "variables": {
+                    "hass.states.get(entity_id)": ":null"
+                }
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "22.1"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "22.1",
+                    "entry.unique_id": "123456789ABC-sensor_0-temp",
+                    "Entity sensor.test_name_temperature comes from a sleeping device": "caplog.text"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_0",
+                "inputs": {
+                    "hass": "hass",
+                    "device_id": 1,
+                    "sleep_period": 3600
+                }
+            },
+            {
+                "action": "mock_block_device.mock_online",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
+                "inputs": {}
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "domain": "HA_DOMAIN",
+                    "service": "SERVICE_UPDATE_ENTITY",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "entity_id"
+                    },
+                    "blocking": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_analog_input_sensors",
+        "device_type": "analog_input",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "analog_state": {
+                "variables": {
+                    "state.state": "'89'",
+                    "entry.unique_id": "'123456789ABC-input:1-analoginput'"
+                }
+            },
+            "analog_value_state": {
+                "variables": {
+                    "state.state": "'8.9'",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "expected_unit",
+                    "entry.unique_id": "'123456789ABC-input:1-analoginput_xpercent'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "analog_state",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 2
+                }
+            },
+            {
+                "action": "set_entity_id",
+                "starting_state": "analog_state",
+                "ending_state": "analog_value_state",
+                "inputs": {
+                    "entity_id": "f'{SENSOR_DOMAIN}.test_name_input_1_analog_value'"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_disabled_analog_input_sensors",
+        "device_type": "analog_input_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_analog_sensor": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None"
+                }
+            },
+            "state_analog_sensor_value": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration_and_set_entity_id",
+                "starting_state": "initial_state",
+                "ending_state": "state_analog_sensor",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 2,
+                    "entity_id": "f'{SENSOR_DOMAIN}.test_name_input_1_analog'"
+                }
+            },
+            {
+                "action": "set_entity_id",
+                "starting_state": "state_analog_sensor",
+                "ending_state": "state_analog_sensor_value",
+                "inputs": {
+                    "entity_id": "f'{SENSOR_DOMAIN}.test_name_input_1_analog_value'"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_disabled_xpercent",
+        "device_type": "rpc",
+        "states": {
+            "mutated_state": {
+                "variables": {}
+            },
+            "post_init": {
+                "variables": {
+                    "state.state": "'89'",
+                    "hass.states.get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "initial_state",
+                "ending_state": "mutated_state",
+                "inputs": {
+                    "monkeypatch": null,
+                    "mock_rpc_device": null,
+                    "entity": "input:1",
+                    "parameter": "xpercent",
+                    "value": null
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "mutated_state",
+                "ending_state": "post_init",
+                "inputs": {
+                    "hass": null,
+                    "config_entry_id": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_pulse_counter_sensors",
+        "device_type": "rpc",
+        "states": {
+            "pulse_counter": {
+                "variables": {
+                    "state.state": "56174",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "pulse",
+                    "state.attributes.get(ATTR_STATE_CLASS)": "SensorStateClass.TOTAL",
+                    "entry.unique_id": "123456789ABC-input:2-pulse_counter"
+                }
+            },
+            "pulse_counter_value": {
+                "variables": {
+                    "state.state": "561.74",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "expected_unit",
+                    "entry.unique_id": "123456789ABC-input:2-counter_value"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "pulse_counter",
+                "inputs": {
+                    "hass": "hass",
+                    "device_id": 2
+                }
+            },
+            {
+                "action": "set_entity_id",
+                "starting_state": "pulse_counter",
+                "ending_state": "pulse_counter_value",
+                "inputs": {
+                    "entity_id": "f'{SENSOR_DOMAIN}.test_name_gas_pulse_counter_value'"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_disabled_pulse_counter_sensors",
+        "device_type": "pulse_counter",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 2
+                }
+            },
+            {
+                "action": "set_entity_id",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "entity_id": "f'{SENSOR_DOMAIN}.gas_pulse_counter_value'"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_disabled_xtotal_counter",
+        "device_type": "gas",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "20635"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "input": "input:2",
+                    "key": "counts",
+                    "value": {
+                        "total": 20635
+                    }
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_pulse_counter_frequency_sensors",
+        "device_type": "pulse_counter",
+        "states": {
+            "test_name_gas_pulse_counter_frequency": {
+                "variables": {
+                    "state.state": "208.0",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "UnitOfFrequency.HERTZ",
+                    "state.attributes.get(ATTR_STATE_CLASS)": "SensorStateClass.MEASUREMENT",
+                    "entry.unique_id": "123456789ABC-input:2-counter_frequency"
+                }
+            },
+            "test_name_gas_pulse_counter_frequency_value": {
+                "variables": {
+                    "state.state": "6.11",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "expected_unit",
+                    "entry.unique_id": "123456789ABC-input:2-counter_frequency_value"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "test_name_gas_pulse_counter_frequency",
+                "inputs": {
+                    "hass": "hass",
+                    "device_index": 2
+                }
+            },
+            {
+                "action": "set_entity_id",
+                "starting_state": "test_name_gas_pulse_counter_frequency",
+                "ending_state": "test_name_gas_pulse_counter_frequency_value",
+                "inputs": {
+                    "entity_id": "sensor.test_name_gas_pulse_counter_frequency_value"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_disabled_xfreq",
+        "device_type": "rpc",
+        "states": {
+            "post_init": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None",
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_init",
+                "inputs": {
+                    "hass": "hass",
+                    "value": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_virtual_text_sensor",
+        "device_type": "text_sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "lorem ipsum",
+                    "entry.unique_id": "123456789ABC-text:203-text_generic"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "dolor sit amet"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "<hass_instance>",
+                    "3": 3
+                }
+            },
+            {
+                "action": "mock_rpc_device.mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_migrate_unique_id_virtual_components_roles",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "pre_migration": {
+                "variables": {
+                    "entity.unique_id": "old_unique_id"
+                }
+            },
+            "post_migration": {
+                "variables": {
+                    "entity_entry.unique_id": "new_unique_id",
+                    "'Migrating unique_id for sensor.test_name_test_sensor'": "caplog.text"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "entity_registry.async_get_or_create",
+                "starting_state": "initial_state",
+                "ending_state": "pre_migration",
+                "inputs": {
+                    "suggested_object_id": "test_name_test_sensor",
+                    "disabled_by": null,
+                    "domain": "sensor",
+                    "platform": "DOMAIN",
+                    "unique_id": "old_unique_id",
+                    "config_entry": "entry"
+                }
+            },
+            {
+                "action": "hass.config_entries.async_setup + hass.async_block_till_done + entity_registry.async_get",
+                "starting_state": "pre_migration",
+                "ending_state": "post_migration",
+                "inputs": {
+                    "entry_id": "entry.entry_id",
+                    "entity_id": "sensor.test_name_test_sensor"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_migrate_unique_id_rpc_sensor_description_key_rename",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "pre_migration": {
+                "variables": {
+                    "entity.unique_id": "old_unique_id"
+                }
+            },
+            "post_migration": {
+                "variables": {
+                    "entity_entry.unique_id": "new_unique_id",
+                    "Migrating unique_id for {entity_id} entity": "caplog.text"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "pre_migration",
+                "inputs": {
+                    "hass": "hass",
+                    "num": 2,
+                    "skip_setup": true
+                }
+            },
+            {
+                "action": "entity_registry.async_get_or_create",
+                "starting_state": "pre_migration",
+                "ending_state": "pre_migration",
+                "inputs": {
+                    "suggested_object_id": "entity_id.split('.')[1]",
+                    "disabled_by": null,
+                    "domain": "SENSOR_DOMAIN",
+                    "platform": "DOMAIN",
+                    "unique_id": "old_unique_id",
+                    "config_entry": "entry"
+                }
+            },
+            {
+                "action": "hass.config_entries.async_setup",
+                "starting_state": "pre_migration",
+                "ending_state": "post_migration",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "entity_registry.async_get",
+                "starting_state": "post_migration",
+                "ending_state": "post_migration",
+                "inputs": {
+                    "entity_id": "entity_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_remove_text_virtual_sensor_when_mode_field",
+        "device_type": "text",
+        "states": {
+            "snapshot": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialize_and_setup_integration",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot",
+                "inputs": {
+                    "config_changes": {
+                        "text:200": {
+                            "name": null,
+                            "meta": {
+                                "ui": {
+                                    "view": "field"
+                                }
+                            }
+                        }
+                    },
+                    "status_changes": {
+                        "text:200": {
+                            "value": "lorem ipsum"
+                        }
+                    },
+                    "init_integration": {
+                        "hass": "<HomeAssistant instance>",
+                        "config_version": 3,
+                        "skip_setup": true
+                    },
+                    "register_device": {
+                        "device_registry": "<device_registry>",
+                        "config_entry": "<config_entry>"
+                    },
+                    "register_entity": {
+                        "hass": "<HomeAssistant instance>",
+                        "domain": "sensor",
+                        "name": "test_name_text_200",
+                        "entity_unique_id": "text:200-text_generic",
+                        "config_entry": "<config_entry>",
+                        "device_id": "<device_entry.id>"
+                    },
+                    "setup_config_entry": {
+                        "config_entry.entry_id": "<config_entry.entry_id>"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_remove_text_virtual_sensor_when_orphaned",
+        "device_type": "text_virtual_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "after_init": {
+                "variables": {}
+            },
+            "after_device_register": {
+                "variables": {}
+            },
+            "after_entity_register": {
+                "variables": {}
+            },
+            "after_setup": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "after_init",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 3,
+                    "skip_setup": true
+                }
+            },
+            {
+                "action": "register_device",
+                "starting_state": "after_init",
+                "ending_state": "after_device_register",
+                "inputs": {
+                    "device_registry": "device_registry",
+                    "config_entry": "config_entry"
+                }
+            },
+            {
+                "action": "register_entity",
+                "starting_state": "after_device_register",
+                "ending_state": "after_entity_register",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "SENSOR_DOMAIN",
+                    "entity_name": "test_name_text_200",
+                    "entity_type": "text:200-text_generic",
+                    "config_entry": "config_entry",
+                    "device_id": "device_entry.id"
+                }
+            },
+            {
+                "action": "async_setup",
+                "starting_state": "after_entity_register",
+                "ending_state": "after_setup",
+                "inputs": {
+                    "entry_id": "config_entry.entry_id"
+                }
+            },
+            {
+                "action": "async_block_till_done",
+                "starting_state": "after_setup",
+                "ending_state": "final_state",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_virtual_number_sensor",
+        "device_type": "number",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "34.5",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "expected_unit",
+                    "entry.unique_id": "123456789ABC-number:203-number_generic"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "56.7"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 3
+                }
+            },
+            {
+                "action": "mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "value": 56.7
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_virtual_number_sensor_no_unit",
+        "device_type": "virtual_number_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "34.5",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "device_index": 3
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_remove_number_virtual_sensor_when_mode_field",
+        "device_type": "number",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_removal_state": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "configure_and_setup",
+                "starting_state": "initial_state",
+                "ending_state": "post_removal_state",
+                "inputs": {
+                    "config_modification": "config['number:200'] = {'name': None, 'min': 0, 'max': 100, 'meta': {'ui': {'step': 1, 'unit': '', 'view': 'field'}}}",
+                    "status_modification": "status['number:200'] = {'value': 67.8}",
+                    "init_integration": "config_entry = await init_integration(hass, 3, skip_setup=True)",
+                    "device_registration": "device_entry = register_device(device_registry, config_entry)",
+                    "entity_registration": "entity_id = register_entity(hass, SENSOR_DOMAIN, 'test_name_number_200', 'number:200-number_generic', config_entry, device_id=device_entry.id)",
+                    "setup_entry": "await hass.config_entries.async_setup(config_entry.entry_id)",
+                    "block_until_done": "await hass.async_block_till_done()"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_remove_number_virtual_sensor_when_orphaned",
+        "device_type": "number",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "sensor_removed_state": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup_config_entry",
+                "starting_state": "initial_state",
+                "ending_state": "sensor_removed_state",
+                "inputs": {
+                    "entry_id": "config_entry.entry_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_virtual_enum_sensor",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "expected_state",
+                    "state.attributes.get(ATTR_DEVICE_CLASS)": "SensorDeviceClass.ENUM",
+                    "state.attributes.get(ATTR_OPTIONS)": "[\"Title 1\", \"two\", \"three\"]",
+                    "entry.unique_id": "'123456789ABC-enum:203-enum_generic'"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "'two'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 3
+                }
+            },
+            {
+                "action": "mock_rpc_device.mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_remove_enum_virtual_sensor_when_mode_dropdown",
+        "device_type": "enum_virtual_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "after_config_set": {
+                "variables": {}
+            },
+            "after_status_set": {
+                "variables": {}
+            },
+            "after_integration_init": {
+                "variables": {}
+            },
+            "after_device_registered": {
+                "variables": {}
+            },
+            "after_entity_registered": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "set_config",
+                "starting_state": "initial_state",
+                "ending_state": "after_config_set",
+                "inputs": {
+                    "config": {
+                        "enum:200": {
+                            "name": null,
+                            "options": [
+                                "option 1",
+                                "option 2",
+                                "option 3"
+                            ],
+                            "meta": {
+                                "ui": {
+                                    "view": "dropdown",
+                                    "titles": {
+                                        "option 1": "Title 1",
+                                        "option 2": null
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "action": "set_status",
+                "starting_state": "after_config_set",
+                "ending_state": "after_status_set",
+                "inputs": {
+                    "status": {
+                        "enum:200": {
+                            "value": "option 2"
+                        }
+                    }
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "after_status_set",
+                "ending_state": "after_integration_init",
+                "inputs": {
+                    "hass": "<HomeAssistant instance>",
+                    "device_count": 3,
+                    "skip_setup": true
+                }
+            },
+            {
+                "action": "register_device",
+                "starting_state": "after_integration_init",
+                "ending_state": "after_device_registered",
+                "inputs": {
+                    "device_registry": "<DeviceRegistry>",
+                    "config_entry": "<ConfigEntry>"
+                }
+            },
+            {
+                "action": "register_entity",
+                "starting_state": "after_device_registered",
+                "ending_state": "after_entity_registered",
+                "inputs": {
+                    "hass": "<HomeAssistant instance>",
+                    "domain": "sensor",
+                    "entity_name": "test_name_enum_200",
+                    "entity_unique_id": "enum:200-enum_generic",
+                    "config_entry": "<ConfigEntry>",
+                    "device_id": "<DeviceEntry.id>"
+                }
+            },
+            {
+                "action": "async_setup_config_entry",
+                "starting_state": "after_entity_registered",
+                "ending_state": "after_entity_registered",
+                "inputs": {
+                    "entry_id": "<ConfigEntry.entry_id>"
+                }
+            },
+            {
+                "action": "async_block_till_done",
+                "starting_state": "after_entity_registered",
+                "ending_state": "final_state",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_remove_enum_virtual_sensor_when_orphaned",
+        "device_type": "enum_virtual_sensor",
+        "states": {
+            "final_state": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_and_remove_enum_virtual_sensor",
+                "starting_state": "initial_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "init_integration": "await init_integration(hass, 3, skip_setup=True)",
+                    "register_device": "register_device(device_registry, config_entry)",
+                    "register_entity": "register_entity(hass, SENSOR_DOMAIN, 'test_name_enum_200', 'enum:200-enum_generic', config_entry, device_id=device_entry.id)",
+                    "setup_config_entry": "await hass.config_entries.async_setup(config_entry.entry_id)",
+                    "block_till_done": "await hass.async_block_till_done()"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_rgbw_sensors",
+        "device_type": "RGBW light",
+        "states": {
+            "sensor.test_name_{light_type}_light_0_power": {
+                "variables": {
+                    "state.state": "12.2",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "UnitOfPower.WATT",
+                    "entry.unique_id": "123456789ABC-{light_type}:0\u2011power_{light_type}"
+                }
+            },
+            "sensor.test_name_{light_type}_light_0_energy": {
+                "variables": {
+                    "state.state": "0.045141",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "UnitOfEnergy.KILO_WATT_HOUR",
+                    "entry.unique_id": "123456789ABC-{light_type}:0\u2011energy_{light_type}"
+                }
+            },
+            "sensor.test_name_{light_type}_light_0_current": {
+                "variables": {
+                    "state.state": "0.23",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "UnitOfElectricCurrent.AMPERE",
+                    "entry.unique_id": "123456789ABC-{light_type}:0\u2011current_{light_type}"
+                }
+            },
+            "sensor.test_name_{light_type}_light_0_voltage": {
+                "variables": {
+                    "state.state": "12.4",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "UnitOfElectricPotential.VOLT",
+                    "entry.unique_id": "123456789ABC-{light_type}:0\u2011voltage_{light_type}"
+                }
+            },
+            "sensor.test_name_{light_type}_light_0_temperature": {
+                "variables": {
+                    "state.state": "54.3",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "UnitOfTemperature.CELSIUS",
+                    "entry.unique_id": "123456789ABC-{light_type}:0\u2011temperature_{light_type}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "await init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "sensor.test_name_{light_type}_light_0_power",
+                "inputs": {
+                    "entity_id": "sensor.test_name_{light_type}_light_0_power"
+                }
+            },
+            {
+                "action": "await init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "sensor.test_name_{light_type}_light_0_energy",
+                "inputs": {
+                    "entity_id": "sensor.test_name_{light_type}_light_0_energy"
+                }
+            },
+            {
+                "action": "await init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "sensor.test_name_{light_type}_light_0_current",
+                "inputs": {
+                    "entity_id": "sensor.test_name_{light_type}_light_0_current"
+                }
+            },
+            {
+                "action": "await init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "sensor.test_name_{light_type}_light_0_voltage",
+                "inputs": {
+                    "entity_id": "sensor.test_name_{light_type}_light_0_voltage"
+                }
+            },
+            {
+                "action": "await init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "sensor.test_name_{light_type}_light_0_temperature",
+                "inputs": {
+                    "entity_id": "sensor.test_name_{light_type}_light_0_temperature"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_sensor_goes_unavailable_on_disconnect",
+        "device_type": "rpc_device_sensor",
+        "states": {
+            "UNAVAILABLE": {
+                "variables": {
+                    "state.state": "STATE_UNAVAILABLE"
+                }
+            },
+            "NOT_INITIALIZED": {
+                "variables": {
+                    "'NotInitialized'": "caplog.text"
+                }
+            },
+            "initial_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "UNAVAILABLE",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_index": 2
+                }
+            },
+            {
+                "action": "mock_disconnected",
+                "starting_state": "UNAVAILABLE",
+                "ending_state": "UNAVAILABLE",
+                "inputs": {}
+            },
+            {
+                "action": "time_passed",
+                "starting_state": "UNAVAILABLE",
+                "ending_state": "NOT_INITIALIZED",
+                "inputs": {
+                    "seconds": 60,
+                    "fire_time_change": true
+                }
+            },
+            {
+                "action": "mock_initialized",
+                "starting_state": "NOT_INITIALIZED",
+                "ending_state": "UNAVAILABLE",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_voltmeter_value",
+        "device_type": "voltmeter",
+        "states": {
+            "snapshot_state": {
+                "variables": {
+                    "state.state": "12.34",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "ppm",
+                    "entry.unique_id": "123456789ABC-voltmeter:100-voltmeter_value"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot_state",
+                "inputs": {
+                    "hass": "hass",
+                    "arg": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_blu_trv_sensor_entity",
+        "device_type": "TRV",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "trv_name_battery_state": {
+                "variables": {}
+            },
+            "trv_name_battery_entry": {
+                "variables": {}
+            },
+            "trv_name_signal_strength_state": {
+                "variables": {}
+            },
+            "trv_name_signal_strength_entry": {
+                "variables": {}
+            },
+            "trv_name_valve_position_state": {
+                "variables": {}
+            },
+            "trv_name_valve_position_entry": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "num_devices": 3,
+                    "model": "MODEL_BLU_GATEWAY_G3"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_virtual_number_sensor_with_device_class",
+        "device_type": "virtual_number_sensor",
+        "states": {
+            "final_state": {
+                "variables": {
+                    "entry.unique_id": "123456789ABC-number:203-number_current_humidity",
+                    "state.state": "34",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "PERCENTAGE",
+                    "state.attributes.get(ATTR_DEVICE_CLASS)": "SensorDeviceClass.HUMIDITY"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "hass": "hass",
+                    "device_id": 3
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_object_role_sensor",
+        "device_type": "sensor",
+        "states": {
+            "final_state": {
+                "variables": {
+                    "state.state": "5.4",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "UnitOfVolume.CUBIC_METERS",
+                    "state.attributes.get(ATTR_DEVICE_CLASS)": "SensorDeviceClass.WATER"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "hass": "hass",
+                    "timeout": 3
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_switch_energy_sensors",
+        "device_type": "switch",
+        "states": {
+            "energy_state": {
+                "variables": {
+                    "state_snapshot": "<snapshot of hass.states.get('sensor.test_name_test_switch_0_energy')>",
+                    "entry_snapshot": "<snapshot of entity_registry.async_get('sensor.test_name_test_switch_0_energy')>"
+                }
+            },
+            "energy_returned_state": {
+                "variables": {
+                    "state_snapshot": "<snapshot of hass.states.get('sensor.test_name_test_switch_0_energy_returned')>",
+                    "entry_snapshot": "<snapshot of entity_registry.async_get('sensor.test_name_test_switch_0_energy_returned')>"
+                }
+            },
+            "energy_consumed_state": {
+                "variables": {
+                    "state_snapshot": "<snapshot of hass.states.get('sensor.test_name_test_switch_0_energy_consumed')>",
+                    "entry_snapshot": "<snapshot of entity_registry.async_get('sensor.test_name_test_switch_0_energy_consumed')>"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.setattr",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "target": "mock_rpc_device.status",
+                    "value": {
+                        "sys": {},
+                        "switch:0": {
+                            "id": 0,
+                            "output": true,
+                            "apower": 85.3,
+                            "aenergy": {
+                                "total": 1234567.89
+                            },
+                            "ret_aenergy": {
+                                "total": 98765.43
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "action": "await init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_init_state",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 3
+                }
+            },
+            {
+                "action": "assert_snapshot",
+                "starting_state": "post_init_state",
+                "ending_state": "energy_state",
+                "inputs": {
+                    "entity_id": "sensor.test_name_test_switch_0_energy",
+                    "snapshot_name": "sensor.test_name_test_switch_0_energy-state"
+                }
+            },
+            {
+                "action": "assert_snapshot",
+                "starting_state": "post_init_state",
+                "ending_state": "energy_state",
+                "inputs": {
+                    "entity_id": "sensor.test_name_test_switch_0_energy",
+                    "snapshot_name": "sensor.test_name_test_switch_0_energy-entry"
+                }
+            },
+            {
+                "action": "assert_snapshot",
+                "starting_state": "post_init_state",
+                "ending_state": "energy_returned_state",
+                "inputs": {
+                    "entity_id": "sensor.test_name_test_switch_0_energy_returned",
+                    "snapshot_name": "sensor.test_name_test_switch_0_energy_returned-state"
+                }
+            },
+            {
+                "action": "assert_snapshot",
+                "starting_state": "post_init_state",
+                "ending_state": "energy_returned_state",
+                "inputs": {
+                    "entity_id": "sensor.test_name_test_switch_0_energy_returned",
+                    "snapshot_name": "sensor.test_name_test_switch_0_energy_returned-entry"
+                }
+            },
+            {
+                "action": "assert_snapshot",
+                "starting_state": "post_init_state",
+                "ending_state": "energy_consumed_state",
+                "inputs": {
+                    "entity_id": "sensor.test_name_test_switch_0_energy_consumed",
+                    "snapshot_name": "sensor.test_name_test_switch_0_energy_consumed-state"
+                }
+            },
+            {
+                "action": "assert_snapshot",
+                "starting_state": "post_init_state",
+                "ending_state": "energy_consumed_state",
+                "inputs": {
+                    "entity_id": "sensor.test_name_test_switch_0_energy_consumed",
+                    "snapshot_name": "sensor.test_name_test_switch_0_energy_consumed-entry"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_switch_no_energy_returned_sensor",
+        "device_type": "switch",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "patched_state": {
+                "variables": {}
+            },
+            "snapshot_state": {
+                "variables": {
+                    "hass.states.get('sensor.test_name_test_switch_0_energy_returned')": "None",
+                    "hass.states.get('sensor.test_name_test_switch_0_energy_consumed')": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.setattr",
+                "starting_state": "initial_state",
+                "ending_state": "patched_state",
+                "inputs": {
+                    "target": "mock_rpc_device",
+                    "attribute": "status",
+                    "value": "status"
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "patched_state",
+                "ending_state": "snapshot_state",
+                "inputs": {
+                    "hass": "hass",
+                    "device_id": 3
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_shelly_ev_sensors",
+        "device_type": "Shelly EV",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "entities_verified": {
+                "variables": {
+                    "charger_state_state_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_charger_state\u2011state>",
+                    "charger_state_entry_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_charger_state\u2011entry>",
+                    "session_energy_state_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_session_energy\u2011state>",
+                    "session_energy_entry_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_session_energy\u2011entry>",
+                    "session_duration_state_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_session_duration\u2011state>",
+                    "session_duration_entry_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_session_duration\u2011entry>",
+                    "phase_a_current_state_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_a_current\u2011state>",
+                    "phase_a_current_entry_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_a_current\u2011entry>",
+                    "phase_b_current_state_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_b_current\u2011state>",
+                    "phase_b_current_entry_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_b_current\u2011entry>",
+                    "phase_c_current_state_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_c_current\u2011state>",
+                    "phase_c_current_entry_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_c_current\u2011entry>",
+                    "phase_a_power_state_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_a_power\u2011state>",
+                    "phase_a_power_entry_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_a_power\u2011entry>",
+                    "phase_b_power_state_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_b_power\u2011state>",
+                    "phase_b_power_entry_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_b_power\u2011entry>",
+                    "phase_c_power_state_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_c_power\u2011state>",
+                    "phase_c_power_entry_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_c_power\u2011entry>",
+                    "phase_a_voltage_state_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_a_voltage\u2011state>",
+                    "phase_a_voltage_entry_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_a_voltage\u2011entry>",
+                    "phase_b_voltage_state_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_b_voltage\u2011state>",
+                    "phase_b_voltage_entry_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_b_voltage\u2011entry>",
+                    "phase_c_voltage_state_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_c_voltage\u2011state>",
+                    "phase_c_voltage_entry_snapshot": "<snapshot\u2011value\u2011for\u2011sensor.test_name_phase_c_voltage\u2011entry>"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "timeout": 3
+                }
+            },
+            {
+                "action": "assert_entities",
+                "starting_state": "integration_initialized",
+                "ending_state": "entities_verified",
+                "inputs": {
+                    "entity_list": [
+                        "charger_state",
+                        "session_energy",
+                        "session_duration",
+                        "phase_a_current",
+                        "phase_b_current",
+                        "phase_c_current",
+                        "phase_a_power",
+                        "phase_b_power",
+                        "phase_c_power",
+                        "phase_a_voltage",
+                        "phase_b_voltage",
+                        "phase_c_voltage"
+                    ],
+                    "snapshot_prefix": "sensor.test_name_"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_friendly_name_sleeping_sensor",
+        "device_type": "sensor",
+        "states": {
+            "entity_created": {
+                "variables": {
+                    "entity.original_name": "Test name temperature"
+                }
+            },
+            "setup_completed": {
+                "variables": {
+                    "state.attributes[ATTR_FRIENDLY_NAME]": "Test name Temperature"
+                }
+            },
+            "device_online": {
+                "variables": {
+                    "state.attributes[ATTR_FRIENDLY_NAME]": "Test name Temperature"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "entity_registry.async_get_or_create",
+                "starting_state": "initial_state",
+                "ending_state": "entity_created",
+                "inputs": {
+                    "domain": "SENSOR_DOMAIN",
+                    "platform": "DOMAIN",
+                    "unique_id": "MOCK_MAC-sensor_0-temp",
+                    "suggested_object_id": "test_name_temperature",
+                    "original_name": "Test name temperature",
+                    "disabled_by": null,
+                    "config_entry": "entry",
+                    "device_id": "device.id"
+                }
+            },
+            {
+                "action": "hass.config_entries.async_setup",
+                "starting_state": "entity_created",
+                "ending_state": "setup_completed",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "mock_block_device.mock_online",
+                "starting_state": "setup_completed",
+                "ending_state": "device_online",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_presence_component",
+        "device_type": "presence",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "2",
+                    "entry.unique_id": "123456789ABC-presence-presence_num_objects"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "0"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.state": "STATE_UNAVAILABLE"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "device_index": 4
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "device": "mock_rpc_device",
+                    "component": "presence",
+                    "attribute": "num_objects",
+                    "value": 0
+                }
+            },
+            {
+                "action": "disable_presence_and_reload",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "config_change": {
+                        "presence": {
+                            "enable": false
+                        }
+                    },
+                    "config_entry_id": "mock_config_entry.entry_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_presencezone_component",
+        "device_type": "presencezone",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "3",
+                    "entry.unique_id": "123456789ABC-presencezone:201-presencezone_num_objects"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "2"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.state": "STATE_UNAVAILABLE"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 4,
+                    "config_modifications": {
+                        "presencezone:201": {
+                            "name": "Other zone",
+                            "enable": true
+                        }
+                    },
+                    "status_modifications": {
+                        "presencezone:201": {
+                            "state": true,
+                            "num_objects": 3
+                        }
+                    }
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status + mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "device": "presencezone:201",
+                    "attribute": "num_objects",
+                    "new_value": 2
+                }
+            },
+            {
+                "action": "disable_zone_and_reload + mock_update",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "device": "presencezone:201",
+                    "config_change": {
+                        "enable": false
+                    },
+                    "reload_entry_id": "mock_config_entry.entry_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_pm1_energy_consumed_sensor",
+        "device_type": "pm1",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "3.0",
+                    "state.state_2": "1.0"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "2.0",
+                    "entry.unique_id": "123456789ABC-pm1:0-consumed_energy_pm1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 3
+                }
+            },
+            {
+                "action": "set_entity_id",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "entity_id": "f'{SENSOR_DOMAIN}.test_name_energy_consumed'"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_pm1_energy_consumed_sensor_non_float_value",
+        "device_type": "pm1",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "2.0"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "<hass instance>",
+                    "config_entry_id": 3
+                }
+            },
+            {
+                "action": "mock_rpc_device.mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_cury_sensor_entity",
+        "device_type": "cury",
+        "states": {
+            "left_slot_level_state": {
+                "variables": {}
+            },
+            "left_slot_level_entry": {
+                "variables": {}
+            },
+            "right_slot_level_state": {
+                "variables": {}
+            },
+            "right_slot_level_entry": {
+                "variables": {}
+            },
+            "left_slot_vial_state": {
+                "variables": {}
+            },
+            "left_slot_vial_entry": {
+                "variables": {}
+            },
+            "right_slot_vial_state": {
+                "variables": {}
+            },
+            "right_slot_vial_entry": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.setattr",
+                "starting_state": "initial_state",
+                "ending_state": "status_set_state",
+                "inputs": {
+                    "target": "mock_rpc_device.status",
+                    "value": {
+                        "cury:0": {
+                            "id": 0,
+                            "slots": {
+                                "left": {
+                                    "intensity": 70,
+                                    "on": true,
+                                    "vial": {
+                                        "level": 27,
+                                        "name": "Forest Dream"
+                                    }
+                                },
+                                "right": {
+                                    "intensity": 70,
+                                    "on": false,
+                                    "vial": {
+                                        "level": 84,
+                                        "name": "Velvet Rose"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "action": "await init_integration",
+                "starting_state": "status_set_state",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 3
+                }
+            },
+            {
+                "action": "check_entity_state",
+                "starting_state": "integration_initialized",
+                "ending_state": "left_slot_level_state",
+                "inputs": {
+                    "entity_id": "sensor.test_name_left_slot_level"
+                }
+            },
+            {
+                "action": "check_entity_entry",
+                "starting_state": "left_slot_level_state",
+                "ending_state": "left_slot_level_entry",
+                "inputs": {
+                    "entity_id": "sensor.test_name_left_slot_level"
+                }
+            },
+            {
+                "action": "check_entity_state",
+                "starting_state": "left_slot_level_entry",
+                "ending_state": "right_slot_level_state",
+                "inputs": {
+                    "entity_id": "sensor.test_name_right_slot_level"
+                }
+            },
+            {
+                "action": "check_entity_entry",
+                "starting_state": "right_slot_level_state",
+                "ending_state": "right_slot_level_entry",
+                "inputs": {
+                    "entity_id": "sensor.test_name_right_slot_level"
+                }
+            },
+            {
+                "action": "check_entity_state",
+                "starting_state": "right_slot_level_entry",
+                "ending_state": "left_slot_vial_state",
+                "inputs": {
+                    "entity_id": "sensor.test_name_left_slot_vial"
+                }
+            },
+            {
+                "action": "check_entity_entry",
+                "starting_state": "left_slot_vial_state",
+                "ending_state": "left_slot_vial_entry",
+                "inputs": {
+                    "entity_id": "sensor.test_name_left_slot_vial"
+                }
+            },
+            {
+                "action": "check_entity_state",
+                "starting_state": "left_slot_vial_entry",
+                "ending_state": "right_slot_vial_state",
+                "inputs": {
+                    "entity_id": "sensor.test_name_right_slot_vial"
+                }
+            },
+            {
+                "action": "check_entity_entry",
+                "starting_state": "right_slot_vial_state",
+                "ending_state": "right_slot_vial_entry",
+                "inputs": {
+                    "entity_id": "sensor.test_name_right_slot_vial"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_shelly_irrigation_weather_sensors",
+        "device_type": "Shelly Irrigation controller FK-06X",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "weather_enabled_state": {
+                "variables": {
+                    "average_temperature_state_snapshot": "<snapshot\u2011data\u2011for\u2011average_temperature\u2011state>",
+                    "average_temperature_entry_snapshot": "<snapshot\u2011data\u2011for\u2011average_temperature\u2011entry>",
+                    "rainfall_state_snapshot": "<snapshot\u2011data\u2011for\u2011rainfall\u2011state>",
+                    "rainfall_entry_snapshot": "<snapshot\u2011data\u2011for\u2011rainfall\u2011entry>"
+                }
+            },
+            "weather_disabled_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "load_fixture_and_init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "weather_enabled_state",
+                "inputs": {
+                    "fixture_file": "fk-06x_gen3_irrigation.json",
+                    "domain": "shelly",
+                    "gen": 3,
+                    "monkeypatches": [
+                        "mock_rpc_device.shelly = device_fixture['shelly']",
+                        "mock_rpc_device.status = device_fixture['status']",
+                        "mock_rpc_device.config = device_fixture['config']"
+                    ]
+                }
+            },
+            {
+                "action": "disable_weather_api_and_reload",
+                "starting_state": "weather_enabled_state",
+                "ending_state": "weather_disabled_state",
+                "inputs": {
+                    "weather_api": false,
+                    "reload_config_entry": true,
+                    "await_block_till_done": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_rgbcct_sensors",
+        "device_type": "rgbcct",
+        "states": {
+            "sensor.test_name_power": {
+                "variables": {
+                    "state.state": "'12.2'",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "UnitOfPower.WATT",
+                    "entry.unique_id": "'123456789ABC-rgbcct:0-power_rgbcct'",
+                    "entry.name": "None",
+                    "entry.translation_key": "None"
+                }
+            },
+            "sensor.test_name_energy": {
+                "variables": {
+                    "state.state": "'0.045141'",
+                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "UnitOfEnergy.KILO_WATT_HOUR",
+                    "entry.unique_id": "'123456789ABC-rgbcct:0-energy_rgbcct'",
+                    "entry.name": "None",
+                    "entry.translation_key": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "await init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "sensor.test_name_power",
+                "inputs": {
+                    "hass": "hass",
+                    "device_count": 2
+                }
+            },
+            {
+                "action": "await init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "sensor.test_name_energy",
+                "inputs": {
+                    "hass": "hass",
+                    "device_count": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_sensor_driver_missing_error",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_setup_state": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialize_and_register_entities",
+                "starting_state": "initial_state",
+                "ending_state": "post_setup_state",
+                "inputs": {
+                    "status": {
+                        "temperature:0": {
+                            "id": 0,
+                            "tC": -275.1499938964844,
+                            "errors": [
+                                "Sensor driver missing from firmware"
+                            ]
+                        }
+                    },
+                    "mock_rpc_device_attribute_set": {
+                        "object": "mock_rpc_device",
+                        "attribute": "status",
+                        "value_source": "status"
+                    },
+                    "init_integration": {
+                        "hass": "hass",
+                        "device_type_id": 2,
+                        "skip_setup": true
+                    },
+                    "register_device": {
+                        "device_registry": "device_registry",
+                        "config_entry": "config_entry"
+                    },
+                    "register_entity": {
+                        "hass": "hass",
+                        "domain": "sensor",
+                        "name": "test_name_temperature",
+                        "unique_id": "temperature:0-temperature_tc",
+                        "config_entry": "config_entry",
+                        "device_id": "device_entry.id"
+                    },
+                    "config_entry_setup": {
+                        "config_entry_id": "config_entry.entry_id"
+                    },
+                    "await_block_till_done": {}
+                }
+            }
+        ]
+    }
+]

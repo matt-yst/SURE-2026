@@ -3,6 +3,9 @@
         "name": "test_rpc_device_virtual_text",
         "device_type": "text",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state_1": {
                 "variables": {
                     "state.state": "lorem ipsum",
@@ -27,29 +30,24 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "parameter": 3
+                    "param": 3
                 }
             },
             {
-                "action": "mock_rpc_device.mock_update",
+                "action": "mock_update",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
-                    "status.text:203.value": "dolor sit amet"
+                    "value": "dolor sit amet"
                 }
             },
             {
-                "action": "hass.services.async_call",
+                "action": "SERVICE_SET_VALUE",
                 "starting_state": "state_2",
                 "ending_state": "state_3",
                 "inputs": {
-                    "domain": "TEXT_DOMAIN",
-                    "service": "SERVICE_SET_VALUE",
-                    "data": {
-                        "entity_id": "entity_id",
-                        "value": "sed do eiusmod"
-                    },
-                    "blocking": true
+                    "entity_id": "entity_id",
+                    "value": "sed do eiusmod"
                 }
             }
         ]
@@ -58,7 +56,10 @@
         "name": "test_rpc_remove_virtual_text_when_mode_label",
         "device_type": "text",
         "states": {
-            "snapshot_state": {
+            "initial_state": {
+                "variables": {}
+            },
+            "final_state": {
                 "variables": {
                     "entity_registry.async_get(entity_id)": "None"
                 }
@@ -66,21 +67,24 @@
         },
         "transitions": [
             {
-                "action": "setup_test_environment",
+                "action": "setup_and_register_entity",
                 "starting_state": "initial_state",
-                "ending_state": "snapshot_state",
+                "ending_state": "final_state",
                 "inputs": {
-                    "config": "deepcopy(mock_rpc_device.config)",
-                    "config_modification": "config['text:200'] = {'name': None, 'meta': {'ui': {'view': 'label'}}}",
-                    "monkeypatch_config": "monkeypatch.setattr(mock_rpc_device, 'config', config)",
-                    "status": "deepcopy(mock_rpc_device.status)",
-                    "status_modification": "status['text:200'] = {'value': 'lorem ipsum'}",
-                    "monkeypatch_status": "monkeypatch.setattr(mock_rpc_device, 'status', status)",
-                    "init_integration": "config_entry = await init_integration(hass, 3, skip_setup=True)",
-                    "register_device": "device_entry = register_device(device_registry, config_entry)",
-                    "register_entity": "entity_id = register_entity(hass, TEXT_DOMAIN, 'test_name_text_200', 'text:200-text_generic', config_entry, device_id=device_entry.id)",
-                    "setup_entry": "await hass.config_entries.async_setup(config_entry.entry_id)",
-                    "block_till_done": "await hass.async_block_till_done()"
+                    "description": "All actions performed before the snapshot assertion",
+                    "steps": [
+                        "config = deepcopy(mock_rpc_device.config)",
+                        "config['text:200'] = {'name': None, 'meta': {'ui': {'view': 'label'}}}",
+                        "monkeypatch.setattr(mock_rpc_device, 'config', config)",
+                        "status = deepcopy(mock_rpc_device.status)",
+                        "status['text:200'] = {'value': 'lorem ipsum'}",
+                        "monkeypatch.setattr(mock_rpc_device, 'status', status)",
+                        "config_entry = await init_integration(hass, 3, skip_setup=True)",
+                        "device_entry = register_device(device_registry, config_entry)",
+                        "entity_id = register_entity(hass, TEXT_DOMAIN, 'test_name_text_200', 'text:200-text_generic', config_entry, device_id=device_entry.id)",
+                        "await hass.config_entries.async_setup(config_entry.entry_id)",
+                        "await hass.async_block_till_done()"
+                    ]
                 }
             }
         ]
@@ -89,7 +93,22 @@
         "name": "test_rpc_remove_virtual_text_when_orphaned",
         "device_type": "text",
         "states": {
-            "post_removal": {
+            "initial_state": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "device_registered": {
+                "variables": {}
+            },
+            "entity_registered": {
+                "variables": {}
+            },
+            "setup_completed": {
+                "variables": {}
+            },
+            "final_state": {
                 "variables": {
                     "entity_registry.async_get(entity_id)": "None"
                 }
@@ -97,32 +116,50 @@
         },
         "transitions": [
             {
-                "action": "initialize_and_register_entities",
+                "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "post_removal",
+                "ending_state": "integration_initialized",
                 "inputs": {
-                    "init_integration": {
-                        "hass": "hass",
-                        "parameter": 3,
-                        "skip_setup": true
-                    },
-                    "register_device": {
-                        "device_registry": "device_registry",
-                        "config_entry": "config_entry"
-                    },
-                    "register_entity": {
-                        "hass": "hass",
-                        "domain": "TEXT_DOMAIN",
-                        "entity_name": "test_name_text_200",
-                        "entity_type": "text:200-text_generic",
-                        "config_entry": "config_entry",
-                        "device_id": "device_entry.id"
-                    },
-                    "async_setup": {
-                        "entry_id": "config_entry.entry_id"
-                    },
-                    "async_block_till_done": {}
+                    "hass": "hass",
+                    "param": 3,
+                    "skip_setup": true
                 }
+            },
+            {
+                "action": "register_device",
+                "starting_state": "integration_initialized",
+                "ending_state": "device_registered",
+                "inputs": {
+                    "device_registry": "device_registry",
+                    "config_entry": "config_entry"
+                }
+            },
+            {
+                "action": "register_entity",
+                "starting_state": "device_registered",
+                "ending_state": "entity_registered",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "TEXT_DOMAIN",
+                    "name": "test_name_text_200",
+                    "entity_type": "text:200-text_generic",
+                    "config_entry": "config_entry",
+                    "device_id": "device_entry.id"
+                }
+            },
+            {
+                "action": "async_setup",
+                "starting_state": "entity_registered",
+                "ending_state": "setup_completed",
+                "inputs": {
+                    "config_entry.entry_id": "config_entry.entry_id"
+                }
+            },
+            {
+                "action": "async_block_till_done",
+                "starting_state": "setup_completed",
+                "ending_state": "final_state",
+                "inputs": {}
             }
         ]
     },
@@ -132,24 +169,22 @@
         "states": {
             "initial_state": {
                 "variables": {}
-            },
-            "error_state": {
-                "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "await hass.services.async_call",
+                "action": "async_call_service",
                 "starting_state": "initial_state",
-                "ending_state": "error_state",
+                "ending_state": "initial_state",
                 "inputs": {
                     "domain": "TEXT_DOMAIN",
                     "service": "SERVICE_SET_VALUE",
                     "service_data": {
-                        "entity_id": "text.test_name_text_203",
+                        "entity_id": "TEXT_DOMAIN.test_name_text_203",
                         "value": "new value"
                     },
-                    "blocking": true
+                    "blocking": true,
+                    "expect_error": "HomeAssistantError"
                 }
             }
         ]
@@ -158,9 +193,6 @@
         "name": "test_text_set_reauth_error",
         "device_type": "text",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
             "state_1": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
@@ -168,14 +200,14 @@
             },
             "state_2": {
                 "variables": {
-                    "len(flows)": "1"
+                    "len(flows)": ".1"
                 }
             },
             "state_3": {
                 "variables": {
-                    "flow.get('step_id')": "'reauth_confirm'",
+                    "flow.get('step_id')": "reauth_confirm",
                     "flow.get('handler')": "DOMAIN",
-                    "'context'": "flow",
+                    "context": "flow",
                     "flow['context'].get('source')": "SOURCE_REAUTH",
                     "flow['context'].get('entry_id')": "entry.entry_id"
                 }
@@ -188,7 +220,7 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "device_count": 3
+                    "config_version": 3
                 }
             },
             {
@@ -199,17 +231,19 @@
                     "domain": "TEXT_DOMAIN",
                     "service": "SERVICE_SET_VALUE",
                     "service_data": {
-                        "entity_id": "f'{TEXT_DOMAIN}.test_name_text_203'",
+                        "entity_id": "TEXT_DOMAIN.test_name_text_203",
                         "value": "new value"
                     },
                     "blocking": true
                 }
             },
             {
-                "action": "hass.config_entries.flow.async_progress",
+                "action": "inspect_flow",
                 "starting_state": "state_2",
                 "ending_state": "state_3",
-                "inputs": {}
+                "inputs": {
+                    "flows": "flows"
+                }
             }
         ]
     }

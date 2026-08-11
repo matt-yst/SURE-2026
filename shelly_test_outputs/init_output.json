@@ -3,10 +3,10 @@
         "name": "test_custom_coap_port",
         "device_type": "coap",
         "states": {
-            "initial_state": {
+            "state_0": {
                 "variables": {}
             },
-            "started_coap_context": {
+            "state_1": {
                 "variables": {
                     "Starting CoAP context with UDP port 7632": "caplog.text"
                 }
@@ -14,9 +14,15 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "await hass.async_block_till_done()",
                 "starting_state": "initial_state",
-                "ending_state": "started_coap_context",
+                "ending_state": "state_0",
+                "inputs": {}
+            },
+            {
+                "action": "await init_integration",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
                     "port": 1
@@ -26,6 +32,77 @@
     },
     {
         "name": "test_ip_address_with_only_default_interface",
+        "device_type": "network",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "setup_complete": {
+                "variables": {
+                    "component_setup_success": "True"
+                }
+            },
+            "integration_initialized": {
+                "variables": {
+                    "integration_id": "1"
+                }
+            },
+            "coap_started": {
+                "variables": {
+                    "log_message": "Starting CoAP context with UDP port 7632"
+                }
+            },
+            "coap_initialized": {
+                "variables": {
+                    "mock_call": "call().initialize(7632, [])"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup_component",
+                "starting_state": "initial_state",
+                "ending_state": "setup_complete",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "shelly",
+                    "config": {
+                        "coap_port": 7632
+                    }
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "setup_complete",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "integration_id": 1
+                }
+            },
+            {
+                "action": "check_log",
+                "starting_state": "integration_initialized",
+                "ending_state": "coap_started",
+                "inputs": {
+                    "expected_message": "Starting CoAP context with UDP port 7632",
+                    "log_source": "caplog.text"
+                }
+            },
+            {
+                "action": "verify_mock_call",
+                "starting_state": "coap_started",
+                "ending_state": "coap_initialized",
+                "inputs": {
+                    "mock_object": "mock_coap_init",
+                    "expected_call_index": 1,
+                    "expected_call": "call().initialize(7632, [])"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_ip_address_without_only_default_interface",
         "device_type": "shelly",
         "states": {
             "initial_state": {
@@ -36,14 +113,17 @@
                     "setup_success": "True"
                 }
             },
-            "coap_started": {
+            "integration_initialized": {
+                "variables": {}
+            },
+            "log_contains_start_message": {
                 "variables": {
                     "log_message": "Starting CoAP context with UDP port 7632"
                 }
             },
             "coap_initialized": {
                 "variables": {
-                    "initialize_call": "call().initialize(7632, [])"
+                    "initialize_call": "{\"port\": 7632, \"ips\": [\"192.168.1.10\", \"10.10.10.10\"]}"
                 }
             }
         },
@@ -56,76 +136,45 @@
                     "hass": "hass",
                     "domain": "DOMAIN",
                     "config": {
-                        "DOMAIN": {
-                            "coap_port": 7632
-                        }
+                        "coap_port": 7632
                     }
                 }
             },
             {
                 "action": "init_integration",
                 "starting_state": "component_setup",
-                "ending_state": "coap_started",
+                "ending_state": "integration_initialized",
                 "inputs": {
                     "hass": "hass",
-                    "device_id": 1
+                    "instance_id": 1
                 }
             },
             {
-                "action": "mock_coap_init.initialize",
-                "starting_state": "coap_started",
+                "action": "assert_log_contains",
+                "starting_state": "integration_initialized",
+                "ending_state": "log_contains_start_message",
+                "inputs": {
+                    "log_text": "caplog.text",
+                    "expected_substring": "Starting CoAP context with UDP port 7632"
+                }
+            },
+            {
+                "action": "assert_mock_call",
+                "starting_state": "log_contains_start_message",
                 "ending_state": "coap_initialized",
                 "inputs": {
-                    "port": 7632,
-                    "args": []
-                }
-            }
-        ]
-    },
-    {
-        "name": "test_ip_address_without_only_default_interface",
-        "device_type": "shelly",
-        "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "component_setup_state": {
-                "variables": {
-                    "setup_success": "assert await async_setup_component(hass, DOMAIN, {DOMAIN: {'coap_port': 7632}})"
-                }
-            },
-            "coap_initialized_state": {
-                "variables": {
-                    "log_contains": "'Starting CoAP context with UDP port 7632' in caplog.text",
-                    "mock_call": "mock_coap_init.mock_calls[1] == call().initialize(7632, [IPv4Address('192.168.1.10'), IPv4Address('10.10.10.10')])"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "async_setup_component",
-                "starting_state": "initial_state",
-                "ending_state": "component_setup_state",
-                "inputs": {
-                    "hass": "hass",
-                    "domain": "DOMAIN",
-                    "config": {
-                        "DOMAIN": {
-                            "coap_port": 7632
-                        }
+                    "mock_object": "mock_coap_init",
+                    "call_index": 1,
+                    "expected_call": {
+                        "method": "initialize",
+                        "args": [
+                            7632,
+                            [
+                                "192.168.1.10",
+                                "10.10.10.10"
+                            ]
+                        ]
                     }
-                }
-            },
-            {
-                "action": "initialize_coap",
-                "starting_state": "component_setup_state",
-                "ending_state": "coap_initialized_state",
-                "inputs": {
-                    "port": 7632,
-                    "source_ips": [
-                        "192.168.1.10",
-                        "10.10.10.10"
-                    ]
                 }
             }
         ]
@@ -134,9 +183,12 @@
         "name": "test_shared_device_mac",
         "device_type": "shared_device",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state_1": {
                 "variables": {
-                    "'will resume when device is online'": "caplog.text"
+                    "will resume when device is online": "caplog.text"
                 }
             },
             "state_2": {
@@ -157,7 +209,7 @@
                 }
             },
             {
-                "action": "async_get_device_by_connection",
+                "action": "device_registry.async_get_device_by_connection",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
@@ -171,7 +223,10 @@
         "name": "test_setup_entry_not_shelly",
         "device_type": "shelly",
         "states": {
-            "post_init": {
+            "initial_state": {
+                "variables": {}
+            },
+            "snapshot_state": {
                 "variables": {
                     "probably comes from a custom integration": "caplog.text"
                 }
@@ -181,10 +236,10 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "post_init",
+                "ending_state": "snapshot_state",
                 "inputs": {
                     "hass": "hass",
-                    "config_entry_id": 1,
+                    "index": 1,
                     "data": {}
                 }
             }
@@ -206,8 +261,8 @@
                 "starting_state": "initial_state",
                 "ending_state": "setup_retry",
                 "inputs": {
-                    "hass": "hass",
-                    "gen": "gen"
+                    "hass": "<HomeAssistant instance>",
+                    "gen": "<generator or config object>"
                 }
             }
         ]
@@ -216,47 +271,21 @@
         "name": "test_device_unsupported_firmware",
         "device_type": "device",
         "states": {
-            "snapshot_state": {
+            "state_snapshot": {
                 "variables": {
                     "entry.state": "ConfigEntryState.SETUP_RETRY",
                     "(DOMAIN, 'firmware_unsupported_123456789ABC')": "issue_registry.issues"
                 }
-            },
-            "block_device_patched": {
-                "variables": {}
-            },
-            "rpc_device_patched": {
-                "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "monkeypatch.setattr",
-                "starting_state": "initial_state",
-                "ending_state": "block_device_patched",
-                "inputs": {
-                    "target": "mock_block_device",
-                    "attribute": "firmware_supported",
-                    "value": false
-                }
-            },
-            {
-                "action": "monkeypatch.setattr",
-                "starting_state": "block_device_patched",
-                "ending_state": "rpc_device_patched",
-                "inputs": {
-                    "target": "mock_rpc_device",
-                    "attribute": "firmware_supported",
-                    "value": false
-                }
-            },
-            {
                 "action": "init_integration",
-                "starting_state": "rpc_device_patched",
-                "ending_state": "snapshot_state",
+                "starting_state": "initial_state",
+                "ending_state": "state_snapshot",
                 "inputs": {
-                    "hass": "hass",
-                    "gen": "gen"
+                    "hass": "<HomeAssistant instance>",
+                    "gen": "<generator or config>"
                 }
             }
         ]
@@ -265,7 +294,7 @@
         "name": "test_mac_mismatch_error",
         "device_type": "device",
         "states": {
-            "state_1": {
+            "setup_retry": {
                 "variables": {
                     "entry.state": "ConfigEntryState.SETUP_RETRY"
                 }
@@ -275,7 +304,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "setup_retry",
                 "inputs": {
                     "hass": "hass",
                     "gen": "gen"
@@ -287,17 +316,17 @@
         "name": "test_device_auth_error",
         "device_type": "device",
         "states": {
-            "setup_error": {
+            "setup_error_state": {
                 "variables": {
                     "entry.state": "ConfigEntryState.SETUP_ERROR"
                 }
             },
-            "flow_progress": {
+            "flows_state": {
                 "variables": {
                     "len(flows)": "1"
                 }
             },
-            "reauth_flow": {
+            "flow_state": {
                 "variables": {
                     "flow.get('step_id')": "'reauth_confirm'",
                     "flow.get('handler')": "DOMAIN",
@@ -311,7 +340,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "setup_error",
+                "ending_state": "setup_error_state",
                 "inputs": {
                     "hass": "hass",
                     "gen": "gen"
@@ -319,14 +348,14 @@
             },
             {
                 "action": "async_progress",
-                "starting_state": "setup_error",
-                "ending_state": "flow_progress",
+                "starting_state": "setup_error_state",
+                "ending_state": "flows_state",
                 "inputs": {}
             },
             {
-                "action": "get_flow_details",
-                "starting_state": "flow_progress",
-                "ending_state": "reauth_flow",
+                "action": "get_first_flow",
+                "starting_state": "flows_state",
+                "ending_state": "flow_state",
                 "inputs": {}
             }
         ]
@@ -335,14 +364,14 @@
         "name": "test_sleeping_block_device_online",
         "device_type": "block_device",
         "states": {
-            "will_resume_when_device_is_online": {
+            "state_1": {
                 "variables": {
-                    "'will resume when device is online'": "caplog.text"
+                    "will resume when device is online": "caplog.text"
                 }
             },
-            "online_resuming_setup": {
+            "state_2": {
                 "variables": {
-                    "'online, resuming setup'": "caplog.text",
+                    "online, resuming setup": "caplog.text",
                     "entry.data[CONF_SLEEP_PERIOD]": "device_sleep"
                 }
             }
@@ -351,18 +380,27 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "will_resume_when_device_is_online",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
                     "device_id": 1,
+                    "data": {},
                     "sleep_period": "entry_sleep"
                 }
             },
             {
-                "action": "mock_online_and_wait",
-                "starting_state": "will_resume_when_device_is_online",
-                "ending_state": "online_resuming_setup",
+                "action": "mock_block_device.mock_online",
+                "starting_state": "state_1",
+                "ending_state": "state_1",
                 "inputs": {}
+            },
+            {
+                "action": "hass.async_block_till_done",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "wait_background_tasks": true
+                }
             }
         ]
     },
@@ -370,15 +408,15 @@
         "name": "test_sleeping_rpc_device_online",
         "device_type": "rpc_device",
         "states": {
-            "will resume when device is online": {
+            "state1": {
                 "variables": {
-                    "caplog.text": "'will resume when device is online'"
+                    "will resume when device is online": "caplog.text"
                 }
             },
-            "online, resuming setup": {
+            "state2": {
                 "variables": {
-                    "caplog.text": "'online, resuming setup'",
-                    "device_sleep": "entry.data[CONF_SLEEP_PERIOD]"
+                    "online, resuming setup": "caplog.text",
+                    "entry.data[CONF_SLEEP_PERIOD]": "device_sleep"
                 }
             }
         },
@@ -386,7 +424,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "will resume when device is online",
+                "ending_state": "state1",
                 "inputs": {
                     "hass": "hass",
                     "device_count": 2,
@@ -394,26 +432,26 @@
                 }
             },
             {
-                "action": "mock_rpc_device.mock_online",
-                "starting_state": "will resume when device is online",
-                "ending_state": "online, resuming setup",
+                "action": "mock_online_and_wait",
+                "starting_state": "state1",
+                "ending_state": "state2",
                 "inputs": {}
             }
         ]
     },
     {
         "name": "test_sleeping_rpc_device_online_new_firmware",
-        "device_type": "rpc_device",
+        "device_type": "sleeping_rpc_device",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "waiting_for_online": {
+            "will_resume_when_device_online": {
                 "variables": {
                     "will resume when device is online": "caplog.text"
                 }
             },
-            "online_resumed_setup": {
+            "online_resuming_setup": {
                 "variables": {
                     "online, resuming setup": "caplog.text",
                     "entry.data[CONF_SLEEP_PERIOD]": "1500"
@@ -424,7 +462,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "waiting_for_online",
+                "ending_state": "will_resume_when_device_online",
                 "inputs": {
                     "hass": "hass",
                     "device_id": 2,
@@ -432,32 +470,44 @@
                 }
             },
             {
-                "action": "mutate_rpc_device_status + mock_rpc_device.mock_online",
-                "starting_state": "waiting_for_online",
-                "ending_state": "online_resumed_setup",
+                "action": "mutate_rpc_device_status",
+                "starting_state": "will_resume_when_device_online",
+                "ending_state": "will_resume_when_device_online",
                 "inputs": {
-                    "target": "mock_rpc_device",
-                    "attribute": "connected",
-                    "value": false,
-                    "namespace": "sys",
+                    "device": "mock_rpc_device",
+                    "category": "sys",
                     "parameter": "wakeup_period",
-                    "wakeup_period": 1500
+                    "value": 1500
+                }
+            },
+            {
+                "action": "mock_online",
+                "starting_state": "will_resume_when_device_online",
+                "ending_state": "online_resuming_setup",
+                "inputs": {}
+            },
+            {
+                "action": "async_block_till_done",
+                "starting_state": "online_resuming_setup",
+                "ending_state": "online_resuming_setup",
+                "inputs": {
+                    "wait_background_tasks": true
                 }
             }
         ]
     },
     {
         "name": "test_sleeping_rpc_device_online_during_setup",
-        "device_type": "sleeping device Gen2",
+        "device_type": "sleeping_rpc_device",
         "states": {
             "will resume when device is online": {
                 "variables": {
-                    "caplog.text": "<value>"
+                    "caplog.text": "will resume when device is online"
                 }
             },
             "is online (source: setup)": {
                 "variables": {
-                    "caplog.text": "<value>"
+                    "caplog.text": "is online (source: setup)"
                 }
             }
         },
@@ -467,7 +517,8 @@
                 "starting_state": "initial_state",
                 "ending_state": "will resume when device is online",
                 "inputs": {
-                    "device_count": 2,
+                    "hass": "hass",
+                    "device_index": 2,
                     "sleep_period": 1000
                 }
             },
@@ -483,16 +534,19 @@
     },
     {
         "name": "test_sleeping_rpc_device_offline_during_setup",
-        "device_type": "rpc_device",
+        "device_type": "RPC Device Gen2 (sleeping)",
         "states": {
-            "state_offline_during_setup": {
+            "initial_state": {
+                "variables": {}
+            },
+            "setup_failed_state": {
                 "variables": {
                     "will resume when device is online": "caplog.text",
                     "is online (source: setup)": "caplog.text",
-                    "sensor.test_name_temperature": "None"
+                    "hass.states.get('sensor.test_name_temperature')": "None"
                 }
             },
-            "state_online_after_resume": {
+            "online_state": {
                 "variables": {}
             }
         },
@@ -500,35 +554,35 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_offline_during_setup",
+                "ending_state": "setup_failed_state",
                 "inputs": {
                     "hass": "hass",
-                    "device_id": 2,
+                    "device_index": 2,
                     "sleep_period": 1000
                 }
             },
             {
-                "action": "mock_rpc_device.mock_online",
-                "starting_state": "state_offline_during_setup",
-                "ending_state": "state_online_after_resume",
+                "action": "mock_rpc_device.mock_online + initialize",
+                "starting_state": "setup_failed_state",
+                "ending_state": "online_state",
                 "inputs": {}
             }
         ]
     },
     {
         "name": "test_entry_unload",
-        "device_type": "cover",
+        "device_type": "mock_rpc_device",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "loaded": {
+            "Loaded": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED",
                     "state.state": "STATE_ON"
                 }
             },
-            "not_loaded": {
+            "Not Loaded": {
                 "variables": {
                     "entry.state": "ConfigEntryState.NOT_LOADED",
                     "state.state": "STATE_UNAVAILABLE"
@@ -539,7 +593,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "loaded",
+                "ending_state": "Loaded",
                 "inputs": {
                     "hass": "hass",
                     "gen": "gen"
@@ -547,8 +601,8 @@
             },
             {
                 "action": "async_unload",
-                "starting_state": "loaded",
-                "ending_state": "not_loaded",
+                "starting_state": "Loaded",
+                "ending_state": "Not Loaded",
                 "inputs": {
                     "entry_id": "entry.entry_id"
                 }
@@ -559,13 +613,13 @@
         "name": "test_entry_unload_device_not_ready",
         "device_type": "device",
         "states": {
-            "loaded_state": {
+            "state_loaded": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED",
                     "hass.states.get(entity_id)": "None"
                 }
             },
-            "not_loaded_state": {
+            "state_not_loaded": {
                 "variables": {
                     "entry.state": "ConfigEntryState.NOT_LOADED"
                 }
@@ -573,9 +627,9 @@
         },
         "transitions": [
             {
-                "action": "hass.config_entries.async_unload",
-                "starting_state": "loaded_state",
-                "ending_state": "not_loaded_state",
+                "action": "async_unload",
+                "starting_state": "state_loaded",
+                "ending_state": "state_not_loaded",
                 "inputs": {
                     "entry_id": "entry.entry_id"
                 }
@@ -584,32 +638,39 @@
     },
     {
         "name": "test_entry_unload_not_connected",
-        "device_type": "Shelly (RPC device)",
+        "device_type": "shelly",
         "states": {
-            "entry.state": {
+            "entry_state": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
+            },
+            "initial_state": {
+                "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "init_integration",
-                "starting_state": "initial_state",
-                "ending_state": "entry.state",
+                "action": "async_reload",
+                "starting_state": "entry_state",
+                "ending_state": "initial_state",
                 "inputs": {
-                    "hass": "HomeAssistant instance (fixture)",
-                    "device_id": 2,
-                    "options": {
-                        "CONF_BLE_SCANNER_MODE": "BLEScannerMode.ACTIVE"
-                    }
+                    "entry_id": "(await entry.entry_id)"
+                }
+            },
+            {
+                "action": "async_reload",
+                "starting_state": "initial_state",
+                "ending_state": "entry_state",
+                "inputs": {
+                    "entry_id": "(await entry.entry_id)"
                 }
             }
         ]
     },
     {
         "name": "test_entry_unload_not_connected_but_we_think_we_are",
-        "device_type": "switch",
+        "device_type": "shelly_rpc_device",
         "states": {
             "entry_loaded": {
                 "variables": {
@@ -629,20 +690,30 @@
                         "CONF_BLE_SCANNER_MODE": "BLEScannerMode.ACTIVE"
                     }
                 }
+            },
+            {
+                "action": "async_reload",
+                "starting_state": "entry_loaded",
+                "ending_state": "entry_loaded",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
             }
         ]
     },
     {
         "name": "test_no_attempt_to_stop_scanner_with_sleepy_devices",
-        "device_type": "shelly",
+        "device_type": "sleepy_device",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
             "loaded_state": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED",
-                    "mock_stop_scanner.call_count": "0"
+                    "mock_stop_scanner.call_count": ".0"
+                }
+            },
+            "post_update_state": {
+                "variables": {
+                    "mock_stop_scanner.call_count": ".0"
                 }
             }
         },
@@ -658,15 +729,9 @@
                 }
             },
             {
-                "action": "mock_rpc_device.mock_update",
+                "action": "mock_rpc_device.mock_update + hass.async_block_till_done",
                 "starting_state": "loaded_state",
-                "ending_state": "loaded_state",
-                "inputs": {}
-            },
-            {
-                "action": "hass.async_block_till_done",
-                "starting_state": "loaded_state",
-                "ending_state": "loaded_state",
+                "ending_state": "post_update_state",
                 "inputs": {}
             }
         ]
@@ -688,7 +753,7 @@
                 "starting_state": "initial_state",
                 "ending_state": "final_state",
                 "inputs": {
-                    "hass": null,
+                    "hass": "hass",
                     "gen": null
                 }
             }
@@ -698,10 +763,7 @@
         "name": "test_entry_missing_port",
         "device_type": "Gen2",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "post_init_state": {
+            "post_init": {
                 "variables": {
                     "ip_address": "192.168.1.37",
                     "device_mac": "123456789ABC",
@@ -712,27 +774,11 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "async_setup_entry",
                 "starting_state": "initial_state",
-                "ending_state": "initial_state",
+                "ending_state": "post_init",
                 "inputs": {
-                    "hass": "hass",
-                    "gen": 2,
-                    "data": {
-                        "CONF_HOST": "192.168.1.37",
-                        "CONF_SLEEP_PERIOD": 0,
-                        "CONF_MODEL": "MODEL_PLUS_2PM",
-                        "CONF_GEN": 2
-                    },
-                    "skip_setup": true
-                }
-            },
-            {
-                "action": "async_setup",
-                "starting_state": "initial_state",
-                "ending_state": "post_init_state",
-                "inputs": {
-                    "entry_id": "entry.entry_id"
+                    "entry_id": "<entry.entry_id>"
                 }
             }
         ]
@@ -741,50 +787,38 @@
         "name": "test_rpc_entry_custom_port",
         "device_type": "Gen2",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "rpc_device_initialized": {
+            "initialized_device": {
                 "variables": {
                     "ip_address": "192.168.1.37",
                     "device_mac": "123456789ABC",
-                    "port": ".8001",
+                    "port": "8001",
                     "verify_ssl": "false"
                 }
             }
         },
         "transitions": [
             {
-                "action": "init_integration",
-                "starting_state": "initial_state",
-                "ending_state": "entry_created",
-                "inputs": {
-                    "hass": "hass",
-                    "gen": 2,
-                    "data": {
-                        "CONF_HOST": "192.168.1.37",
-                        "CONF_SLEEP_PERIOD": 0,
-                        "CONF_MODEL": "MODEL_PLUS_2PM",
-                        "CONF_GEN": 2,
-                        "CONF_PORT": 8001
-                    },
-                    "skip_setup": true
-                }
-            },
-            {
                 "action": "async_setup_entry",
-                "starting_state": "entry_created",
-                "ending_state": "rpc_device_initialized",
+                "starting_state": "initial_state",
+                "ending_state": "initialized_device",
                 "inputs": {
-                    "entry_id": "entry.entry_id"
+                    "entry_id": "<entry.entry_id>"
                 }
             }
         ]
     },
     {
         "name": "test_rpc_entry_https_verify_ssl_disabled",
-        "device_type": "RpcDevice",
+        "device_type": "RpcDevice (Gen2)",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "entry_created_state": {
+                "variables": {
+                    "data": "{CONF_HOST: '192.168.1.37', CONF_SLEEP_PERIOD: 0, CONF_MODEL: MODEL_PLUS_2PM, CONF_GEN: 2, CONF_PORT: DEFAULT_HTTPS_PORT, CONF_VERIFY_SSL: False}"
+                }
+            },
             "post_setup_state": {
                 "variables": {
                     "ip_address": "192.168.1.37",
@@ -798,7 +832,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "post_setup_state",
+                "ending_state": "entry_created_state",
                 "inputs": {
                     "hass": "hass",
                     "gen": 2,
@@ -814,8 +848,8 @@
                 }
             },
             {
-                "action": "async_setup_entry",
-                "starting_state": "post_setup_state",
+                "action": "config_entries.async_setup",
+                "starting_state": "entry_created_state",
                 "ending_state": "post_setup_state",
                 "inputs": {
                     "entry_id": "entry.entry_id"
@@ -827,15 +861,12 @@
         "name": "test_sleeping_block_device_wrong_sleep_period",
         "device_type": "block_device",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state_wrong_sleep": {
+            "state_before_setup": {
                 "variables": {
                     "entry.data[CONF_SLEEP_PERIOD]": "BLOCK_WRONG_SLEEP_PERIOD"
                 }
             },
-            "state_expected_sleep": {
+            "state_after_setup": {
                 "variables": {
                     "entry.data[CONF_SLEEP_PERIOD]": "BLOCK_EXPECTED_SLEEP_PERIOD"
                 }
@@ -845,19 +876,19 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_wrong_sleep",
+                "ending_state": "state_before_setup",
                 "inputs": {
                     "hass": "hass",
-                    "config_entry_id": "1",
+                    "param_1": 1,
                     "model": "model",
                     "sleep_period": "BLOCK_WRONG_SLEEP_PERIOD",
                     "skip_setup": true
                 }
             },
             {
-                "action": "async_setup + async_block_till_done",
-                "starting_state": "state_wrong_sleep",
-                "ending_state": "state_expected_sleep",
+                "action": "async_setup",
+                "starting_state": "state_before_setup",
+                "ending_state": "state_after_setup",
                 "inputs": {
                     "entry_id": "entry.entry_id"
                 }
@@ -890,7 +921,7 @@
                 "ending_state": "loaded_state",
                 "inputs": {
                     "hass": "hass",
-                    "count": 2
+                    "num": 2
                 }
             },
             {
@@ -913,9 +944,9 @@
     },
     {
         "name": "test_device_script_getcode_error",
-        "device_type": "device",
+        "device_type": "device_script",
         "states": {
-            "state_1": {
+            "entry_state": {
                 "variables": {
                     "entry.state": "ConfigEntryState.SETUP_RETRY"
                 }
@@ -925,9 +956,9 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "entry_state",
                 "inputs": {
-                    "hass": "hass",
+                    "hass": "<hass object>",
                     "param": 2
                 }
             }
@@ -935,7 +966,7 @@
     },
     {
         "name": "test_ble_scanner_unsupported_firmware_fixed",
-        "device_type": "BLE scanner",
+        "device_type": "BLE Scanner",
         "states": {
             "state_1": {
                 "variables": {
@@ -955,14 +986,14 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "device_count": 2,
+                    "device_index": 2,
                     "options": {
                         "CONF_BLE_SCANNER_MODE": "BLEScannerMode.AUTO"
                     }
                 }
             },
             {
-                "action": "set_firmware_and_reload",
+                "action": "reload_with_supported_firmware",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
@@ -976,10 +1007,7 @@
         "name": "test_migrate_ble_scanner_mode",
         "device_type": "BLE scanner",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "migrated_state": {
+            "post_migration_state": {
                 "variables": {
                     "entry.minor_version": "3",
                     "entry.options.get(CONF_BLE_SCANNER_MODE)": "expected_mode"
@@ -988,55 +1016,33 @@
         },
         "transitions": [
             {
-                "action": "create MockConfigEntry",
+                "action": "setup_config_entry",
                 "starting_state": "initial_state",
-                "ending_state": "initial_state",
+                "ending_state": "post_migration_state",
                 "inputs": {
-                    "domain": "DOMAIN",
-                    "data": {
-                        "CONF_HOST": "192.168.1.37",
-                        "CONF_SLEEP_PERIOD": 0,
-                        "CONF_MODEL": "MODEL_PLUS_2PM",
-                        "gen": 2
+                    "entry": {
+                        "domain": "DOMAIN",
+                        "data": {
+                            "CONF_HOST": "192.168.1.37",
+                            "CONF_SLEEP_PERIOD": 0,
+                            "CONF_MODEL": "MODEL_PLUS_2PM",
+                            "gen": 2
+                        },
+                        "unique_id": "MOCK_MAC",
+                        "options": "starting_options",
+                        "title": "Test name",
+                        "minor_version": 2
                     },
-                    "unique_id": "MOCK_MAC",
-                    "options": "starting_options",
-                    "title": "Test name",
-                    "minor_version": 2
-                }
-            },
-            {
-                "action": "add entry to hass",
-                "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {
-                    "entry": "MockConfigEntry",
                     "hass": "hass"
-                }
-            },
-            {
-                "action": "async_setup config entry",
-                "starting_state": "initial_state",
-                "ending_state": "migrated_state",
-                "inputs": {
-                    "entry_id": "entry.entry_id"
-                }
-            },
-            {
-                "action": "await async_block_till_done",
-                "starting_state": "migrated_state",
-                "ending_state": "migrated_state",
-                "inputs": {
-                    "wait_background_tasks": true
                 }
             }
         ]
     },
     {
         "name": "test_migrate_ble_scanner_mode_future_version",
-        "device_type": "MODEL_PLUS_2PM",
+        "device_type": "BLE Scanner",
         "states": {
-            "migration_error_state": {
+            "final_state": {
                 "variables": {
                     "entry.state": "ConfigEntryState.MIGRATION_ERROR",
                     "entry.version": "2",
@@ -1047,9 +1053,9 @@
         },
         "transitions": [
             {
-                "action": "setup_config_entry",
+                "action": "create_entry",
                 "starting_state": "initial_state",
-                "ending_state": "migration_error_state",
+                "ending_state": "entry_created",
                 "inputs": {
                     "domain": "DOMAIN",
                     "data": {
@@ -1068,25 +1074,25 @@
                 }
             },
             {
-                "action": "entry.add_to_hass",
-                "starting_state": "initial_state",
-                "ending_state": "migration_error_state",
+                "action": "add_to_hass",
+                "starting_state": "entry_created",
+                "ending_state": "entry_added",
                 "inputs": {
                     "hass": "hass"
                 }
             },
             {
-                "action": "hass.config_entries.async_setup",
-                "starting_state": "initial_state",
-                "ending_state": "migration_error_state",
+                "action": "async_setup",
+                "starting_state": "entry_added",
+                "ending_state": "setup_done",
                 "inputs": {
                     "entry_id": "entry.entry_id"
                 }
             },
             {
-                "action": "hass.async_block_till_done",
-                "starting_state": "initial_state",
-                "ending_state": "migration_error_state",
+                "action": "async_block_till_done",
+                "starting_state": "setup_done",
+                "ending_state": "final_state",
                 "inputs": {
                     "wait_background_tasks": true
                 }
@@ -1095,9 +1101,12 @@
     },
     {
         "name": "test_migrate_ble_scanner_mode_future_minor_version",
-        "device_type": "BLE scanner",
+        "device_type": "MODEL_PLUS_2PM",
         "states": {
-            "state_1": {
+            "initial_state": {
+                "variables": {}
+            },
+            "loaded_state": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED",
                     "entry.version": "1",
@@ -1108,82 +1117,46 @@
         },
         "transitions": [
             {
-                "action": "create_mock_config_entry",
+                "action": "setup_entry",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "loaded_state",
                 "inputs": {
-                    "domain": "DOMAIN",
-                    "data": {
-                        "CONF_HOST": "192.168.1.37",
-                        "CONF_SLEEP_PERIOD": 0,
-                        "CONF_MODEL": "MODEL_PLUS_2PM",
-                        "gen": 2
-                    },
-                    "unique_id": "MOCK_MAC",
-                    "options": {
-                        "CONF_BLE_SCANNER_MODE": "BLEScannerMode.ACTIVE"
-                    },
-                    "title": "Test name",
-                    "version": 1,
-                    "minor_version": 4
-                }
-            },
-            {
-                "action": "add_entry_to_hass",
-                "starting_state": "initial_state",
-                "ending_state": "state_1",
-                "inputs": {
-                    "entry": "MockConfigEntry"
-                }
-            },
-            {
-                "action": "setup_config_entry",
-                "starting_state": "initial_state",
-                "ending_state": "state_1",
-                "inputs": {
-                    "entry_id": "entry.entry_id"
-                }
-            },
-            {
-                "action": "wait_for_background_tasks",
-                "starting_state": "initial_state",
-                "ending_state": "state_1",
-                "inputs": {
-                    "wait_background_tasks": true
+                    "entry": "MockConfigEntry(domain=DOMAIN, data={CONF_HOST: '192.168.1.37', CONF_SLEEP_PERIOD: 0, CONF_MODEL: MODEL_PLUS_2PM, 'gen': 2}, unique_id=MOCK_MAC, options={CONF_BLE_SCANNER_MODE: BLEScannerMode.ACTIVE}, title='Test name', version=1, minor_version=4)",
+                    "hass": "hass"
                 }
             }
         ]
     },
     {
         "name": "test_blu_trv_stale_device_removal",
-        "device_type": "BLU TRV",
+        "device_type": "TRV",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state_1": {
+            "state1": {
                 "variables": {
                     "hass.states.get(trv_200_entity_id)": "None"
                 }
             },
-            "state_2": {
+            "state2": {
                 "variables": {}
             },
-            "state_3": {
+            "state3": {
                 "variables": {
                     "trv_200_device_entry.name": "'TRV-Name'",
                     "hass.states.get(trv_201_entity_id)": "None"
                 }
             },
-            "state_4": {
+            "state4": {
                 "variables": {}
             },
-            "state_5": {
+            "state5": {
+                "variables": {}
+            },
+            "state6": {
                 "variables": {
                     "trv_201_device_entry.name": "'TRV-201'"
                 }
             },
-            "state_6": {
+            "state7": {
                 "variables": {
                     "hass.states.get(trv_200_entity_id)": "None",
                     "device_registry.async_get(trv_200_entry.device_id)": "None",
@@ -1196,7 +1169,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "state1",
                 "inputs": {
                     "hass": "hass",
                     "device_count": 3,
@@ -1205,53 +1178,59 @@
             },
             {
                 "action": "entity_registry.async_get",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "starting_state": "state1",
+                "ending_state": "state2",
                 "inputs": {
                     "entity_id": "trv_200_entity_id"
                 }
             },
             {
                 "action": "device_registry.async_get",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
+                "starting_state": "state2",
+                "ending_state": "state3",
                 "inputs": {
                     "device_id": "trv_200_entry.device_id"
                 }
             },
             {
                 "action": "entity_registry.async_get",
-                "starting_state": "state_3",
-                "ending_state": "state_4",
+                "starting_state": "state3",
+                "ending_state": "state4",
                 "inputs": {
                     "entity_id": "trv_201_entity_id"
                 }
             },
             {
                 "action": "device_registry.async_get",
-                "starting_state": "state_4",
-                "ending_state": "state_5",
+                "starting_state": "state4",
+                "ending_state": "state5",
                 "inputs": {
                     "device_id": "trv_201_entry.device_id"
                 }
             },
             {
-                "action": "remove_device_and_reload",
-                "starting_state": "state_5",
-                "ending_state": "state_6",
+                "action": "monkeypatch.delitem",
+                "starting_state": "state5",
+                "ending_state": "state6",
                 "inputs": {
-                    "delitem_1": {
-                        "target": "mock_blu_trv.config",
-                        "key": "blutrv:201"
-                    },
-                    "delitem_2": {
-                        "target": "mock_blu_trv.status",
-                        "key": "blutrv:201"
-                    },
-                    "reload_config_entry": {
-                        "entry_id": "gw_entry.entry_id"
-                    },
-                    "await_block_till_done": {}
+                    "targets": [
+                        {
+                            "object": "mock_blu_trv.config",
+                            "key": "blutrv:201"
+                        },
+                        {
+                            "object": "mock_blu_trv.status",
+                            "key": "blutrv:201"
+                        }
+                    ]
+                }
+            },
+            {
+                "action": "reload_integration",
+                "starting_state": "state6",
+                "ending_state": "state7",
+                "inputs": {
+                    "entry_id": "gw_entry.entry_id"
                 }
             }
         ]
@@ -1279,11 +1258,11 @@
                 "inputs": {
                     "device_registry": "device_registry",
                     "config_entry": "config_entry",
-                    "device_descriptor": "boolean:201-boolean"
+                    "device_identifier": "boolean:201-boolean"
                 }
             },
             {
-                "action": "config_entries.async_reload",
+                "action": "async_reload",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
@@ -1294,9 +1273,30 @@
     },
     {
         "name": "test_rpc_waits_for_ble_scanner_at_startup",
-        "device_type": "Shelly",
+        "device_type": "BLE scanner",
         "states": {
-            "entry_loaded": {
+            "loaded_state": {
+                "variables": {
+                    "entry.state": "ConfigEntryState.LOADED"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup_entry",
+                "starting_state": "initial_state",
+                "ending_state": "loaded_state",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_ble_scanner_startup_wait_times_out",
+        "device_type": "BLE scanner",
+        "states": {
+            "loaded_state": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
@@ -1306,37 +1306,10 @@
             {
                 "action": "hass.config_entries.async_setup",
                 "starting_state": "initial_state",
-                "ending_state": "entry_loaded",
+                "ending_state": "loaded_state",
                 "inputs": {
                     "entry_id": "entry.entry_id"
                 }
-            }
-        ]
-    },
-    {
-        "name": "test_rpc_ble_scanner_startup_wait_times_out",
-        "device_type": "shelly",
-        "states": {
-            "loaded": {
-                "variables": {
-                    "entry.state": "ConfigEntryState.LOADED"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "async_setup",
-                "starting_state": "initial_state",
-                "ending_state": "loaded",
-                "inputs": {
-                    "entry_id": "entry.entry_id"
-                }
-            },
-            {
-                "action": "connect_event.set",
-                "starting_state": "loaded",
-                "ending_state": "loaded",
-                "inputs": {}
             }
         ]
     },
@@ -1344,20 +1317,29 @@
         "name": "test_rpc_disabled_ble_scanner_does_not_wait_at_startup",
         "device_type": "Shelly",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "entry_created": {
+                "variables": {}
+            },
             "snapshot_1": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
+            },
+            "final_state": {
+                "variables": {}
             }
         },
         "transitions": [
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "integration_initialized",
+                "ending_state": "entry_created",
                 "inputs": {
                     "hass": "hass",
-                    "param": 2,
+                    "num_devices": 2,
                     "options": {
                         "CONF_BLE_SCANNER_MODE": "BLEScannerMode.DISABLED"
                     },
@@ -1366,29 +1348,19 @@
             },
             {
                 "action": "async_setup",
-                "starting_state": "integration_initialized",
+                "starting_state": "entry_created",
                 "ending_state": "snapshot_1",
                 "inputs": {
                     "entry_id": "entry.entry_id"
                 }
             },
             {
-                "action": "block_event.set",
+                "action": "set_event_and_block_till_done",
                 "starting_state": "snapshot_1",
-                "ending_state": "snapshot_1",
-                "inputs": {}
-            },
-            {
-                "action": "hass.async_block_till_done",
-                "starting_state": "snapshot_1",
-                "ending_state": "snapshot_1",
-                "inputs": {}
-            },
-            {
-                "action": "patch('_async_connect_ble_scanner', _block_forever)",
-                "starting_state": "integration_initialized",
-                "ending_state": "snapshot_1",
-                "inputs": {}
+                "ending_state": "final_state",
+                "inputs": {
+                    "event": "block_event"
+                }
             }
         ]
     }

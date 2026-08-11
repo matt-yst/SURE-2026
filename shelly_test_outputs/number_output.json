@@ -1,25 +1,22 @@
 [
     {
         "name": "test_block_number_update",
-        "device_type": "block_device",
+        "device_type": "block",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state_0": {
+            "state0": {
                 "variables": {
                     "hass.states.get(entity_id)": "None"
                 }
             },
-            "state_1": {
+            "state1": {
                 "variables": {
-                    "state.state": "'50'"
+                    "state.state": "50"
                 }
             },
-            "state_2": {
+            "state2": {
                 "variables": {
-                    "state.state": "'30'",
-                    "entry.unique_id": "'123456789ABC-device_0-valvePos'"
+                    "state.state": "30",
+                    "entry.unique_id": "123456789ABC-device_0-valvePos"
                 }
             }
         },
@@ -27,7 +24,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_0",
+                "ending_state": "state0",
                 "inputs": {
                     "hass": "hass",
                     "device_id": 1,
@@ -35,33 +32,32 @@
                 }
             },
             {
-                "action": "await_hass_async_block_till_done",
-                "starting_state": "state_0",
-                "ending_state": "state_1",
-                "inputs": {
-                    "wait_background_tasks": true
-                }
+                "action": "mock_online",
+                "starting_state": "state0",
+                "ending_state": "state1",
+                "inputs": {}
             },
             {
-                "action": "mock_update",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "set_valvePos_and_update",
+                "starting_state": "state1",
+                "ending_state": "state2",
                 "inputs": {
-                    "valvePos": 30
+                    "attribute": "valvePos",
+                    "value": 30
                 }
             }
         ]
     },
     {
         "name": "test_block_restored_number",
-        "device_type": "number",
+        "device_type": "block",
         "states": {
-            "state_40": {
+            "state_1": {
                 "variables": {
                     "state.state": "40"
                 }
             },
-            "state_50": {
+            "state_2": {
                 "variables": {
                     "state.state": "50"
                 }
@@ -69,25 +65,28 @@
         },
         "transitions": [
             {
-                "action": "hass.config_entries.async_setup",
+                "action": "async_setup",
                 "starting_state": "initial_state",
-                "ending_state": "state_40",
+                "ending_state": "state_1",
                 "inputs": {
                     "entry_id": "entry.entry_id"
                 }
             },
             {
-                "action": "mock_block_device.mock_online",
-                "starting_state": "state_40",
-                "ending_state": "state_50",
+                "action": "mock_online",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {}
             }
         ]
     },
     {
         "name": "test_block_restored_number_no_last_state",
-        "device_type": "number",
+        "device_type": "block",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "unknown_state": {
                 "variables": {
                     "state.state": "STATE_UNKNOWN"
@@ -101,21 +100,24 @@
         },
         "transitions": [
             {
-                "action": "setup_integration",
+                "action": "setup integration entry while device reports not initialized",
                 "starting_state": "initial_state",
                 "ending_state": "unknown_state",
                 "inputs": {
-                    "initialized": false,
-                    "setup_entry_id": "<entry.entry_id>"
+                    "entry": "await init_integration(hass, 1, sleep_period=1000, skip_setup=True)",
+                    "device_registration": "register_device(device_registry, entry)",
+                    "entity_registration": "register_entity(hass, NUMBER_DOMAIN, 'test_name_valve_position', 'device_0-valvePos', entry, capabilities, device_id=device.id)",
+                    "mock_block_device.initialized": false
                 }
             },
             {
-                "action": "bring_device_online",
+                "action": "mark device as initialized and bring it online",
                 "starting_state": "unknown_state",
                 "ending_state": "value_50_state",
                 "inputs": {
-                    "initialized": true,
-                    "online": true
+                    "mock_block_device.initialized": true,
+                    "mock_block_device.mock_online": "()",
+                    "await hass.async_block_till_done": "(wait_background_tasks=True)"
                 }
             }
         ]
@@ -127,88 +129,73 @@
             "initial_state": {
                 "variables": {}
             },
-            "value_set_state": {
-                "variables": {}
+            "valve_position_set": {
+                "variables": {
+                    "pos": ".0"
+                }
             }
         },
         "transitions": [
             {
                 "action": "hass.services.async_call",
                 "starting_state": "initial_state",
-                "ending_state": "value_set_state",
+                "ending_state": "valve_position_set",
                 "inputs": {
-                    "domain": "NUMBER_DOMAIN",
-                    "service": "SERVICE_SET_VALUE",
-                    "entity_id": "number.test_name_valve_position",
-                    "value": 30,
-                    "blocking": true
+                    "domain": "number",
+                    "service": "set_value",
+                    "service_data": {
+                        "entity_id": "number.test_name_valve_position",
+                        "value": 30
+                    }
                 }
             }
         ]
     },
     {
         "name": "test_block_set_value_connection_error",
-        "device_type": "block",
+        "device_type": "block_device",
         "states": {
             "initial_state": {
-                "variables": {}
-            },
-            "error_state": {
                 "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "NUMBER_DOMAIN SERVICE_SET_VALUE",
+                "action": "SERVICE_SET_VALUE",
                 "starting_state": "initial_state",
-                "ending_state": "error_state",
+                "ending_state": "initial_state",
                 "inputs": {
-                    "domain": "number",
-                    "service": "set_value",
                     "entity_id": "number.test_name_valve_position",
                     "value": 30
                 }
-            },
-            {
-                "action": "init_integration",
-                "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {
-                    "hass": "hass",
-                    "config_entry_id": 1,
-                    "sleep_period": 3600
-                }
-            },
-            {
-                "action": "mock_block_device.mock_online",
-                "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {}
             }
         ]
     },
     {
         "name": "test_block_set_value_auth_error",
-        "device_type": "block",
+        "device_type": "block_device",
         "states": {
-            "entry_loaded": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "post_service_call": {
+            "state_2": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "flows_present": {
+            "state_3": {
                 "variables": {
                     "len(flows)": "1"
                 }
             },
-            "flow_details": {
+            "state_4": {
                 "variables": {
-                    "flow.get('step_id')": "'reauth_confirm'",
+                    "flow.get('step_id')": "reauth_confirm",
                     "flow.get('handler')": "DOMAIN",
                     "'context'": "flow",
                     "flow['context'].get('source')": "SOURCE_REAUTH",
@@ -220,7 +207,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "entry_loaded",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
                     "config_entry_id": 1,
@@ -228,9 +215,9 @@
                 }
             },
             {
-                "action": "services.async_call",
-                "starting_state": "entry_loaded",
-                "ending_state": "post_service_call",
+                "action": "hass.services.async_call",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
                     "domain": "NUMBER_DOMAIN",
                     "service": "SERVICE_SET_VALUE",
@@ -242,15 +229,15 @@
                 }
             },
             {
-                "action": "config_entries.flow.async_progress",
-                "starting_state": "post_service_call",
-                "ending_state": "flows_present",
+                "action": "hass.config_entries.flow.async_progress",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {}
             },
             {
                 "action": "select_flow",
-                "starting_state": "flows_present",
-                "ending_state": "flow_details",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
                 "inputs": {
                     "index": 0
                 }
@@ -259,27 +246,30 @@
     },
     {
         "name": "test_rpc_device_virtual_number",
-        "device_type": "number",
+        "device_type": "rpc_device",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "initialized_state": {
                 "variables": {
-                    "state.state": "12.3",
-                    "state.attributes.get(ATTR_MIN)": "0",
-                    "state.attributes.get(ATTR_MAX)": "100",
-                    "state.attributes.get(ATTR_STEP)": "0.1",
-                    "state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)": "expected_unit",
-                    "state.attributes.get(ATTR_MODE)": "mode",
-                    "entry.unique_id": "123456789ABC-number:203-number_generic"
+                    "state": "12.3",
+                    "min": "0",
+                    "max": "100",
+                    "step": "0.1",
+                    "unit_of_measurement": "expected_unit",
+                    "mode": "mode",
+                    "unique_id": "123456789ABC-number:203-number_generic"
                 }
             },
             "state_78_9": {
                 "variables": {
-                    "state.state": "78.9"
+                    "state": "78.9"
                 }
             },
             "state_56_7": {
                 "variables": {
-                    "state.state": "56.7"
+                    "state": "56.7"
                 }
             }
         },
@@ -294,21 +284,18 @@
                 }
             },
             {
-                "action": "mock_update_status",
+                "action": "mock_update",
                 "starting_state": "initialized_state",
                 "ending_state": "state_78_9",
                 "inputs": {
-                    "entity": "number:203",
                     "value": 78.9
                 }
             },
             {
-                "action": "SERVICE_SET_VALUE",
+                "action": "service_set_value",
                 "starting_state": "state_78_9",
                 "ending_state": "state_56_7",
                 "inputs": {
-                    "domain": "number",
-                    "service": "set_value",
                     "entity_id": "entity_id",
                     "value": 56.7
                 }
@@ -319,12 +306,9 @@
         "name": "test_rpc_remove_virtual_number_when_mode_label",
         "device_type": "number",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
             "snapshot_state": {
                 "variables": {
-                    "entity_registry.async_get(entity_id)": "null"
+                    "entity_registry.async_get(entity_id)": "None"
                 }
             }
         },
@@ -334,17 +318,17 @@
                 "starting_state": "initial_state",
                 "ending_state": "snapshot_state",
                 "inputs": {
-                    "config_initialisation": "config = deepcopy(mock_rpc_device.config)",
-                    "virtual_number_definition": "config['number:200'] = {'name': None, 'min': -1000, 'max': 1000, 'meta': {'ui': {'step': 1, 'unit': '', 'view': 'label'}}}",
+                    "config_copy": "config = deepcopy(mock_rpc_device.config)",
+                    "add_virtual_number": "config['number:200'] = {'name': None, 'min': -1000, 'max': 1000, 'meta': {'ui': {'step': 1, 'unit': '', 'view': 'label'}}}",
                     "apply_config": "monkeypatch.setattr(mock_rpc_device, 'config', config)",
-                    "status_initialisation": "status = deepcopy(mock_rpc_device.status)",
-                    "virtual_number_status": "status['number:200'] = {'value': 123}",
+                    "status_copy": "status = deepcopy(mock_rpc_device.status)",
+                    "set_virtual_number_value": "status['number:200'] = {'value': 123}",
                     "apply_status": "monkeypatch.setattr(mock_rpc_device, 'status', status)",
                     "init_integration": "config_entry = await init_integration(hass, 3, skip_setup=True)",
                     "register_device": "device_entry = register_device(device_registry, config_entry)",
                     "register_entity": "entity_id = register_entity(hass, NUMBER_DOMAIN, 'test_name_number_200', 'number:200-number_generic', config_entry, device_id=device_entry.id)",
                     "setup_entry": "await hass.config_entries.async_setup(config_entry.entry_id)",
-                    "wait_until_done": "await hass.async_block_till_done()"
+                    "await_finish": "await hass.async_block_till_done()"
                 }
             }
         ]
@@ -353,10 +337,7 @@
         "name": "test_rpc_remove_virtual_number_when_orphaned",
         "device_type": "number",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "post_removal_state": {
+            "final_state": {
                 "variables": {
                     "entity_registry.async_get(entity_id)": "None"
                 }
@@ -364,45 +345,89 @@
         },
         "transitions": [
             {
-                "action": "hass.config_entries.async_setup",
+                "action": "test_sequence",
                 "starting_state": "initial_state",
-                "ending_state": "post_removal_state",
+                "ending_state": "final_state",
                 "inputs": {
-                    "entry_id": "config_entry.entry_id"
+                    "init_integration": {
+                        "params": [
+                            "hass",
+                            3,
+                            {
+                                "skip_setup": true
+                            }
+                        ]
+                    },
+                    "register_device": {
+                        "params": [
+                            "device_registry",
+                            "config_entry"
+                        ]
+                    },
+                    "register_entity": {
+                        "params": [
+                            "hass",
+                            "NUMBER_DOMAIN",
+                            "test_name_number_200",
+                            "number:200-number_generic",
+                            "config_entry",
+                            {
+                                "device_id": "device_entry.id"
+                            }
+                        ]
+                    },
+                    "async_setup": {
+                        "params": [
+                            "config_entry.entry_id"
+                        ]
+                    },
+                    "async_block_till_done": {
+                        "params": []
+                    }
                 }
             }
         ]
     },
     {
         "name": "test_blu_trv_number_entity",
-        "device_type": "BLU TRV",
+        "device_type": "BLU_TRV",
         "states": {
             "initial_state": {
+                "variables": {}
+            },
+            "initialized": {
                 "variables": {}
             },
             "config_patched": {
                 "variables": {}
             },
-            "integration_initialized": {
-                "variables": {}
+            "external_temperature_verified": {
+                "variables": {
+                    "state_snapshot": "number.trv_name_external_temperature-state",
+                    "entry_snapshot": "number.trv_name_external_temperature-entry"
+                }
             },
-            "external_temperature_state": {
-                "variables": {}
-            },
-            "external_temperature_entry": {
-                "variables": {}
-            },
-            "valve_position_state": {
-                "variables": {}
-            },
-            "valve_position_entry": {
-                "variables": {}
+            "valve_position_verified": {
+                "variables": {
+                    "state_snapshot": "number.trv_name_valve_position-state",
+                    "entry_snapshot": "number.trv_name_valve_position-entry"
+                }
             }
         },
         "transitions": [
             {
-                "action": "monkeypatch.setitem",
+                "action": "init_integration",
                 "starting_state": "initial_state",
+                "ending_state": "initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "config_version": 3,
+                    "model": "MODEL_BLU_GATEWAY_G3"
+                }
+            },
+            {
+                "action": "monkeypatch.setitem",
+                "starting_state": "initialized",
                 "ending_state": "config_patched",
                 "inputs": {
                     "target": "mock_blu_trv.config['blutrv:200']",
@@ -411,44 +436,20 @@
                 }
             },
             {
-                "action": "init_integration",
+                "action": "verify_entity",
                 "starting_state": "config_patched",
-                "ending_state": "integration_initialized",
+                "ending_state": "external_temperature_verified",
                 "inputs": {
-                    "hass": "hass",
-                    "param": 3,
-                    "model": "MODEL_BLU_GATEWAY_G3"
-                }
-            },
-            {
-                "action": "fetch_entity_state",
-                "starting_state": "integration_initialized",
-                "ending_state": "external_temperature_state",
-                "inputs": {
+                    "entity": "external_temperature",
                     "entity_id": "number.trv_name_external_temperature"
                 }
             },
             {
-                "action": "fetch_entity_entry",
-                "starting_state": "external_temperature_state",
-                "ending_state": "external_temperature_entry",
+                "action": "verify_entity",
+                "starting_state": "config_patched",
+                "ending_state": "valve_position_verified",
                 "inputs": {
-                    "entity_id": "number.trv_name_external_temperature"
-                }
-            },
-            {
-                "action": "fetch_entity_state",
-                "starting_state": "external_temperature_entry",
-                "ending_state": "valve_position_state",
-                "inputs": {
-                    "entity_id": "number.trv_name_valve_position"
-                }
-            },
-            {
-                "action": "fetch_entity_entry",
-                "starting_state": "valve_position_state",
-                "ending_state": "valve_position_entry",
-                "inputs": {
+                    "entity": "valve_position",
                     "entity_id": "number.trv_name_valve_position"
                 }
             }
@@ -458,14 +459,17 @@
         "name": "test_blu_trv_ext_temp_set_value",
         "device_type": "BLU TRV",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state_unknown": {
                 "variables": {
                     "state.state": "STATE_UNKNOWN"
                 }
             },
-            "state_22_2": {
+            "final_state": {
                 "variables": {
-                    "state.state": "'22.2'"
+                    "state.state": "22.2"
                 }
             }
         },
@@ -476,21 +480,19 @@
                 "ending_state": "state_unknown",
                 "inputs": {
                     "hass": "hass",
-                    "config_entry_index": 3,
+                    "device_count": 3,
                     "model": "MODEL_BLU_GATEWAY_G3"
                 }
             },
             {
                 "action": "hass.services.async_call",
                 "starting_state": "state_unknown",
-                "ending_state": "state_22_2",
+                "ending_state": "final_state",
                 "inputs": {
                     "domain": "NUMBER_DOMAIN",
                     "service": "SERVICE_SET_VALUE",
-                    "service_data": {
-                        "ATTR_ENTITY_ID": "entity_id",
-                        "ATTR_VALUE": 22.2
-                    },
+                    "entity_id": "entity_id",
+                    "value": 22.2,
                     "blocking": true
                 }
             }
@@ -518,40 +520,26 @@
                 "ending_state": "state_0",
                 "inputs": {
                     "hass": "hass",
-                    "model": "MODEL_BLU_GATEWAY_G3",
-                    "parameter": 3,
-                    "config_patch": {
-                        "blutrv:200.enable": false
-                    }
+                    "param": 3,
+                    "model": "MODEL_BLU_GATEWAY_G3"
                 }
             },
             {
-                "action": "hass.services.async_call",
+                "action": "SERVICE_SET_VALUE",
                 "starting_state": "state_0",
                 "ending_state": "state_20",
                 "inputs": {
-                    "domain": "number",
-                    "service": "set_value",
                     "entity_id": "number.trv_name_valve_position",
-                    "value": 20.0,
-                    "status_patch": {
-                        "blutrv:200.pos": 20
-                    }
+                    "value": 20.0
                 }
             }
         ]
     },
     {
         "name": "test_blu_trv_number_exc",
-        "device_type": "BLU TRV",
+        "device_type": "BLU_TRV",
         "states": {
             "initial_state": {
-                "variables": {}
-            },
-            "post_init_state": {
-                "variables": {}
-            },
-            "exception_configured_state": {
                 "variables": {}
             },
             "error_state": {
@@ -562,7 +550,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "post_init_state",
+                "ending_state": "initial_state",
                 "inputs": {
                     "hass": "hass",
                     "config_entry_id": 3,
@@ -570,22 +558,21 @@
                 }
             },
             {
-                "action": "set_side_effect",
-                "starting_state": "post_init_state",
-                "ending_state": "exception_configured_state",
+                "action": "mock_set_external_temperature",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
                 "inputs": {
-                    "target": "mock_blu_trv.blu_trv_set_external_temperature",
                     "side_effect": "exception"
                 }
             },
             {
-                "action": "call_service_set_value",
-                "starting_state": "exception_configured_state",
+                "action": "service_call",
+                "starting_state": "initial_state",
                 "ending_state": "error_state",
                 "inputs": {
-                    "domain": "NUMBER_DOMAIN",
-                    "service": "SERVICE_SET_VALUE",
-                    "entity_id": "f'{NUMBER_DOMAIN}.trv_name_external_temperature'",
+                    "domain": "number",
+                    "service": "set_value",
+                    "entity_id": "number.trv_name_external_temperature",
                     "value": 20.0,
                     "blocking": true
                 }
@@ -594,19 +581,19 @@
     },
     {
         "name": "test_blu_trv_number_reauth_error",
-        "device_type": "BLU TRV",
+        "device_type": "BLU_TRV",
         "states": {
-            "state_1": {
+            "entry_loaded": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "state_2": {
+            "flows_present": {
                 "variables": {
                     "len(flows)": "1"
                 }
             },
-            "state_3": {
+            "reauth_flow": {
                 "variables": {
                     "flow.get('step_id')": "'reauth_confirm'",
                     "flow.get('handler')": "DOMAIN",
@@ -620,35 +607,39 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "entry_loaded",
                 "inputs": {
                     "hass": "hass",
-                    "config_version": 3,
+                    "config_entry_id": 3,
                     "model": "MODEL_BLU_GATEWAY_G3"
                 }
             },
             {
-                "action": "service_call",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "set_side_effect",
+                "starting_state": "entry_loaded",
+                "ending_state": "entry_loaded",
+                "inputs": {
+                    "target": "mock_blu_trv.blu_trv_set_external_temperature",
+                    "side_effect": "InvalidAuthError"
+                }
+            },
+            {
+                "action": "services.async_call",
+                "starting_state": "entry_loaded",
+                "ending_state": "flows_present",
                 "inputs": {
                     "domain": "NUMBER_DOMAIN",
                     "service": "SERVICE_SET_VALUE",
-                    "data": {
-                        "entity_id": "NUMBER_DOMAIN.trv_name_external_temperature",
-                        "value": 20.0
-                    },
+                    "entity_id": "NUMBER_DOMAIN.trv_name_external_temperature",
+                    "value": 20.0,
                     "blocking": true
                 }
             },
             {
-                "action": "get_flow_details",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
-                "inputs": {
-                    "flows_source": "hass.config_entries.flow.async_progress()",
-                    "flow_index": 0
-                }
+                "action": "config_entries.flow.async_progress",
+                "starting_state": "flows_present",
+                "ending_state": "reauth_flow",
+                "inputs": {}
             }
         ]
     },
@@ -659,28 +650,28 @@
             "initial_state": {
                 "variables": {}
             },
-            "left_slot_intensity_initial": {
+            "post_init_state": {
                 "variables": {
-                    "intensity": "70",
-                    "on": "True",
-                    "vial.level": "27",
-                    "vial.name": "\"Forest Dream\""
+                    "left_slot_intensity": "70",
+                    "right_slot_intensity": "70",
+                    "left_slot_on": "True",
+                    "right_slot_on": "False",
+                    "left_vial_name": "Forest Dream",
+                    "right_vial_name": "Velvet Rose",
+                    "left_vial_level": "27",
+                    "right_vial_level": "84"
                 }
             },
-            "right_slot_intensity_initial": {
+            "left_intensity_updated_state": {
                 "variables": {
-                    "intensity": "70",
-                    "on": "False",
-                    "vial.level": "84",
-                    "vial.name": "\"Velvet Rose\""
-                }
-            },
-            "left_slot_intensity_updated": {
-                "variables": {
-                    "intensity": "80",
-                    "on": "True",
-                    "vial.level": "27",
-                    "vial.name": "\"Forest Dream\""
+                    "left_slot_intensity": "80",
+                    "right_slot_intensity": "70",
+                    "left_slot_on": "True",
+                    "right_slot_on": "False",
+                    "left_vial_name": "Forest Dream",
+                    "right_vial_name": "Velvet Rose",
+                    "left_vial_level": "27",
+                    "right_vial_level": "84"
                 }
             }
         },
@@ -688,39 +679,30 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "left_slot_intensity_initial",
+                "ending_state": "post_init_state",
                 "inputs": {
                     "hass": "hass",
-                    "config_entry_id": "3"
+                    "config_entry_id": 3
                 }
             },
             {
-                "action": "init_integration",
-                "starting_state": "initial_state",
-                "ending_state": "right_slot_intensity_initial",
+                "action": "SERVICE_SET_VALUE",
+                "starting_state": "post_init_state",
+                "ending_state": "left_intensity_updated_state",
                 "inputs": {
-                    "hass": "hass",
-                    "config_entry_id": "3"
+                    "domain": "NUMBER_DOMAIN",
+                    "service": "SERVICE_SET_VALUE",
+                    "service_data": {
+                        "entity_id": "number.test_name_left_slot_intensity",
+                        "value": 80.0
+                    }
                 }
             },
             {
-                "action": "NUMBER_DOMAIN.SERVICE_SET_VALUE",
-                "starting_state": "left_slot_intensity_initial",
-                "ending_state": "left_slot_intensity_updated",
-                "inputs": {
-                    "entity_id": "number.test_name_left_slot_intensity",
-                    "value": 80.0
-                }
-            },
-            {
-                "action": "mock_rpc_device.cury_set",
-                "starting_state": "left_slot_intensity_initial",
-                "ending_state": "left_slot_intensity_updated",
-                "inputs": {
-                    "device_id": 0,
-                    "slot": "left",
-                    "intensity": 80
-                }
+                "action": "mock_update",
+                "starting_state": "left_intensity_updated_state",
+                "ending_state": "left_intensity_updated_state",
+                "inputs": {}
             }
         ]
     }

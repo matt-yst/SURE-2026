@@ -21,7 +21,7 @@
                     "state.state": "CoverState.CLOSING"
                 }
             },
-            "closed": {
+            "stopped": {
                 "variables": {
                     "state.state": "CoverState.CLOSED",
                     "entry.unique_id": "'123456789ABC-roller_0'"
@@ -30,36 +30,36 @@
         },
         "transitions": [
             {
-                "action": "set_cover_position",
+                "action": "SERVICE_SET_COVER_POSITION",
                 "starting_state": "initial_state",
                 "ending_state": "position_set",
                 "inputs": {
-                    "entity_id": "cover.test_name",
-                    "position": 50
+                    "ATTR_ENTITY_ID": "cover.test_name",
+                    "ATTR_POSITION": 50
                 }
             },
             {
-                "action": "open_cover",
+                "action": "SERVICE_OPEN_COVER",
                 "starting_state": "position_set",
                 "ending_state": "opening",
                 "inputs": {
-                    "entity_id": "cover.test_name"
+                    "ATTR_ENTITY_ID": "cover.test_name"
                 }
             },
             {
-                "action": "close_cover",
+                "action": "SERVICE_CLOSE_COVER",
                 "starting_state": "opening",
                 "ending_state": "closing",
                 "inputs": {
-                    "entity_id": "cover.test_name"
+                    "ATTR_ENTITY_ID": "cover.test_name"
                 }
             },
             {
-                "action": "stop_cover",
+                "action": "SERVICE_STOP_COVER",
                 "starting_state": "closing",
-                "ending_state": "closed",
+                "ending_state": "stopped",
                 "inputs": {
-                    "entity_id": "cover.test_name"
+                    "ATTR_ENTITY_ID": "cover.test_name"
                 }
             }
         ]
@@ -68,12 +68,15 @@
         "name": "test_block_device_update",
         "device_type": "cover",
         "states": {
-            "CLOSED": {
+            "initial_state": {
+                "variables": {}
+            },
+            "closed": {
                 "variables": {
                     "state.state": "CoverState.CLOSED"
                 }
             },
-            "OPEN": {
+            "open": {
                 "variables": {
                     "state.state": "CoverState.OPEN"
                 }
@@ -81,19 +84,20 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "set rollerPos to 0 and initialise integration",
                 "starting_state": "initial_state",
-                "ending_state": "CLOSED",
+                "ending_state": "closed",
                 "inputs": {
-                    "hass": "hass",
-                    "value": 1
+                    "rollerPos": 0
                 }
             },
             {
-                "action": "mock_update",
-                "starting_state": "CLOSED",
-                "ending_state": "OPEN",
-                "inputs": {}
+                "action": "set rollerPos to 100 and trigger device update",
+                "starting_state": "closed",
+                "ending_state": "open",
+                "inputs": {
+                    "rollerPos": 100
+                }
             }
         ]
     },
@@ -104,7 +108,7 @@
             "initial_state": {
                 "variables": {}
             },
-            "snapshot_1": {
+            "post_init_state": {
                 "variables": {
                     "hass.states.get('cover.test_name')": "None"
                 }
@@ -112,21 +116,12 @@
         },
         "transitions": [
             {
-                "action": "monkeypatch.setattr",
-                "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {
-                    "target": "mock_block_device.blocks[ROLLER_BLOCK_ID].type",
-                    "value": null
-                }
-            },
-            {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "snapshot_1",
+                "ending_state": "post_init_state",
                 "inputs": {
                     "hass": "hass",
-                    "arg": 1
+                    "param": 1
                 }
             }
         ]
@@ -135,22 +130,22 @@
         "name": "test_rpc_device_services",
         "device_type": "cover",
         "states": {
-            "state_1": {
+            "position_set": {
                 "variables": {
                     "state.attributes[ATTR_CURRENT_POSITION]": "50"
                 }
             },
-            "state_2": {
+            "opening": {
                 "variables": {
                     "state.state": "CoverState.OPENING"
                 }
             },
-            "state_3": {
+            "closing": {
                 "variables": {
                     "state.state": "CoverState.CLOSING"
                 }
             },
-            "state_4": {
+            "closed": {
                 "variables": {
                     "state.state": "CoverState.CLOSED",
                     "entry.unique_id": "'123456789ABC-cover:0'"
@@ -159,58 +154,70 @@
         },
         "transitions": [
             {
-                "action": "SERVICE_SET_COVER_POSITION",
+                "action": "set_cover_position",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "position_set",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "cover.test_name_test_cover_0",
-                    "ATTR_POSITION": 50
+                    "entity_id": "cover.test_name_test_cover_0",
+                    "position": 50
                 }
             },
             {
-                "action": "SERVICE_OPEN_COVER",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "open_cover",
+                "starting_state": "position_set",
+                "ending_state": "opening",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "cover.test_name_test_cover_0"
+                    "entity_id": "cover.test_name_test_cover_0"
                 }
             },
             {
-                "action": "SERVICE_CLOSE_COVER",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
+                "action": "close_cover",
+                "starting_state": "opening",
+                "ending_state": "closing",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "cover.test_name_test_cover_0"
+                    "entity_id": "cover.test_name_test_cover_0"
                 }
             },
             {
-                "action": "SERVICE_STOP_COVER",
-                "starting_state": "state_3",
-                "ending_state": "state_4",
+                "action": "stop_cover",
+                "starting_state": "closing",
+                "ending_state": "closed",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "cover.test_name_test_cover_0"
+                    "entity_id": "cover.test_name_test_cover_0"
                 }
             }
         ]
     },
     {
         "name": "test_rpc_device_no_cover_keys",
-        "device_type": "rpc_device",
+        "device_type": "cover",
         "states": {
-            "snapshot_1": {
+            "state1": {
                 "variables": {
                     "hass.states.get('cover.test_name_test_cover_0')": "None"
                 }
+            },
+            "post_monkeypatch": {
+                "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "monkeypatch.delitem",
                 "starting_state": "initial_state",
-                "ending_state": "snapshot_1",
+                "ending_state": "post_monkeypatch",
+                "inputs": {
+                    "target": "mock_rpc_device.status",
+                    "key": "cover:0"
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "post_monkeypatch",
+                "ending_state": "state1",
                 "inputs": {
                     "hass": "hass",
-                    "value": 2
+                    "device_count": 2
                 }
             }
         ]
@@ -236,30 +243,24 @@
                 "starting_state": "initial_state",
                 "ending_state": "CLOSED",
                 "inputs": {
-                    "monkeypatch": "<monkeypatch>",
-                    "mock_rpc_device": "<mock_rpc_device>",
+                    "monkeypatch": "<provided\u2011by\u2011fixture>",
+                    "mock_rpc_device": "<mock\u2011object>",
                     "device_id": "cover:0",
                     "attribute": "state",
                     "value": "closed"
                 }
             },
             {
-                "action": "mutate_rpc_device_status",
+                "action": "mutate_rpc_device_status + mock_rpc_device.mock_update",
                 "starting_state": "CLOSED",
                 "ending_state": "OPEN",
                 "inputs": {
-                    "monkeypatch": "<monkeypatch>",
-                    "mock_rpc_device": "<mock_rpc_device>",
+                    "monkeypatch": "<provided\u2011by\u2011fixture>",
+                    "mock_rpc_device": "<mock\u2011object>",
                     "device_id": "cover:0",
                     "attribute": "state",
                     "value": "open"
                 }
-            },
-            {
-                "action": "mock_rpc_device.mock_update",
-                "starting_state": "OPEN",
-                "ending_state": "OPEN",
-                "inputs": {}
             }
         ]
     },
@@ -267,7 +268,7 @@
         "name": "test_rpc_device_no_position_control",
         "device_type": "cover",
         "states": {
-            "CoverState.OPEN": {
+            "open_state": {
                 "variables": {
                     "state.state": "CoverState.OPEN"
                 }
@@ -275,12 +276,24 @@
         },
         "transitions": [
             {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "initial_state",
+                "ending_state": "open_state",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "entity_id": "cover:0",
+                    "attribute": "pos_control",
+                    "value": false
+                }
+            },
+            {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "CoverState.OPEN",
+                "ending_state": "open_state",
                 "inputs": {
-                    "hass": "<hass\u2011instance>",
-                    "count": 2
+                    "hass": "hass",
+                    "value": 2
                 }
             }
         ]
@@ -289,25 +302,25 @@
         "name": "test_rpc_cover_tilt",
         "device_type": "cover",
         "states": {
-            "state0": {
+            "state_0": {
                 "variables": {
-                    "state.attributes[ATTR_CURRENT_TILT_POSITION]": "0",
-                    "entry.unique_id": "'123456789ABC-cover:0'"
+                    "ATTR_CURRENT_TILT_POSITION": "0",
+                    "entry.unique_id": "123456789ABC-cover:0"
                 }
             },
-            "state50": {
+            "state_1": {
                 "variables": {
-                    "state.attributes[ATTR_CURRENT_TILT_POSITION]": "50"
+                    "ATTR_CURRENT_TILT_POSITION": "50"
                 }
             },
-            "state100": {
+            "state_2": {
                 "variables": {
-                    "state.attributes[ATTR_CURRENT_TILT_POSITION]": "100"
+                    "ATTR_CURRENT_TILT_POSITION": "100"
                 }
             },
-            "state10": {
+            "state_3": {
                 "variables": {
-                    "state.attributes[ATTR_CURRENT_TILT_POSITION]": "10"
+                    "ATTR_CURRENT_TILT_POSITION": "10"
                 }
             }
         },
@@ -315,35 +328,35 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state0",
+                "ending_state": "state_0",
                 "inputs": {
                     "hass": "hass",
-                    "param": 3
+                    "parameter": 3
                 }
             },
             {
-                "action": "set_cover_tilt_position",
-                "starting_state": "state0",
-                "ending_state": "state50",
+                "action": "SERVICE_SET_COVER_TILT_POSITION",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "cover.test_name_test_cover_0",
-                    "ATTR_TILT_POSITION": 50
+                    "entity_id": "cover.test_name_test_cover_0",
+                    "tilt_position": 50
                 }
             },
             {
-                "action": "open_cover_tilt",
-                "starting_state": "state50",
-                "ending_state": "state100",
+                "action": "SERVICE_OPEN_COVER_TILT",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "cover.test_name_test_cover_0"
+                    "entity_id": "cover.test_name_test_cover_0"
                 }
             },
             {
-                "action": "close_and_stop_cover_tilt",
-                "starting_state": "state100",
-                "ending_state": "state10",
+                "action": "SERVICE_CLOSE_COVER_TILT + SERVICE_STOP_COVER_TILT",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "cover.test_name_test_cover_0"
+                    "entity_id": "cover.test_name_test_cover_0"
                 }
             }
         ]
@@ -355,13 +368,43 @@
             "initial_state": {
                 "variables": {}
             },
-            "CoverState.CLOSING": {
+            "closing_50": {
                 "variables": {
                     "state.state": "CoverState.CLOSING",
                     "state.attributes[ATTR_CURRENT_POSITION]": "50"
                 }
             },
-            "CoverState.CLOSED": {
+            "closing_40": {
+                "variables": {
+                    "state.state": "CoverState.CLOSING",
+                    "state.attributes[ATTR_CURRENT_POSITION]": "40"
+                }
+            },
+            "closing_30": {
+                "variables": {
+                    "state.state": "CoverState.CLOSING",
+                    "state.attributes[ATTR_CURRENT_POSITION]": "30"
+                }
+            },
+            "closing_20": {
+                "variables": {
+                    "state.state": "CoverState.CLOSING",
+                    "state.attributes[ATTR_CURRENT_POSITION]": "20"
+                }
+            },
+            "closing_10": {
+                "variables": {
+                    "state.state": "CoverState.CLOSING",
+                    "state.attributes[ATTR_CURRENT_POSITION]": "10"
+                }
+            },
+            "closing_0": {
+                "variables": {
+                    "state.state": "CoverState.CLOSING",
+                    "state.attributes[ATTR_CURRENT_POSITION]": "0"
+                }
+            },
+            "closed_0": {
                 "variables": {
                     "state.state": "CoverState.CLOSED",
                     "state.attributes[ATTR_CURRENT_POSITION]": "0"
@@ -370,108 +413,77 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "mutate_rpc_device_status + mock_rpc_device.mock_update",
                 "starting_state": "initial_state",
-                "ending_state": "CoverState.CLOSING",
-                "inputs": {
-                    "hass": "hass",
-                    "value": 2
-                }
-            },
-            {
-                "action": "mutate_rpc_device_status",
-                "starting_state": "initial_state",
-                "ending_state": "CoverState.CLOSING",
+                "ending_state": "closing_50",
                 "inputs": {
                     "monkeypatch": "monkeypatch",
-                    "device": "mock_rpc_device",
+                    "mock_rpc_device": "mock_rpc_device",
                     "entity": "cover:0",
                     "attribute": "state",
                     "value": "closing"
                 }
             },
             {
-                "action": "mock_rpc_device.mock_update",
-                "starting_state": "CoverState.CLOSING",
-                "ending_state": "CoverState.CLOSING",
-                "inputs": {}
-            },
-            {
                 "action": "mock_polling_rpc_update",
-                "starting_state": "CoverState.CLOSING (position 50)",
-                "ending_state": "CoverState.CLOSING (position 40)",
+                "starting_state": "closing_50",
+                "ending_state": "closing_40",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer",
-                    "interval": "RPC_COVER_UPDATE_TIME_SEC"
+                    "interval_seconds": "RPC_COVER_UPDATE_TIME_SEC"
                 }
             },
             {
                 "action": "mock_polling_rpc_update",
-                "starting_state": "CoverState.CLOSING (position 40)",
-                "ending_state": "CoverState.CLOSING (position 30)",
+                "starting_state": "closing_40",
+                "ending_state": "closing_30",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer",
-                    "interval": "RPC_COVER_UPDATE_TIME_SEC"
+                    "interval_seconds": "RPC_COVER_UPDATE_TIME_SEC"
                 }
             },
             {
                 "action": "mock_polling_rpc_update",
-                "starting_state": "CoverState.CLOSING (position 30)",
-                "ending_state": "CoverState.CLOSING (position 20)",
+                "starting_state": "closing_30",
+                "ending_state": "closing_20",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer",
-                    "interval": "RPC_COVER_UPDATE_TIME_SEC"
+                    "interval_seconds": "RPC_COVER_UPDATE_TIME_SEC"
                 }
             },
             {
                 "action": "mock_polling_rpc_update",
-                "starting_state": "CoverState.CLOSING (position 20)",
-                "ending_state": "CoverState.CLOSING (position 10)",
+                "starting_state": "closing_20",
+                "ending_state": "closing_10",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer",
-                    "interval": "RPC_COVER_UPDATE_TIME_SEC"
+                    "interval_seconds": "RPC_COVER_UPDATE_TIME_SEC"
                 }
             },
             {
                 "action": "mock_polling_rpc_update",
-                "starting_state": "CoverState.CLOSING (position 10)",
-                "ending_state": "CoverState.CLOSING (position 0)",
+                "starting_state": "closing_10",
+                "ending_state": "closing_0",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer",
-                    "interval": "RPC_COVER_UPDATE_TIME_SEC"
+                    "interval_seconds": "RPC_COVER_UPDATE_TIME_SEC"
                 }
             },
             {
-                "action": "mutate_rpc_device_status",
-                "starting_state": "CoverState.CLOSING (position 0)",
-                "ending_state": "CoverState.CLOSED",
+                "action": "mutate_rpc_device_status + mock_rpc_device.mock_update",
+                "starting_state": "closing_0",
+                "ending_state": "closed_0",
                 "inputs": {
                     "monkeypatch": "monkeypatch",
-                    "device": "mock_rpc_device",
+                    "mock_rpc_device": "mock_rpc_device",
                     "entity": "cover:0",
                     "attribute": "state",
                     "value": "closed"
-                }
-            },
-            {
-                "action": "mock_rpc_device.mock_update",
-                "starting_state": "CoverState.CLOSED",
-                "ending_state": "CoverState.CLOSED",
-                "inputs": {}
-            },
-            {
-                "action": "mock_polling_rpc_update",
-                "starting_state": "CoverState.CLOSED",
-                "ending_state": "CoverState.CLOSED",
-                "inputs": {
-                    "hass": "hass",
-                    "freezer": "freezer",
-                    "interval": "RPC_COVER_UPDATE_TIME_SEC"
                 }
             }
         ]
@@ -483,7 +495,7 @@
             "initial_state": {
                 "variables": {}
             },
-            "unavailable_state": {
+            "unavailable": {
                 "variables": {
                     "state.state": "STATE_UNAVAILABLE"
                 }
@@ -491,52 +503,13 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
-                "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {
-                    "hass": "hass",
-                    "count": 2
-                }
-            },
-            {
-                "action": "mutate_rpc_device_status",
-                "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {
-                    "device": "cover:0",
-                    "attribute": "state",
-                    "value": "closing"
-                }
-            },
-            {
-                "action": "mutate_rpc_device_status",
-                "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {
-                    "device": "cover:0",
-                    "attribute": "current_pos",
-                    "value": 40
-                }
-            },
-            {
-                "action": "setattr",
-                "starting_state": "initial_state",
-                "ending_state": "initial_state",
-                "inputs": {
-                    "object": "mock_rpc_device",
-                    "attribute": "initialized",
-                    "value": false
-                }
-            },
-            {
                 "action": "mock_polling_rpc_update",
                 "starting_state": "initial_state",
-                "ending_state": "unavailable_state",
+                "ending_state": "unavailable",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer",
-                    "interval_sec": "RPC_COVER_UPDATE_TIME_SEC"
+                    "timeout": "RPC_COVER_UPDATE_TIME_SEC"
                 }
             }
         ]
