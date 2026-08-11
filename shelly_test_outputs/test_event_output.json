@@ -1,0 +1,862 @@
+[
+    {
+        "name": "test_rpc_button",
+        "device_type": "button",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_0": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN",
+                    "state.attributes.get(ATTR_EVENT_TYPES)": "unordered(['btn_down', 'btn_up', 'double_push', 'long_push', 'single_push', 'triple_push'])",
+                    "state.attributes.get(ATTR_EVENT_TYPE)": "None",
+                    "state.attributes.get(ATTR_DEVICE_CLASS)": "EventDeviceClass.BUTTON",
+                    "entry.unique_id": "'123456789ABC-input:0'"
+                }
+            },
+            "state_1": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPE)": "'single_push'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_0",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 2
+                }
+            },
+            {
+                "action": "inject_rpc_device_event",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "event_payload": {
+                        "events": [
+                            {
+                                "event": "single_push",
+                                "id": 0,
+                                "ts": 1668522399.2
+                            }
+                        ],
+                        "ts": 1668522399.2
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_script_1_event",
+        "device_type": "script",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "hass.states.get(entity_id)": "snapshot(name=f'{entity_id}-state')",
+                    "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPE)": "'script_start'"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPE)": "'unknown_event'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 2
+                }
+            },
+            {
+                "action": "inject_rpc_device_event",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "event_payload": {
+                        "events": [
+                            {
+                                "component": "script:1",
+                                "id": 1,
+                                "event": "script_start",
+                                "ts": 1668522399.2
+                            }
+                        ],
+                        "ts": 1668522399.2
+                    }
+                }
+            },
+            {
+                "action": "inject_rpc_device_event",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "event_payload": {
+                        "events": [
+                            {
+                                "component": "script:1",
+                                "id": 1,
+                                "event": "unknown_event",
+                                "ts": 1668522399.2
+                            }
+                        ],
+                        "ts": 1668522399.2
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_script_2_event",
+        "device_type": "script",
+        "states": {
+            "post_init": {
+                "variables": {
+                    "hass.states.get(entity_id)": "snapshot(name=f'{entity_id}-state')",
+                    "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_init",
+                "inputs": {
+                    "hass": "hass",
+                    "value": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_script_ble_event",
+        "device_type": "BLE",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_event_state": {
+                "variables": {
+                    "hass.states.get(entity_id)": "snapshot(name=f'{entity_id}-state')",
+                    "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_event_state",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_event_removal",
+        "device_type": "rpc_event",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "register_entity",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "EVENT_DOMAIN",
+                    "name": "test_name_input_0",
+                    "entity_key": "input:0"
+                }
+            },
+            {
+                "action": "monkeypatch.setitem",
+                "starting_state": "state_1",
+                "ending_state": "state_1",
+                "inputs": {
+                    "target": "mock_rpc_device.config",
+                    "key": "input:0",
+                    "value": {
+                        "id": 0,
+                        "type": "switch"
+                    }
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "entity_count": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_event",
+        "device_type": "block",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN",
+                    "state.attributes.get(ATTR_EVENT_TYPES)": "unordered(['single', 'long'])",
+                    "state.attributes.get(ATTR_EVENT_TYPE)": "None",
+                    "state.attributes.get(ATTR_DEVICE_CLASS)": "EventDeviceClass.BUTTON",
+                    "entry.unique_id": "'123456789ABC-relay_0-1'"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPE)": "'long'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "arg2": 1
+                }
+            },
+            {
+                "action": "mock_update_event",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "sensor_ids_patch": "monkeypatch.setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'sensor_ids', {'inputEvent': 'L', 'inputEventCnt': 0})",
+                    "input_event_patch": "monkeypatch.setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'inputEvent', 'L')",
+                    "mock_update_call": "mock_block_device.mock_update()",
+                    "await_block_till_done": "await hass.async_block_till_done()"
+                }
+            },
+            {
+                "action": "entity_id_assignment",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "entity_id": "event.test_name_channel_1_input"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_event_single_output",
+        "device_type": "block_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_init_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.setitem",
+                "starting_state": "initial_state",
+                "ending_state": "post_init_state",
+                "inputs": {
+                    "target": "mock_block_device.shelly",
+                    "key": "num_outputs",
+                    "value": 1
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "post_init_state",
+                "ending_state": "post_init_state",
+                "inputs": {
+                    "hass": "hass",
+                    "num_outputs": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_event_custom_name",
+        "device_type": "block_device",
+        "states": {
+            "state_0": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.setitem",
+                "starting_state": "initial_state",
+                "ending_state": "state_0",
+                "inputs": {
+                    "target": "mock_block_device.settings",
+                    "key": "relays",
+                    "value": [
+                        {
+                            "name": "test channel",
+                            "btn_type": "momentary"
+                        },
+                        {
+                            "btn_type": "toggle"
+                        }
+                    ]
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_0",
+                "inputs": {
+                    "hass": "hass",
+                    "value": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_event_custom_name_single_output",
+        "device_type": "block",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_init": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_init",
+                "inputs": {
+                    "hass": "hass",
+                    "num_devices": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_event_shix3_1",
+        "device_type": "SHIX3-1",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPES)": "UNORDERED_EVENT_TYPES"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPES)": "UNORDERED_EVENT_TYPES"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPES)": "UNORDERED_EVENT_TYPES"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "model": "MODEL_I3",
+                    "param": 1
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "model": "MODEL_I3",
+                    "param": 1
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_3",
+                "inputs": {
+                    "hass": "hass",
+                    "model": "MODEL_I3",
+                    "param": 1
+                }
+            }
+        ]
+    }
+][
+    {
+        "name": "test_rpc_button",
+        "device_type": "button",
+        "states": {
+            "state_0": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN",
+                    "state.attributes.get(ATTR_EVENT_TYPES)": "[\"btn_down\", \"btn_up\", \"double_push\", \"long_push\", \"single_push\", \"triple_push\"]",
+                    "state.attributes.get(ATTR_EVENT_TYPE)": "None",
+                    "state.attributes.get(ATTR_DEVICE_CLASS)": "EventDeviceClass.BUTTON",
+                    "entry.unique_id": "123456789ABC-input:0"
+                }
+            },
+            "state_1": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPE)": "single_push"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_0",
+                "inputs": {
+                    "hass": "hass",
+                    "arg2": 2
+                }
+            },
+            {
+                "action": "inject_rpc_device_event",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "event_payload": {
+                        "events": [
+                            {
+                                "event": "single_push",
+                                "id": 0,
+                                "ts": 1668522399.2
+                            }
+                        ],
+                        "ts": 1668522399.2
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_script_1_event",
+        "device_type": "script",
+        "states": {
+            "post_init_state": {
+                "variables": {
+                    "hass.states.get(entity_id)": "snapshot(name=f'{entity_id}-state')",
+                    "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
+                }
+            },
+            "script_start_state": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPE)": "'script_start'"
+                }
+            },
+            "unknown_event_state": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPE)": "'unknown_event'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "inject_rpc_device_event",
+                "starting_state": "post_init_state",
+                "ending_state": "script_start_state",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "events": [
+                        {
+                            "component": "script:1",
+                            "id": 1,
+                            "event": "script_start",
+                            "ts": 1668522399.2
+                        }
+                    ],
+                    "ts": 1668522399.2
+                }
+            },
+            {
+                "action": "inject_rpc_device_event",
+                "starting_state": "script_start_state",
+                "ending_state": "unknown_event_state",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "events": [
+                        {
+                            "component": "script:1",
+                            "id": 1,
+                            "event": "unknown_event",
+                            "ts": 1668522399.2
+                        }
+                    ],
+                    "ts": 1668522399.2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_script_2_event",
+        "device_type": "script",
+        "states": {
+            "entity_state": {
+                "variables": {
+                    "hass.states.get(entity_id)": "snapshot(name=f'{entity_id}-state')"
+                }
+            },
+            "registry_entry": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "entity_state",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 2
+                }
+            },
+            {
+                "action": "assign_entity_id",
+                "starting_state": "entity_state",
+                "ending_state": "registry_entry",
+                "inputs": {
+                    "entity_id": "event.test_name_test_script_2_js"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_script_ble_event",
+        "device_type": "BLE",
+        "states": {
+            "post_init_state": {
+                "variables": {
+                    "hass.states.get(entity_id)": "snapshot(name=f'{entity_id}-state')",
+                    "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_init_state",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_event_removal",
+        "device_type": "event",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "register_entity",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "EVENT_DOMAIN",
+                    "name": "test_name_input_0",
+                    "entity_key": "input:0"
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_event",
+        "device_type": "block",
+        "states": {
+            "state_0": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN",
+                    "state.attributes.get(ATTR_EVENT_TYPES)": "unordered(['single', 'long'])",
+                    "state.attributes.get(ATTR_EVENT_TYPE)": "None",
+                    "state.attributes.get(ATTR_DEVICE_CLASS)": "EventDeviceClass.BUTTON",
+                    "entry.unique_id": "'123456789ABC-relay_0-1'"
+                }
+            },
+            "state_1": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPE)": "'long'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_0",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 1
+                }
+            },
+            {
+                "action": "mock_block_device_update",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
+                "inputs": {
+                    "sensor_ids": {
+                        "inputEvent": "L",
+                        "inputEventCnt": 0
+                    },
+                    "inputEvent": "L"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_event_single_output",
+        "device_type": "block_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "patched_state": {
+                "variables": {}
+            },
+            "initialized_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.setitem",
+                "starting_state": "initial_state",
+                "ending_state": "patched_state",
+                "inputs": {
+                    "target": "mock_block_device.shelly",
+                    "key": "num_outputs",
+                    "value": 1
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "patched_state",
+                "ending_state": "initialized_state",
+                "inputs": {
+                    "hass": "hass",
+                    "num_outputs": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_event_custom_name",
+        "device_type": "block_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_init_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.setitem",
+                "starting_state": "initial_state",
+                "ending_state": "post_init_state",
+                "inputs": {
+                    "target": "mock_block_device.settings",
+                    "key": "relays",
+                    "value": [
+                        {
+                            "name": "test channel",
+                            "btn_type": "momentary"
+                        },
+                        {
+                            "btn_type": "toggle"
+                        }
+                    ]
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "post_init_state",
+                "ending_state": "post_init_state",
+                "inputs": {
+                    "hass": "hass",
+                    "device_id": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_event_custom_name_single_output",
+        "device_type": "block",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_init_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.setitem",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "target": "mock_block_device.shelly",
+                    "key": "num_outputs",
+                    "value": 1
+                }
+            },
+            {
+                "action": "monkeypatch.setitem",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "target": "mock_block_device.settings",
+                    "key": "relays",
+                    "value": [
+                        {
+                            "name": "test channel",
+                            "btn_type": "momentary"
+                        },
+                        {
+                            "btn_type": "toggle"
+                        }
+                    ]
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_init_state",
+                "inputs": {
+                    "hass": "hass",
+                    "num_outputs": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_event_shix3_1",
+        "device_type": "SHIX3-1",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPES)": "UNORDERED_EVENT_TYPES"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPES)": "UNORDERED_EVENT_TYPES"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.attributes.get(ATTR_EVENT_TYPES)": "UNORDERED_EVENT_TYPES"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 1,
+                    "model": "MODEL_I3"
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 1,
+                    "model": "MODEL_I3"
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_3",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 1,
+                    "model": "MODEL_I3"
+                }
+            }
+        ]
+    }
+]

@@ -1,0 +1,205 @@
+[
+    {
+        "name": "test_block_device_gas_valve",
+        "device_type": "gas_valve",
+        "states": {
+            "closed_initial": {
+                "variables": {
+                    "entry.unique_id": "123456789ABC-valve_0-valve",
+                    "entry.name": "None",
+                    "entry.translation_key": "gas_valve",
+                    "state.state": "ValveState.CLOSED"
+                }
+            },
+            "opening": {
+                "variables": {
+                    "state.state": "ValveState.OPENING"
+                }
+            },
+            "open": {
+                "variables": {
+                    "state.state": "ValveState.OPEN"
+                }
+            },
+            "closing": {
+                "variables": {
+                    "state.state": "ValveState.CLOSING"
+                }
+            },
+            "closed_final": {
+                "variables": {
+                    "state.state": "ValveState.CLOSED"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "closed_initial",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 1,
+                    "model": "MODEL_GAS"
+                }
+            },
+            {
+                "action": "service_call",
+                "starting_state": "closed_initial",
+                "ending_state": "opening",
+                "inputs": {
+                    "domain": "VALVE_DOMAIN",
+                    "service": "SERVICE_OPEN_VALVE",
+                    "service_data": {
+                        "entity_id": "valve.test_name_valve"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "mock_update",
+                "starting_state": "opening",
+                "ending_state": "open",
+                "inputs": {
+                    "valve": "opened"
+                }
+            },
+            {
+                "action": "service_call",
+                "starting_state": "open",
+                "ending_state": "closing",
+                "inputs": {
+                    "domain": "VALVE_DOMAIN",
+                    "service": "SERVICE_CLOSE_VALVE",
+                    "service_data": {
+                        "entity_id": "valve.test_name_valve"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "mock_update",
+                "starting_state": "closing",
+                "ending_state": "closed_final",
+                "inputs": {
+                    "valve": "closed"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_water_valve",
+        "device_type": "water_valve",
+        "states": {
+            "state_closed_initial": {
+                "variables": {
+                    "entry.unique_id": "'123456789ABC-number:200-water_valve'",
+                    "state.state": "ValveState.CLOSED"
+                }
+            },
+            "state_open": {
+                "variables": {
+                    "state.state": "ValveState.OPEN"
+                }
+            },
+            "state_closed": {
+                "variables": {
+                    "state.state": "ValveState.CLOSED"
+                }
+            },
+            "state_open_position_50": {
+                "variables": {
+                    "state.state": "ValveState.OPEN",
+                    "state.attributes.get(ATTR_CURRENT_POSITION)": "50"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_closed_initial",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": "3",
+                    "model": "MODEL_FRANKEVER_WATER_VALVE"
+                }
+            },
+            {
+                "action": "VALVE_DOMAIN.SERVICE_OPEN_VALVE",
+                "starting_state": "state_closed_initial",
+                "ending_state": "state_open",
+                "inputs": {
+                    "ATTR_ENTITY_ID": "entity_id"
+                }
+            },
+            {
+                "action": "VALVE_DOMAIN.SERVICE_CLOSE_VALVE",
+                "starting_state": "state_open",
+                "ending_state": "state_closed",
+                "inputs": {
+                    "ATTR_ENTITY_ID": "entity_id"
+                }
+            },
+            {
+                "action": "VALVE_DOMAIN.SERVICE_SET_VALVE_POSITION",
+                "starting_state": "state_closed",
+                "ending_state": "state_open_position_50",
+                "inputs": {
+                    "ATTR_ENTITY_ID": "entity_id",
+                    "ATTR_POSITION": 50
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_neo_water_valve",
+        "device_type": "Neo Water Valve",
+        "states": {
+            "closed_initial": {
+                "variables": {
+                    "entry.unique_id": "123456789ABC-boolean:200-neo_water_valve",
+                    "state.state": "ValveState.CLOSED"
+                }
+            },
+            "open": {
+                "variables": {
+                    "state.state": "ValveState.OPEN"
+                }
+            },
+            "closed_final": {
+                "variables": {
+                    "state.state": "ValveState.CLOSED"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "closed_initial",
+                "inputs": {
+                    "hass": "hass",
+                    "config_version": 3,
+                    "model": "MODEL_NEO_WATER_VALVE"
+                }
+            },
+            {
+                "action": "VALVE_DOMAIN.SERVICE_OPEN_VALVE",
+                "starting_state": "closed_initial",
+                "ending_state": "open",
+                "inputs": {
+                    "entity_id": "valve.test_name"
+                }
+            },
+            {
+                "action": "VALVE_DOMAIN.SERVICE_CLOSE_VALVE",
+                "starting_state": "open",
+                "ending_state": "closed_final",
+                "inputs": {
+                    "entity_id": "valve.test_name"
+                }
+            }
+        ]
+    }
+]

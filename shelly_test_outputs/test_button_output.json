@@ -1,0 +1,654 @@
+[
+    {
+        "name": "test_block_button",
+        "device_type": "block_device",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN",
+                    "entry.unique_id": "123456789ABC-reboot"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "mock_block_device.trigger_reboot.call_count": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 1
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "domain": "BUTTON_DOMAIN",
+                    "service": "SERVICE_PRESS",
+                    "service_data": {
+                        "entity_id": "button.test_name_restart"
+                    },
+                    "blocking": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_button",
+        "device_type": "rpc_button",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state": "snapshot(name=f'{entity_id}-state')",
+                    "entry": "snapshot(name=f'{entity_id}-entry')"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "mock_rpc_device.trigger_reboot.call_count": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 2
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "domain": "BUTTON_DOMAIN",
+                    "service": "SERVICE_PRESS",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "entity_id"
+                    },
+                    "blocking": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_button_exc",
+        "device_type": "button",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "initialized_state": {
+                "variables": {}
+            },
+            "error_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "initialized_state",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 2
+                }
+            },
+            {
+                "action": "set_side_effect",
+                "starting_state": "initialized_state",
+                "ending_state": "initialized_state",
+                "inputs": {
+                    "target": "mock_rpc_device.trigger_reboot",
+                    "side_effect": "exception"
+                }
+            },
+            {
+                "action": "async_call_service",
+                "starting_state": "initialized_state",
+                "ending_state": "error_state",
+                "inputs": {
+                    "domain": "BUTTON_DOMAIN",
+                    "service": "SERVICE_PRESS",
+                    "service_data": {
+                        "entity_id": "button.test_name_restart"
+                    },
+                    "blocking": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_button_reauth_error",
+        "device_type": "rpc_device",
+        "states": {
+            "entry_loaded": {
+                "variables": {
+                    "entry.state": "ConfigEntryState.LOADED"
+                }
+            },
+            "flows_present": {
+                "variables": {
+                    "len(flows)": "1"
+                }
+            },
+            "reauth_flow": {
+                "variables": {
+                    "flow.get('step_id')": "reauth_confirm",
+                    "flow.get('handler')": "DOMAIN",
+                    "context": "flow",
+                    "flow['context'].get('source')": "SOURCE_REAUTH",
+                    "flow['context'].get('entry_id')": "entry.entry_id"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "entry_loaded",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entries": 2
+                }
+            },
+            {
+                "action": "press_button_service",
+                "starting_state": "entry_loaded",
+                "ending_state": "flows_present",
+                "inputs": {
+                    "domain": "BUTTON_DOMAIN",
+                    "service": "SERVICE_PRESS",
+                    "entity_id": "button.test_name_restart"
+                }
+            },
+            {
+                "action": "async_progress",
+                "starting_state": "flows_present",
+                "ending_state": "reauth_flow",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_blu_trv_button",
+        "device_type": "blu_trv",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_snapshot": {
+                "variables": {
+                    "state": "snapshot(name=f'{entity_id}-state')"
+                }
+            },
+            "entry_snapshot": {
+                "variables": {
+                    "entry": "snapshot(name=f'{entity_id}-entry')"
+                }
+            },
+            "final_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_snapshot",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 3,
+                    "model": "MODEL_BLU_GATEWAY_G3"
+                }
+            },
+            {
+                "action": "entity_registry.async_get",
+                "starting_state": "state_snapshot",
+                "ending_state": "entry_snapshot",
+                "inputs": {
+                    "entity_id": "button.trv_name_calibrate"
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "entry_snapshot",
+                "ending_state": "final_state",
+                "inputs": {
+                    "domain": "BUTTON_DOMAIN",
+                    "service": "SERVICE_PRESS",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "button.trv_name_calibrate"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "mock_blu_trv.trigger_blu_trv_calibration.assert_called_once_with",
+                "starting_state": "final_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "value": 200
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_blu_trv_button_exc",
+        "device_type": "blu_trv",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "setup_state": {
+                "variables": {}
+            },
+            "error_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "setup_state",
+                "inputs": {
+                    "hass": "hass",
+                    "gateway_count": 3,
+                    "model": "MODEL_BLU_GATEWAY_G3"
+                }
+            },
+            {
+                "action": "set_side_effect",
+                "starting_state": "setup_state",
+                "ending_state": "setup_state",
+                "inputs": {
+                    "target": "mock_blu_trv.trigger_blu_trv_calibration",
+                    "side_effect": "exception"
+                }
+            },
+            {
+                "action": "press_button_service",
+                "starting_state": "setup_state",
+                "ending_state": "error_state",
+                "inputs": {
+                    "domain": "button",
+                    "service": "press",
+                    "entity_id": "button.trv_name_calibrate",
+                    "expected_exception": "HomeAssistantError"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_blu_trv_button_auth_error",
+        "device_type": "blu_trv",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_loaded": {
+                "variables": {
+                    "entry.state": "ConfigEntryState.LOADED"
+                }
+            },
+            "state_flows": {
+                "variables": {
+                    "len(flows)": "1"
+                }
+            },
+            "state_flow_details": {
+                "variables": {
+                    "flow.get('step_id')": "'reauth_confirm'",
+                    "flow.get('handler')": "DOMAIN",
+                    "'context'": "flow",
+                    "flow['context'].get('source')": "SOURCE_REAUTH",
+                    "flow['context'].get('entry_id')": "entry.entry_id"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_loaded",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entries": 3,
+                    "model": "MODEL_BLU_GATEWAY_G3"
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "state_loaded",
+                "ending_state": "state_flows",
+                "inputs": {
+                    "domain": "BUTTON_DOMAIN",
+                    "service": "SERVICE_PRESS",
+                    "service_data": {
+                        "entity_id": "button.trv_name_calibrate"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "inspect_flow",
+                "starting_state": "state_flows",
+                "ending_state": "state_flow_details",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_virtual_button",
+        "device_type": "rpc_device",
+        "states": {
+            "post_init": {
+                "variables": {
+                    "state": "snapshot(name=f'{entity_id}-state')",
+                    "entry": "snapshot(name=f'{entity_id}-entry')"
+                }
+            },
+            "post_press": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_init",
+                "inputs": {
+                    "hass": "hass",
+                    "value": 3
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "post_init",
+                "ending_state": "post_press",
+                "inputs": {
+                    "domain": "BUTTON_DOMAIN",
+                    "service": "SERVICE_PRESS",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "entity_id"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "mock_rpc_device.button_trigger.assert_called_once_with",
+                "starting_state": "post_press",
+                "ending_state": "post_press",
+                "inputs": {
+                    "button_id": 200,
+                    "event": "single_push"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_remove_virtual_button_when_orphaned",
+        "device_type": "virtual_button",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "after_init_integration": {
+                "variables": {}
+            },
+            "after_register_device": {
+                "variables": {}
+            },
+            "after_register_entity": {
+                "variables": {}
+            },
+            "after_async_setup": {
+                "variables": {}
+            },
+            "after_block_till_done": {
+                "variables": {}
+            },
+            "after_get_entity": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "after_init_integration",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 3,
+                    "skip_setup": true
+                }
+            },
+            {
+                "action": "register_device",
+                "starting_state": "after_init_integration",
+                "ending_state": "after_register_device",
+                "inputs": {
+                    "device_registry": "device_registry",
+                    "config_entry": "config_entry"
+                }
+            },
+            {
+                "action": "register_entity",
+                "starting_state": "after_register_device",
+                "ending_state": "after_register_entity",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "BUTTON_DOMAIN",
+                    "name": "test_name_button_200",
+                    "entity_key": "button:200",
+                    "config_entry": "config_entry",
+                    "device_id": "device_entry.id"
+                }
+            },
+            {
+                "action": "async_setup",
+                "starting_state": "after_register_entity",
+                "ending_state": "after_async_setup",
+                "inputs": {
+                    "entry_id": "config_entry.entry_id"
+                }
+            },
+            {
+                "action": "async_block_till_done",
+                "starting_state": "after_async_setup",
+                "ending_state": "after_block_till_done",
+                "inputs": {}
+            },
+            {
+                "action": "async_get",
+                "starting_state": "after_block_till_done",
+                "ending_state": "after_get_entity",
+                "inputs": {
+                    "entity_id": "entity_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_wall_display_virtual_button",
+        "device_type": "wall_display",
+        "states": {
+            "state": {
+                "variables": {
+                    "snapshot": "snapshot(name=f'{entity_id}-state')"
+                }
+            },
+            "entry": {
+                "variables": {
+                    "snapshot": "snapshot(name=f'{entity_id}-entry')"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state",
+                "inputs": {
+                    "hass": "hass",
+                    "config_version": 3
+                }
+            },
+            {
+                "action": "press_button",
+                "starting_state": "state",
+                "ending_state": "entry",
+                "inputs": {
+                    "domain": "BUTTON_DOMAIN",
+                    "service": "SERVICE_PRESS",
+                    "service_data": {
+                        "entity_id": "button.test_name_button"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_smoke_mute_alarm_button",
+        "device_type": "smoke",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "STATE_UNAVAILABLE"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN"
+                }
+            },
+            "state_4": {
+                "variables": {
+                    "state.state": "STATE_UNAVAILABLE"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "device_index": 2,
+                    "sleep_period": 1000,
+                    "model": "MODEL_PLUS_SMOKE"
+                }
+            },
+            {
+                "action": "mock_rpc_device.mock_online + hass.async_block_till_done",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
+            },
+            {
+                "action": "mutate_rpc_device_status + mock_rpc_device.mock_update",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "entity": "smoke:0",
+                    "attribute": "alarm",
+                    "value": true
+                }
+            },
+            {
+                "action": "button_press_service_call + mock_rpc_device.mock_update + reset_initialized",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
+                "inputs": {
+                    "domain": "BUTTON_DOMAIN",
+                    "service": "SERVICE_PRESS",
+                    "entity_id": "entity_id",
+                    "blocking": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_wall_display_screen_buttons",
+        "device_type": "wall_display",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_press": {
+                "variables": {
+                    "state": "snapshot(name=f'{entity_id}-state')",
+                    "entry": "snapshot(name=f'{entity_id}-entry')"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "press",
+                "starting_state": "initial_state",
+                "ending_state": "post_press",
+                "inputs": {
+                    "entity_id": "entity_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_remove_restart_button_for_sleeping_devices",
+        "device_type": "sleeping_device",
+        "states": {
+            "pre_setup": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            },
+            "post_setup": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialize_test_environment",
+                "starting_state": "initial_state",
+                "ending_state": "pre_setup",
+                "inputs": {
+                    "config_entry": "await init_integration(hass, 2, sleep_period=1000, skip_setup=True)",
+                    "device_entry": "register_device(device_registry, config_entry)",
+                    "entity_id": "register_entity(hass, BUTTON_DOMAIN, 'test_name_restart', 'reboot', config_entry, device_id=device_entry.id)"
+                }
+            },
+            {
+                "action": "async_setup_config_entry",
+                "starting_state": "pre_setup",
+                "ending_state": "post_setup",
+                "inputs": {
+                    "config_entry_id": "config_entry.entry_id"
+                }
+            }
+        ]
+    }
+]

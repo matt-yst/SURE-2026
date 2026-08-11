@@ -1,0 +1,902 @@
+[
+    {
+        "name": "test_block_get_block_number_of_channels",
+        "device_type": "block",
+        "states": {
+            "state1": {
+                "variables": {
+                    "get_block_number_of_channels(mock_block_device, mock_block_device.blocks[DEVICE_BLOCK_ID])": "3"
+                }
+            },
+            "state2": {
+                "variables": {
+                    "get_block_number_of_channels(mock_block_device, mock_block_device.blocks[DEVICE_BLOCK_ID])": "4"
+                }
+            },
+            "state3": {
+                "variables": {
+                    "get_block_number_of_channels(mock_block_device, mock_block_device.blocks[DEVICE_BLOCK_ID])": "2"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.setattr & monkeypatch.setitem (emeter setup)",
+                "starting_state": "initial_state",
+                "ending_state": "state1",
+                "inputs": {
+                    "mock_block_device.blocks[DEVICE_BLOCK_ID].type": "emeter",
+                    "mock_block_device.shelly['num_emeters']": 3
+                }
+            },
+            {
+                "action": "monkeypatch.setitem & monkeypatch.setattr (input setup)",
+                "starting_state": "state1",
+                "ending_state": "state2",
+                "inputs": {
+                    "mock_block_device.shelly['num_inputs']": 4,
+                    "mock_block_device.blocks[DEVICE_BLOCK_ID].type": "input"
+                }
+            },
+            {
+                "action": "monkeypatch.setitem (device type change)",
+                "starting_state": "state2",
+                "ending_state": "state3",
+                "inputs": {
+                    "mock_block_device.settings['device']['type']": "MODEL_DIMMER_2"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_is_block_momentary_input",
+        "device_type": "MODEL_1L / MODEL_BUTTON1_V2",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "is_block_momentary_input(mock_block_device.settings, mock_block_device.blocks[DEVICE_BLOCK_ID])": "False",
+                    "is_block_momentary_input(mock_block_device.settings, mock_block_device.blocks[DEVICE_BLOCK_ID], True)": "True"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "is_block_momentary_input(mock_block_device.settings, mock_block_device.blocks[DEVICE_BLOCK_ID], True)": "False"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "is_block_momentary_input(mock_block_device.settings, mock_block_device.blocks[DEVICE_BLOCK_ID])": "False"
+                }
+            },
+            "state_4": {
+                "variables": {
+                    "is_block_momentary_input(mock_block_device.settings, mock_block_device.blocks[DEVICE_BLOCK_ID])": "True"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "configure_initial",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "setattr": {
+                        "target": "mock_block_device.blocks[DEVICE_BLOCK_ID]",
+                        "attribute": "type",
+                        "value": "relay"
+                    },
+                    "setitem_mode": {
+                        "target": "mock_block_device.settings",
+                        "key": "mode",
+                        "value": "roller"
+                    },
+                    "setitem_rollers": {
+                        "target": "mock_block_device.settings['rollers']",
+                        "value": "[{'button_type': 'detached'}]"
+                    }
+                }
+            },
+            {
+                "action": "set_mode_and_device_type",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "setitem_mode": {
+                        "target": "mock_block_device.settings",
+                        "key": "mode",
+                        "value": "relay"
+                    },
+                    "setitem_device_type": {
+                        "target": "mock_block_device.settings['device']",
+                        "key": "type",
+                        "value": "MODEL_1L"
+                    }
+                }
+            },
+            {
+                "action": "delete_settings_keys",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "delitem_inputs": {
+                        "target": "mock_block_device.settings",
+                        "key": "inputs"
+                    },
+                    "delitem_relays": {
+                        "target": "mock_block_device.settings",
+                        "key": "relays"
+                    },
+                    "delitem_rollers": {
+                        "target": "mock_block_device.settings",
+                        "key": "rollers"
+                    }
+                }
+            },
+            {
+                "action": "set_device_type_button",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
+                "inputs": {
+                    "setitem_device_type": {
+                        "target": "mock_block_device.settings['device']",
+                        "key": "type",
+                        "value": "MODEL_BUTTON1_V2"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_block_device_sleep_period",
+        "device_type": "block_device",
+        "states": {
+            "assert_state": {
+                "variables": {
+                    "get_block_device_sleep_period(settings)": "sleep_period"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_block_device_sleep_period",
+                "starting_state": "initial_state",
+                "ending_state": "assert_state",
+                "inputs": {
+                    "settings": null
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_block_input_triggers",
+        "device_type": "varies (MODEL_BUTTON1, MODEL_I3)",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "input_triggers": "{('long', 'button'), ('single', 'button')}"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "input_triggers": "{('long', 'button'), ('double', 'button'), ('single', 'button'), ('triple', 'button')}"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "input_triggers": "{('long_single', 'button'), ('single_long', 'button'), ('triple', 'button'), ('long', 'button'), ('single', 'button'), ('double', 'button')}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_initial",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "setattr": {
+                        "target": "mock_block_device.blocks[DEVICE_BLOCK_ID].sensor_ids",
+                        "value": {
+                            "inputEvent": "S",
+                            "inputEventCnt": 0
+                        }
+                    },
+                    "setitem": {
+                        "target": "mock_block_device.settings['rollers']",
+                        "value": [
+                            {
+                                "button_type": "detached"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "action": "set_device_type",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "target": "mock_block_device.settings['device']['type']",
+                    "value": "MODEL_BUTTON1"
+                }
+            },
+            {
+                "action": "set_device_type",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "target": "mock_block_device.settings['device']['type']",
+                    "value": "MODEL_I3"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_rpc_channel_name",
+        "device_type": "rpc_device",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "get_rpc_channel_name(mock_rpc_device, 'input:0')": "Test input 0",
+                    "get_rpc_channel_name(mock_rpc_device, 'input:3')": "Input 3"
+                }
+            }
+        },
+        "transitions": []
+    },
+    {
+        "name": "test_get_rpc_channel_name_multiple_components",
+        "device_type": "rpc_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_0": {
+                "variables": {
+                    "get_rpc_channel_name(mock_rpc_device, f'{component}:0')": "expected"
+                }
+            },
+            "state_1": {
+                "variables": {
+                    "get_rpc_channel_name(mock_rpc_device, f'{component}:1')": "expected"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_rpc_channel_name",
+                "starting_state": "initial_state",
+                "ending_state": "state_0",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "channel": "f'{component}:0'"
+                }
+            },
+            {
+                "action": "get_rpc_channel_name",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "channel": "f'{component}:1'"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_rpc_input_triggers",
+        "device_type": "rpc",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_button": {
+                "variables": {
+                    "set(get_rpc_input_triggers(mock_rpc_device))": "{('btn_down', 'button1'), ('btn_up', 'button1'), ('single_push', 'button1'), ('double_push', 'button1'), ('triple_push', 'button1'), ('long_push', 'button1')}"
+                }
+            },
+            "state_switch": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.setattr",
+                "starting_state": "initial_state",
+                "ending_state": "state_button",
+                "inputs": {
+                    "target": "mock_rpc_device",
+                    "attribute": "config",
+                    "value": {
+                        "input:0": {
+                            "type": "button"
+                        }
+                    }
+                }
+            },
+            {
+                "action": "monkeypatch.setattr",
+                "starting_state": "state_button",
+                "ending_state": "state_switch",
+                "inputs": {
+                    "target": "mock_rpc_device",
+                    "attribute": "config",
+                    "value": {
+                        "input:0": {
+                            "type": "switch"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_shelly_receiver_get",
+        "device_type": "ShellyReceiver",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "after_get": {
+                "variables": {
+                    "response": "test_response"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "receiver.get",
+                "starting_state": "initial_state",
+                "ending_state": "after_get",
+                "inputs": {
+                    "mock_request": "Mock(spec=Request)"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_rpc_sub_device_name",
+        "device_type": "rpc_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "asserted_state": {
+                "variables": {
+                    "get_rpc_sub_device_name(mock_rpc_device, key)": "expected"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_rpc_sub_device_name",
+                "starting_state": "initial_state",
+                "ending_state": "asserted_state",
+                "inputs": {
+                    "mock_rpc_device": "mock_rpc_device",
+                    "key": "key"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_rpc_sub_device_name_with_custom_name",
+        "device_type": "switch",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "get_rpc_sub_device_name(mock_rpc_device, 'switch:0')": "My Custom Output"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_rpc_sub_device_name",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "mock_rpc_device": "mock_rpc_device",
+                    "device_id": "switch:0"
+                }
+            },
+            {
+                "action": "config_override",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "config": {
+                        "switch:0": {
+                            "name": "My Custom Output"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_rpc_sub_device_name_with_emeter_phase",
+        "device_type": "emeter",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_phase_A": {
+                "variables": {
+                    "get_rpc_sub_device_name(mock_rpc_device, 'em:0', 'A')": "Test name Phase A"
+                }
+            },
+            "state_phase_B": {
+                "variables": {
+                    "get_rpc_sub_device_name(mock_rpc_device, 'em:0', 'B')": "Test name Phase B"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_rpc_sub_device_name",
+                "starting_state": "initial_state",
+                "ending_state": "state_phase_A",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "sub_device_id": "em:0",
+                    "phase": "A"
+                }
+            },
+            {
+                "action": "get_rpc_sub_device_name",
+                "starting_state": "state_phase_A",
+                "ending_state": "state_phase_B",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "sub_device_id": "em:0",
+                    "phase": "B"
+                }
+            }
+        ]
+    }
+][
+    {
+        "name": "test_block_get_block_number_of_channels",
+        "device_type": "block",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "get_block_number_of_channels(mock_block_device, mock_block_device.blocks[DEVICE_BLOCK_ID])": "3"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "get_block_number_of_channels(mock_block_device, mock_block_device.blocks[DEVICE_BLOCK_ID])": "4"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "get_block_number_of_channels(mock_block_device, mock_block_device.blocks[DEVICE_BLOCK_ID])": "2"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_emeter",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "type": "emeter",
+                    "num_emeters": 3
+                }
+            },
+            {
+                "action": "setup_input",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "type": "input",
+                    "num_inputs": 4
+                }
+            },
+            {
+                "action": "set_device_type_dimmer2",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "device_type": "MODEL_DIMMER_2"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_is_block_momentary_input",
+        "device_type": "MODEL_BUTTON1_V2",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "is_block_momentary_input(mock_block_device.settings, mock_block_device.blocks[DEVICE_BLOCK_ID])": "False",
+                    "is_block_momentary_input(mock_block_device.settings, mock_block_device.blocks[DEVICE_BLOCK_ID], True)": "True"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "is_block_momentary_input(mock_block_device.settings, mock_block_device.blocks[DEVICE_BLOCK_ID], True)": "False"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "is_block_momentary_input(mock_block_device.settings, mock_block_device.blocks[DEVICE_BLOCK_ID])": "False"
+                }
+            },
+            "state_4": {
+                "variables": {
+                    "is_block_momentary_input(mock_block_device.settings, mock_block_device.blocks[DEVICE_BLOCK_ID])": "True"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "configure_block_and_initial_settings",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "setattr": "mock_block_device.blocks[DEVICE_BLOCK_ID].type = 'relay'",
+                    "setitem_mode": "mock_block_device.settings['mode'] = 'roller'",
+                    "setitem_rollers": "mock_block_device.settings['rollers'] = [{'button_type': 'detached'}]"
+                }
+            },
+            {
+                "action": "change_mode_and_device_type_to_MODEL_1L",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "setitem_mode": "mock_block_device.settings['mode'] = 'relay'",
+                    "setitem_device_type": "mock_block_device.settings['device']['type'] = MODEL_1L"
+                }
+            },
+            {
+                "action": "remove_inputs_relays_rollers",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "delitem_inputs": "del mock_block_device.settings['inputs']",
+                    "delitem_relays": "del mock_block_device.settings['relays']",
+                    "delitem_rollers": "del mock_block_device.settings['rollers']"
+                }
+            },
+            {
+                "action": "set_device_type_to_MODEL_BUTTON1_V2",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
+                "inputs": {
+                    "setitem_device_type": "mock_block_device.settings['device']['type'] = MODEL_BUTTON1_V2"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_block_device_sleep_period",
+        "device_type": "block_device",
+        "states": {
+            "snapshot_state": {
+                "variables": {
+                    "sleep_period": "<value from get_block_device_sleep_period(settings)>"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_block_device_sleep_period",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot_state",
+                "inputs": {
+                    "settings": "<provided settings object>"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_block_input_triggers",
+        "device_type": "various",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_default": {
+                "variables": {
+                    "set(get_block_input_triggers(mock_block_device, mock_block_device.blocks[DEVICE_BLOCK_ID]))": "{('long', 'button'), ('single', 'button')}"
+                }
+            },
+            "state_model_button1": {
+                "variables": {
+                    "set(get_block_input_triggers(mock_block_device, mock_block_device.blocks[DEVICE_BLOCK_ID]))": "{('long', 'button'), ('double', 'button'), ('single', 'button'), ('triple', 'button')}"
+                }
+            },
+            "state_model_i3": {
+                "variables": {
+                    "set(get_block_input_triggers(mock_block_device, mock_block_device.blocks[DEVICE_BLOCK_ID]))": "{('long_single', 'button'), ('single_long', 'button'), ('triple', 'button'), ('long', 'button'), ('single', 'button'), ('double', 'button')}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_sensor_and_rollers",
+                "starting_state": "initial_state",
+                "ending_state": "state_default",
+                "inputs": {
+                    "sensor_ids": {
+                        "inputEvent": "S",
+                        "inputEventCnt": 0
+                    },
+                    "rollers": [
+                        {
+                            "button_type": "detached"
+                        }
+                    ]
+                }
+            },
+            {
+                "action": "set_device_type",
+                "starting_state": "state_default",
+                "ending_state": "state_model_button1",
+                "inputs": {
+                    "type": "MODEL_BUTTON1"
+                }
+            },
+            {
+                "action": "set_device_type",
+                "starting_state": "state_model_button1",
+                "ending_state": "state_model_i3",
+                "inputs": {
+                    "type": "MODEL_I3"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_rpc_channel_name",
+        "device_type": "rpc_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "get_rpc_channel_name(mock_rpc_device, 'input:0')": "Test input 0"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "get_rpc_channel_name(mock_rpc_device, 'input:3')": "Input 3"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_rpc_channel_name",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "channel": "input:0"
+                }
+            },
+            {
+                "action": "get_rpc_channel_name",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "channel": "input:3"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_rpc_channel_name_multiple_components",
+        "device_type": "rpc_device",
+        "states": {
+            "state_0": {
+                "variables": {
+                    "get_rpc_channel_name(mock_rpc_device, f'{component}:0')": "expected"
+                }
+            },
+            "state_1": {
+                "variables": {
+                    "get_rpc_channel_name(mock_rpc_device, f'{component}:1')": "expected"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_rpc_channel_name",
+                "starting_state": "initial_state",
+                "ending_state": "state_0",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "component": "f'{component}:0'"
+                }
+            },
+            {
+                "action": "get_rpc_channel_name",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "component": "f'{component}:1'"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_rpc_input_triggers",
+        "device_type": "rpc",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "set(get_rpc_input_triggers(mock_rpc_device))": "{('btn_down', 'button1'), ('btn_up', 'button1'), ('single_push', 'button1'), ('double_push', 'button1'), ('triple_push', 'button1'), ('long_push', 'button1')}"
+                }
+            },
+            "state_2": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.setattr",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "target": "mock_rpc_device",
+                    "attribute": "config",
+                    "value": {
+                        "input:0": {
+                            "type": "button"
+                        }
+                    }
+                }
+            },
+            {
+                "action": "monkeypatch.setattr",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "target": "mock_rpc_device",
+                    "attribute": "config",
+                    "value": {
+                        "input:0": {
+                            "type": "switch"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_shelly_receiver_get",
+        "device_type": "ShellyReceiver",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "response_state": {
+                "variables": {
+                    "response": "test_response"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get",
+                "starting_state": "initial_state",
+                "ending_state": "response_state",
+                "inputs": {
+                    "request": "mock_request"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_rpc_sub_device_name",
+        "device_type": "rpc",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "get_rpc_sub_device_name(mock_rpc_device, key)": "expected"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_rpc_sub_device_name",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "mock_rpc_device": "mock_rpc_device",
+                    "key": "key"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_rpc_sub_device_name_with_custom_name",
+        "device_type": "switch",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "get_rpc_sub_device_name(mock_rpc_device, 'switch:0')": "My Custom Output"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_rpc_sub_device_name",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "sub_device_id": "switch:0"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_rpc_sub_device_name_with_emeter_phase",
+        "device_type": "em",
+        "states": {
+            "state_A": {
+                "variables": {
+                    "get_rpc_sub_device_name(mock_rpc_device, 'em:0', 'A')": "Test name Phase A"
+                }
+            },
+            "state_B": {
+                "variables": {
+                    "get_rpc_sub_device_name(mock_rpc_device, 'em:0', 'B')": "Test name Phase B"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_rpc_sub_device_name",
+                "starting_state": "initial_state",
+                "ending_state": "state_A",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "sub_device_id": "em:0",
+                    "phase": "A"
+                }
+            },
+            {
+                "action": "get_rpc_sub_device_name",
+                "starting_state": "initial_state",
+                "ending_state": "state_B",
+                "inputs": {
+                    "device": "mock_rpc_device",
+                    "sub_device_id": "em:0",
+                    "phase": "B"
+                }
+            },
+            {
+                "action": "setattr",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "target": "mock_rpc_device",
+                    "attribute": "config",
+                    "value": {
+                        "em:0": {
+                            "name": null
+                        }
+                    }
+                }
+            }
+        ]
+    }
+]

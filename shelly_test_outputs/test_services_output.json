@@ -1,0 +1,296 @@
+[
+    {
+        "name": "test_service_get_kvs_value",
+        "device_type": "generic_device",
+        "states": {
+            "response_state": {
+                "variables": {
+                    "response": "{'value': 'test_value'}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "initial_state",
+                "ending_state": "response_state",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "service": "SERVICE_GET_KVS_VALUE",
+                    "service_data": {
+                        "ATTR_DEVICE_ID": "device.id",
+                        "ATTR_KEY": "test_key"
+                    },
+                    "blocking": true,
+                    "return_response": true
+                }
+            },
+            {
+                "action": "mock_rpc_device.kvs_get",
+                "starting_state": "response_state",
+                "ending_state": "response_state",
+                "inputs": {
+                    "key": "test_key"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_service_get_kvs_value_invalid_device",
+        "device_type": "device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "error_state": {
+                "variables": {
+                    "exc_info.value.translation_domain": "DOMAIN",
+                    "exc_info.value.translation_key": "'invalid_device_id'",
+                    "exc_info.value.translation_placeholders": "{ATTR_DEVICE_ID: 'invalid_device_id'}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "hass": "hass",
+                    "device_count": 2
+                }
+            },
+            {
+                "action": "services.async_call",
+                "starting_state": "initial_state",
+                "ending_state": "error_state",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "service": "SERVICE_GET_KVS_VALUE",
+                    "service_data": {
+                        "ATTR_DEVICE_ID": "invalid_device_id",
+                        "ATTR_KEY": "test_key"
+                    },
+                    "blocking": true,
+                    "return_response": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_service_get_kvs_value_block_device",
+        "device_type": "block_device",
+        "states": {
+            "error_state": {
+                "variables": {
+                    "exc_info.value.translation_domain": "DOMAIN",
+                    "exc_info.value.translation_key": "kvs_not_supported",
+                    "exc_info.value.translation_placeholders": "{'device': entry.title}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "initial_state",
+                "ending_state": "error_state",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "service": "SERVICE_GET_KVS_VALUE",
+                    "service_data": {
+                        "device_id": "device.id",
+                        "key": "test_key"
+                    },
+                    "blocking": true,
+                    "return_response": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_service_get_kvs_value_exc",
+        "device_type": "generic",
+        "states": {
+            "exception_state": {
+                "variables": {
+                    "exc_info.value.translation_domain": "DOMAIN",
+                    "exc_info.value.translation_key": "translation_key",
+                    "exc_info.value.translation_placeholders": "{'device': entry.title}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "initial_state",
+                "ending_state": "exception_state",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "service": "SERVICE_GET_KVS_VALUE",
+                    "service_data": {
+                        "device_id": "device.id",
+                        "key": "test_key"
+                    },
+                    "blocking": true,
+                    "return_response": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_config_entry_not_loaded",
+        "device_type": "config_entry",
+        "states": {
+            "state_not_loaded": {
+                "variables": {
+                    "entry.state": "ConfigEntryState.NOT_LOADED"
+                }
+            },
+            "error_state": {
+                "variables": {
+                    "exc_info.value.translation_domain": "DOMAIN",
+                    "exc_info.value.translation_key": "'entry_not_loaded'",
+                    "exc_info.value.translation_placeholders": "{'device': entry.title}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "config_entries.async_unload",
+                "starting_state": "initial_state",
+                "ending_state": "state_not_loaded",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "services.async_call",
+                "starting_state": "state_not_loaded",
+                "ending_state": "error_state",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "service": "SERVICE_GET_KVS_VALUE",
+                    "service_data": {
+                        "device_id": "device.id",
+                        "key": "test_key"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_service_get_kvs_value_sleeping_device",
+        "device_type": "sleeping_device",
+        "states": {
+            "error_state": {
+                "variables": {
+                    "exc_info.value.translation_domain": "DOMAIN",
+                    "exc_info.value.translation_key": "kvs_not_supported",
+                    "exc_info.value.translation_placeholders": "{'device': entry.title}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "service_call",
+                "starting_state": "initial_state",
+                "ending_state": "error_state",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "service": "SERVICE_GET_KVS_VALUE",
+                    "device_id": "device.id",
+                    "key": "test_key"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_service_set_kvs_value",
+        "device_type": "rpc_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_service_call": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "initial_state",
+                "ending_state": "post_service_call",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "service": "SERVICE_SET_KVS_VALUE",
+                    "service_data": {
+                        "ATTR_DEVICE_ID": "device.id",
+                        "ATTR_KEY": "test_key",
+                        "ATTR_VALUE": "test_value"
+                    },
+                    "blocking": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_service_get_kvs_value_device_not_initialized",
+        "device_type": "device",
+        "states": {
+            "error_state": {
+                "variables": {
+                    "exc_info.value.translation_domain": "DOMAIN",
+                    "exc_info.value.translation_key": "device_not_initialized",
+                    "exc_info.value.translation_placeholders": "{'device': entry.title}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "initial_state",
+                "ending_state": "error_state",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "service": "SERVICE_GET_KVS_VALUE",
+                    "data": {
+                        "ATTR_DEVICE_ID": "device.id",
+                        "ATTR_KEY": "test_key"
+                    },
+                    "blocking": true,
+                    "return_response": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_service_get_kvs_value_wrong_domain",
+        "device_type": "device",
+        "states": {
+            "error_state": {
+                "variables": {
+                    "exc_info.value.translation_domain": "DOMAIN",
+                    "exc_info.value.translation_key": "config_entry_not_found",
+                    "exc_info.value.translation_placeholders": "{'device_id': device.id}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "service_call",
+                "starting_state": "initial_state",
+                "ending_state": "error_state",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "service": "SERVICE_GET_KVS_VALUE",
+                    "data": {
+                        "ATTR_DEVICE_ID": "device.id",
+                        "ATTR_KEY": "test_key"
+                    },
+                    "blocking": true,
+                    "return_response": true
+                }
+            }
+        ]
+    }
+]

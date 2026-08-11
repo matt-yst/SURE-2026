@@ -1,0 +1,112 @@
+[
+    {
+        "name": "test_humanify_shelly_click_event_block_device",
+        "device_type": "shelly",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "humanified_events": {
+                "variables": {
+                    "event1['name']": "'Shelly'",
+                    "event1['domain']": "DOMAIN",
+                    "event1['message']": "'single' click event for Test name channel 1 Input was fired",
+                    "event2['name']": "'Shelly'",
+                    "event2['domain']": "DOMAIN",
+                    "event2['message']": "'long' click event for shellyswitch25-12345678 channel 2 Input was fired"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "<HomeAssistant instance>",
+                    "device_count": 1
+                }
+            },
+            {
+                "action": "mock_humanify",
+                "starting_state": "integration_initialized",
+                "ending_state": "humanified_events",
+                "inputs": {
+                    "event_rows": [
+                        "MockRow(EVENT_SHELLY_CLICK, {ATTR_DEVICE_ID: device.id, ATTR_DEVICE: 'shellyix3-12345678', ATTR_CLICK_TYPE: 'single', ATTR_CHANNEL: 1})",
+                        "MockRow(EVENT_SHELLY_CLICK, {ATTR_DEVICE_ID: 'no_device_id', ATTR_DEVICE: 'shellyswitch25-12345678', ATTR_CLICK_TYPE: 'long', ATTR_CHANNEL: 2})"
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_humanify_shelly_click_event_rpc_device",
+        "device_type": "shelly_rpc",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "initialized": {
+                "variables": {}
+            },
+            "humanified_events": {
+                "variables": {
+                    "event1['name']": "Shelly",
+                    "event1['domain']": "DOMAIN",
+                    "event1['message']": "'single_push' click event for Test name Test input 0 Input was fired",
+                    "event2['name']": "Shelly",
+                    "event2['domain']": "DOMAIN",
+                    "event2['message']": "'btn_down' click event for shellypro4pm-12345678 channel 2 Input was fired"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "initialized",
+                "inputs": {
+                    "hass": "<HomeAssistant instance>",
+                    "device_count": 2,
+                    "additional_setup": [
+                        "device = dr.async_entries_for_config_entry(device_registry, entry.entry_id)[0]",
+                        "hass.config.components.add('recorder')",
+                        "await hass.async_block_till_done()"
+                    ]
+                }
+            },
+            {
+                "action": "mock_humanify",
+                "starting_state": "initialized",
+                "ending_state": "humanified_events",
+                "inputs": {
+                    "hass": "<HomeAssistant instance>",
+                    "rows": [
+                        {
+                            "event_type": "EVENT_SHELLY_CLICK",
+                            "attributes": {
+                                "ATTR_DEVICE_ID": "<device.id>",
+                                "ATTR_DEVICE": "shellyplus1pm-12345678",
+                                "ATTR_CLICK_TYPE": "single_push",
+                                "ATTR_CHANNEL": 1
+                            }
+                        },
+                        {
+                            "event_type": "EVENT_SHELLY_CLICK",
+                            "attributes": {
+                                "ATTR_DEVICE_ID": "no_device_id",
+                                "ATTR_DEVICE": "shellypro4pm-12345678",
+                                "ATTR_CLICK_TYPE": "btn_down",
+                                "ATTR_CHANNEL": 2
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+]
