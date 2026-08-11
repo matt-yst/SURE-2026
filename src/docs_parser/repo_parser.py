@@ -144,7 +144,7 @@ if __name__ == "__main__":
     print("FILES IN COMPONENT DIRECTORY: ")
     print_files(component_dir, 0)
 
-    output_folder = script_dir / "shelly_test_outputs"
+    output_folder = script_dir / "shelly_test_outputs2"
     output_folder.mkdir(exist_ok=True)
 
     print("\n")
@@ -185,26 +185,26 @@ if __name__ == "__main__":
 
 
 
-            # for i in range(len(tests)):
-            #     print(tests[i])
-            #     print("\n")
-            #     print("********************************************************************************************************")
-            #     print("\n")
+            for i in range(len(tests)):
+                print(tests[i])
+                print("\n")
+                print("********************************************************************************************************")
+                print("\n")
 
-            #     prompt = f"""Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}.
-            #     Utilise the schema in the provided format
-            #     'name' is the name of the test function
-            #     'device_type' is the type of device being tested, meant to be extracted from the test case name or source code.
-            #     'states' are defined as the snapshot asserts within the test case behaviour. Extract all the listed entries within the snapshot dictionary objects to be the entries in the "variables" field of the state object.
-            #     'transitions' are the actions moving from one state to another, the 'starting_state' and 'ending_state'. The 'action' is the action involved with the state transition, and 'inputs' are the parameters of the action. the statring and ending sattes must be defined in the 'states' field, and the other information must be taken from the behaviour field of the 'tests' list. 
+                prompt = f"""Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}.
+                Utilise the schema in the provided format
+                'name' is the name of the test function
+                'device_type' is the type of device being tested, meant to be extracted from the test case name or source code.
+                'states' are defined as the snapshot asserts within the test case behaviour. Extract all the listed entries within the snapshot dictionary objects to be the entries in the "variables" field of the state object.
+                'transitions' are the actions moving from one state to another, the 'starting_state' and 'ending_state'. The 'action' is the action involved with the state transition, and 'inputs' are the parameters of the action. the statring and ending sattes must be defined in the 'states' field, and the other information must be taken from the behaviour field of the 'tests' list. 
 
-            #     If you find that an initialisation state is not explicityly defined by asserts but a transition action is present (let's say an initiialisation function is called for example), you can assume the initial state has no variables to assert. However, do name this null state as "initial_state" in the list of transitions
-            #     """
+                If you find that an initialisation state is not explicityly defined by asserts but a transition action is present (let's say an initiialisation function is called for example), you can assume the initial state has no variables to assert. However, do name this null state as "initial_state" in the list of transitions
+                """
 
-            #     LLM_prompt(prompt)
+                LLM_prompt(prompt)
 
 
-            # output_file.write(json.dumps(output, indent=4))
-            # print(assert_types)
+            output_file.write(json.dumps(output, indent=4))
+            print(assert_types)
 
     print("total number of tests: " + str(no_of_tests))
