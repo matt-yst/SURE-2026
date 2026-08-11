@@ -1,9 +1,9 @@
 [
     {
         "name": "test_rpc_media_player",
-        "device_type": "media_player",
+        "device_type": "Shelly RPC media player",
         "states": {
-            "initial_state": {
+            "post_init": {
                 "variables": {
                     "state": "snapshot(name=f'{ENTITY_ID}-state', exclude=props('entity_picture_local'))",
                     "entry": "snapshot(name=f'{ENTITY_ID}-entry')"
@@ -18,17 +18,17 @@
         "transitions": [
             {
                 "action": "init_integration",
-                "starting_state": "null_state",
-                "ending_state": "initial_state",
+                "starting_state": "initial_state",
+                "ending_state": "post_init",
                 "inputs": {
                     "hass": "hass",
-                    "device_count": 2,
+                    "device_index": 2,
                     "model": "MODEL_WALL_DISPLAY"
                 }
             },
             {
-                "action": "mock_rpc_device.mock_update",
-                "starting_state": "initial_state",
+                "action": "mock_update",
+                "starting_state": "post_init",
                 "ending_state": "buffering_state",
                 "inputs": {}
             }
@@ -36,7 +36,7 @@
     },
     {
         "name": "test_rpc_media_player_audio_file",
-        "device_type": "media_player",
+        "device_type": "rpc_media_player",
         "states": {
             "initial_state": {
                 "variables": {}
@@ -44,9 +44,9 @@
             "playing_initial": {
                 "variables": {
                     "state.state": "STATE_PLAYING",
-                    "state.attributes[ATTR_MEDIA_TITLE]": "Title",
-                    "state.attributes[ATTR_MEDIA_ARTIST]": "Artist",
-                    "state.attributes[ATTR_MEDIA_ALBUM_NAME]": "Album Name",
+                    "state.attributes[ATTR_MEDIA_TITLE]": "'Title'",
+                    "state.attributes[ATTR_MEDIA_ARTIST]": "'Artist'",
+                    "state.attributes[ATTR_MEDIA_ALBUM_NAME]": "'Album Name'",
                     "state.attributes[ATTR_MEDIA_DURATION]": "132",
                     "state.attributes[ATTR_MEDIA_POSITION]": "64",
                     "state.attributes[ATTR_MEDIA_VOLUME_LEVEL]": "0.2"
@@ -76,32 +76,47 @@
                 "ending_state": "playing_initial",
                 "inputs": {
                     "hass": "hass",
-                    "device_index": 2,
+                    "device_count": 2,
                     "model": "MODEL_WALL_DISPLAY"
                 }
             },
             {
-                "action": "MEDIA_PLAYER_DOMAIN.SERVICE_MEDIA_PAUSE",
+                "action": "media_pause",
                 "starting_state": "playing_initial",
                 "ending_state": "idle_after_pause",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "ENTITY_ID"
+                    "domain": "MEDIA_PLAYER_DOMAIN",
+                    "service": "SERVICE_MEDIA_PAUSE",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "ENTITY_ID"
+                    },
+                    "blocking": true
                 }
             },
             {
-                "action": "MEDIA_PLAYER_DOMAIN.SERVICE_MEDIA_PLAY",
+                "action": "media_play",
                 "starting_state": "idle_after_pause",
                 "ending_state": "playing_after_play",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "ENTITY_ID"
+                    "domain": "MEDIA_PLAYER_DOMAIN",
+                    "service": "SERVICE_MEDIA_PLAY",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "ENTITY_ID"
+                    },
+                    "blocking": true
                 }
             },
             {
-                "action": "MEDIA_PLAYER_DOMAIN.SERVICE_MEDIA_STOP",
+                "action": "media_stop",
                 "starting_state": "playing_after_play",
                 "ending_state": "idle_after_stop",
                 "inputs": {
-                    "ATTR_ENTITY_ID": "ENTITY_ID"
+                    "domain": "MEDIA_PLAYER_DOMAIN",
+                    "service": "SERVICE_MEDIA_STOP",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "ENTITY_ID"
+                    },
+                    "blocking": true
                 }
             }
         ]
@@ -113,22 +128,22 @@
             "initial_state": {
                 "variables": {}
             },
-            "integration_initialized": {
+            "initialized_state": {
                 "variables": {}
             },
-            "next_track": {
+            "media_next_state": {
                 "variables": {}
             },
-            "previous_track": {
+            "media_previous_state": {
                 "variables": {}
             },
-            "volume_set": {
+            "volume_set_state": {
                 "variables": {}
             },
-            "play_audio": {
+            "play_audio_state": {
                 "variables": {}
             },
-            "play_radio": {
+            "play_radio_state": {
                 "variables": {}
             }
         },
@@ -136,118 +151,129 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "integration_initialized",
+                "ending_state": "initialized_state",
                 "inputs": {
                     "hass": "hass",
-                    "device_count": 2,
+                    "device_id": 2,
                     "model": "MODEL_WALL_DISPLAY"
                 }
             },
             {
-                "action": "media_next_track_service_call",
-                "starting_state": "integration_initialized",
-                "ending_state": "next_track",
+                "action": "media_next",
+                "starting_state": "initialized_state",
+                "ending_state": "media_next_state",
                 "inputs": {
-                    "domain": "media_player",
-                    "service": "media_next_track",
-                    "service_data": {
-                        "entity_id": "ENTITY_ID"
-                    },
-                    "blocking": true
+                    "service": "media_player.media_next_track",
+                    "entity_id": "ENTITY_ID"
                 }
             },
             {
-                "action": "media_previous_track_service_call",
-                "starting_state": "next_track",
-                "ending_state": "previous_track",
+                "action": "media_previous",
+                "starting_state": "media_next_state",
+                "ending_state": "media_previous_state",
                 "inputs": {
-                    "domain": "media_player",
-                    "service": "media_previous_track",
-                    "service_data": {
-                        "entity_id": "ENTITY_ID"
-                    },
-                    "blocking": true
+                    "service": "media_player.media_previous_track",
+                    "entity_id": "ENTITY_ID"
                 }
             },
             {
-                "action": "volume_set_service_call",
-                "starting_state": "previous_track",
-                "ending_state": "volume_set",
+                "action": "set_volume",
+                "starting_state": "media_previous_state",
+                "ending_state": "volume_set_state",
                 "inputs": {
-                    "domain": "media_player",
-                    "service": "volume_set",
-                    "service_data": {
-                        "entity_id": "ENTITY_ID",
-                        "media_volume_level": 0.5
-                    },
-                    "blocking": true
+                    "service": "media_player.volume_set",
+                    "entity_id": "ENTITY_ID",
+                    "volume_level": 0.5
                 }
             },
             {
-                "action": "play_media_service_call_audio",
-                "starting_state": "volume_set",
-                "ending_state": "play_audio",
+                "action": "play_media_audio",
+                "starting_state": "volume_set_state",
+                "ending_state": "play_audio_state",
                 "inputs": {
-                    "domain": "media_player",
-                    "service": "play_media",
-                    "service_data": {
-                        "entity_id": "ENTITY_ID",
-                        "media_content_type": "CONTENT_TYPE_AUDIO",
-                        "media_content_id": "12"
-                    },
-                    "blocking": true
+                    "service": "media_player.play_media",
+                    "entity_id": "ENTITY_ID",
+                    "media_content_type": "audio",
+                    "media_content_id": "12"
                 }
             },
             {
-                "action": "play_media_service_call_radio",
-                "starting_state": "play_audio",
-                "ending_state": "play_radio",
+                "action": "play_media_radio",
+                "starting_state": "play_audio_state",
+                "ending_state": "play_radio_state",
                 "inputs": {
-                    "domain": "media_player",
-                    "service": "play_media",
-                    "service_data": {
-                        "entity_id": "ENTITY_ID",
-                        "media_content_type": "CONTENT_TYPE_RADIO",
-                        "media_content_id": "2"
-                    },
-                    "blocking": true
+                    "service": "media_player.play_media",
+                    "entity_id": "ENTITY_ID",
+                    "media_content_type": "radio",
+                    "media_content_id": "2"
                 }
             }
         ]
     },
     {
         "name": "test_rpc_media_player_play_media_errors",
-        "device_type": "wall_display",
+        "device_type": "media_player",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "error_media_id": {
+            "initialized": {
                 "variables": {}
             },
-            "error_media_type": {
+            "error_unsupported_media_id": {
+                "variables": {}
+            },
+            "error_unsupported_media_type": {
                 "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "SERVICE_PLAY_MEDIA",
+                "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "error_media_id",
+                "ending_state": "initialized",
                 "inputs": {
-                    "entity_id": "ENTITY_ID",
-                    "media_content_type": "CONTENT_TYPE_RADIO",
-                    "media_content_id": "invalid"
+                    "hass": "<HomeAssistant instance>",
+                    "device_index": 2,
+                    "model": "MODEL_WALL_DISPLAY"
                 }
             },
             {
-                "action": "SERVICE_PLAY_MEDIA",
-                "starting_state": "initial_state",
-                "ending_state": "error_media_type",
+                "action": "async_call_play_media",
+                "starting_state": "initialized",
+                "ending_state": "error_unsupported_media_id",
                 "inputs": {
-                    "entity_id": "ENTITY_ID",
-                    "media_content_type": "invalid",
-                    "media_content_id": "1"
+                    "domain": "media_player",
+                    "service": "play_media",
+                    "service_data": {
+                        "entity_id": "ENTITY_ID",
+                        "media_content_type": "CONTENT_TYPE_RADIO",
+                        "media_content_id": "invalid"
+                    },
+                    "blocking": true,
+                    "expected_exception": {
+                        "type": "HomeAssistantError",
+                        "match": "Unsupported media ID for Shelly device: invalid"
+                    }
+                }
+            },
+            {
+                "action": "async_call_play_media",
+                "starting_state": "initialized",
+                "ending_state": "error_unsupported_media_type",
+                "inputs": {
+                    "domain": "media_player",
+                    "service": "play_media",
+                    "service_data": {
+                        "entity_id": "ENTITY_ID",
+                        "media_content_type": "invalid",
+                        "media_content_id": "1"
+                    },
+                    "blocking": true,
+                    "expected_exception": {
+                        "type": "HomeAssistantError",
+                        "match": "Unsupported media type for Shelly device: invalid"
+                    }
                 }
             }
         ]
@@ -256,9 +282,12 @@
         "name": "test_get_image_http",
         "device_type": "wall_display",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state_1": {
                 "variables": {
-                    "(state := hass.states.get(ENTITY_ID))": "None",
+                    "state": "None",
                     "entity_picture_local": "state.attributes"
                 }
             },
@@ -273,12 +302,12 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "config_entry_id": 2,
+                    "device_count": 2,
                     "model": "MODEL_WALL_DISPLAY"
                 }
             },
             {
-                "action": "client.get",
+                "action": "http_get_image",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
@@ -291,18 +320,18 @@
         "name": "test_get_image_http_stale_url_after_thumb_invalidated",
         "device_type": "wall_display",
         "states": {
-            "state0": {
+            "state_1": {
                 "variables": {
                     "state": "None"
                 }
             },
-            "state1": {
+            "state_2": {
                 "variables": {
                     "state": "None",
                     "entity_picture": "state.attributes"
                 }
             },
-            "state2": {
+            "state_3": {
                 "variables": {
                     "resp.status": "HTTPStatus.NOT_FOUND"
                 }
@@ -312,23 +341,25 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state0",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "entry_id": 2,
+                    "device_index": 2,
                     "model": "MODEL_WALL_DISPLAY"
                 }
             },
             {
-                "action": "mock_update_and_wait",
-                "starting_state": "state0",
-                "ending_state": "state1",
-                "inputs": {}
+                "action": "invalidate_thumb_and_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "invalid_thumb": "invalid_thumb"
+                }
             },
             {
-                "action": "client.get",
-                "starting_state": "state1",
-                "ending_state": "state2",
+                "action": "http_get_entity_picture",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
                     "entity_picture": "entity_picture"
                 }
@@ -344,7 +375,7 @@
             },
             "state_1": {
                 "variables": {
-                    "(state := hass.states.get(ENTITY_ID))": "None",
+                    "state": "None",
                     "entity_picture": "state.attributes"
                 }
             },
@@ -361,7 +392,7 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "config_entry_id": 2,
+                    "device_id": 2,
                     "model": "MODEL_WALL_DISPLAY"
                 }
             },
@@ -370,7 +401,7 @@
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
-                    "url": "/api/media_player_proxy/{ENTITY_ID}"
+                    "path": "/api/media_player_proxy/{ENTITY_ID}"
                 }
             }
         ]
@@ -379,9 +410,6 @@
         "name": "test_entity_picture_absent_thumb_string_invalid",
         "device_type": "wall_display",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
             "state_1": {
                 "variables": {
                     "(state := hass.states.get(ENTITY_ID))": "None",
@@ -401,7 +429,7 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "config_entry_id": 2,
+                    "param": "2",
                     "model": "MODEL_WALL_DISPLAY"
                 }
             },
@@ -410,7 +438,8 @@
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
-                    "endpoint": "/api/media_player_proxy/{ENTITY_ID}"
+                    "client": "client",
+                    "url": "/api/media_player_proxy/{ENTITY_ID}"
                 }
             }
         ]
@@ -419,13 +448,13 @@
         "name": "test_entity_picture_absent_mime_type_not_allowed",
         "device_type": "wall_display",
         "states": {
-            "state_1": {
+            "state_check": {
                 "variables": {
                     "(state := hass.states.get(ENTITY_ID))": "None",
-                    "entity_picture": "state.attributes"
+                    "'entity_picture'": "state.attributes"
                 }
             },
-            "state_2": {
+            "response_check": {
                 "variables": {
                     "resp.status": "HTTPStatus.NOT_FOUND"
                 }
@@ -435,18 +464,19 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "state_check",
                 "inputs": {
-                    "status.media": "STATUS_AUDIO_FILE",
-                    "status.media.playback.media_meta.thumb": "data:video/mpg;base64,0",
+                    "hass": "hass",
+                    "config_entry_id": 2,
                     "model": "MODEL_WALL_DISPLAY"
                 }
             },
             {
-                "action": "client.get",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "GET",
+                "starting_state": "state_check",
+                "ending_state": "response_check",
                 "inputs": {
+                    "method": "GET",
                     "url": "/api/media_player_proxy/{ENTITY_ID}"
                 }
             }
@@ -456,37 +486,21 @@
         "name": "test_rpc_media_player_browse_media_root",
         "device_type": "media_player",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "initialized_state": {
-                "variables": {}
-            },
-            "browse_media_root_state": {
+            "browse_media_root": {
                 "variables": {
-                    "msg['result']['title']": "'Shelly'",
-                    "msg['result']['media_class']": "'directory'",
-                    "msg['result']['media_content_id']": "''",
-                    "[child['title'] for child in msg['result']['children']]": "['Radio stations', 'Audio files']",
-                    "[child['media_content_type'] for child in msg['result']['children']]": "[CONTENT_TYPE_RADIO, CONTENT_TYPE_AUDIO]"
+                    "title": "Shelly",
+                    "media_class": "directory",
+                    "media_content_id": "",
+                    "children_titles": "[\"Radio stations\", \"Audio files\"]",
+                    "children_media_content_type": "[CONTENT_TYPE_RADIO, CONTENT_TYPE_AUDIO]"
                 }
             }
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "media_player/browse_media",
                 "starting_state": "initial_state",
-                "ending_state": "initialized_state",
-                "inputs": {
-                    "hass": "hass",
-                    "device_count": 2,
-                    "model": "MODEL_WALL_DISPLAY"
-                }
-            },
-            {
-                "action": "websocket_client.send_json",
-                "starting_state": "initialized_state",
-                "ending_state": "browse_media_root_state",
+                "ending_state": "browse_media_root",
                 "inputs": {
                     "id": 1,
                     "type": "media_player/browse_media",
@@ -502,41 +516,37 @@
             "initial_state": {
                 "variables": {}
             },
-            "device_ready": {
+            "ready_state": {
                 "variables": {}
             },
-            "browse_media_response": {
+            "browse_media_state": {
                 "variables": {
-                    "msg['result']['title']": "'Radio stations'",
-                    "msg['result']['media_class']": "'directory'",
-                    "msg['result']['media_content_type']": "CONTENT_TYPE_RADIO",
-                    "[child['title'] for child in msg['result']['children']]": "[station['name'] for station in RADIO_STATIONS]",
-                    "[child['media_content_id'] for child in msg['result']['children']]": "[str(station['id']) for station in RADIO_STATIONS]",
-                    "[child['thumbnail'] for child in msg['result']['children']]": "[station['icon'] for station in RADIO_STATIONS]"
+                    "title": "Radio stations",
+                    "media_class": "directory",
+                    "media_content_type": "CONTENT_TYPE_RADIO",
+                    "child_titles": "[station['name'] for station in RADIO_STATIONS]",
+                    "child_media_content_ids": "[str(station['id']) for station in RADIO_STATIONS]",
+                    "child_thumbnails": "[station['icon'] for station in RADIO_STATIONS]"
                 }
             }
         },
         "transitions": [
             {
-                "action": "setup_device",
+                "action": "init_integration_and_mock_setup",
                 "starting_state": "initial_state",
-                "ending_state": "device_ready",
+                "ending_state": "ready_state",
                 "inputs": {
-                    "status": "deepcopy(mock_rpc_device.status)",
-                    "status['media']": "STATUS_RADIO_STATION",
-                    "monkeypatch.setattr": "mock_rpc_device.status = status",
-                    "mock_rpc_device.media_list_radio_stations.return_value": "RADIO_STATIONS",
-                    "init_integration": {
-                        "hass": "hass",
-                        "device_count": 2,
-                        "model": "MODEL_WALL_DISPLAY"
-                    }
+                    "hass": "hass",
+                    "device_id": 2,
+                    "model": "MODEL_WALL_DISPLAY",
+                    "status_media": "STATUS_RADIO_STATION",
+                    "media_list_radio_stations": "RADIO_STATIONS"
                 }
             },
             {
-                "action": "websocket_send",
-                "starting_state": "device_ready",
-                "ending_state": "browse_media_response",
+                "action": "websocket_send_json",
+                "starting_state": "ready_state",
+                "ending_state": "browse_media_state",
                 "inputs": {
                     "id": 1,
                     "type": "media_player/browse_media",
@@ -554,20 +564,20 @@
             "initial_state": {
                 "variables": {}
             },
-            "initialized": {
+            "integration_initialized": {
                 "variables": {}
             },
             "request_sent": {
                 "variables": {}
             },
-            "browse_media_result": {
+            "browse_media_response": {
                 "variables": {
-                    "title": "'Audio files'",
-                    "media_class": "'directory'",
+                    "title": "Audio files",
+                    "media_class": "directory",
                     "media_content_type": "CONTENT_TYPE_AUDIO",
                     "children_titles": "[item['title'] for item in AUDIO_FILES if item['type'] == 'AUDIO']",
-                    "children_media_content_ids": "[str(item['id']) for item in AUDIO_FILES if item['type'] == 'AUDIO']",
-                    "children_thumbnails": "[item['preview'] for item in AUDIO_FILES if item['type'] == 'AUDIO']"
+                    "children_media_content_id": "[str(item['id']) for item in AUDIO_FILES if item['type'] == 'AUDIO']",
+                    "children_thumbnail": "[item['preview'] for item in AUDIO_FILES if item['type'] == 'AUDIO']"
                 }
             }
         },
@@ -575,7 +585,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "initialized",
+                "ending_state": "integration_initialized",
                 "inputs": {
                     "hass": "hass",
                     "config_entry_id": 2,
@@ -583,16 +593,8 @@
                 }
             },
             {
-                "action": "hass_ws_client",
-                "starting_state": "initialized",
-                "ending_state": "request_sent",
-                "inputs": {
-                    "hass": "hass"
-                }
-            },
-            {
-                "action": "send_json",
-                "starting_state": "request_sent",
+                "action": "websocket_client.send_json",
+                "starting_state": "integration_initialized",
                 "ending_state": "request_sent",
                 "inputs": {
                     "id": 1,
@@ -603,9 +605,9 @@
                 }
             },
             {
-                "action": "receive_json",
+                "action": "websocket_client.receive_json",
                 "starting_state": "request_sent",
-                "ending_state": "browse_media_result",
+                "ending_state": "browse_media_response",
                 "inputs": {}
             }
         ]
@@ -614,13 +616,7 @@
         "name": "test_rpc_media_player_browse_media_unsupported_media_type",
         "device_type": "media_player",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "initialized_state": {
-                "variables": {}
-            },
-            "error_response": {
+            "error_state": {
                 "variables": {
                     "msg['error']['code']": "home_assistant_error",
                     "msg['error']['message']": "Unsupported media content type for Shelly device: invalid"
@@ -629,32 +625,18 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "websocket_client.send_json / websocket_client.receive_json",
                 "starting_state": "initial_state",
-                "ending_state": "initialized_state",
+                "ending_state": "error_state",
                 "inputs": {
-                    "hass": "hass",
-                    "device_count": 2,
-                    "model": "MODEL_WALL_DISPLAY"
+                    "json_payload": {
+                        "id": 1,
+                        "type": "media_player/browse_media",
+                        "entity_id": "ENTITY_ID",
+                        "media_content_type": "invalid",
+                        "media_content_id": "CONTENT_TYPE_AUDIO"
+                    }
                 }
-            },
-            {
-                "action": "websocket_client.send_json",
-                "starting_state": "initialized_state",
-                "ending_state": "error_response",
-                "inputs": {
-                    "id": 1,
-                    "type": "media_player/browse_media",
-                    "entity_id": "ENTITY_ID",
-                    "media_content_type": "invalid",
-                    "media_content_id": "CONTENT_TYPE_AUDIO"
-                }
-            },
-            {
-                "action": "websocket_client.receive_json",
-                "starting_state": "initialized_state",
-                "ending_state": "error_response",
-                "inputs": {}
             }
         ]
     },
@@ -662,6 +644,9 @@
         "name": "test_rpc_media_player_browse_media_errors",
         "device_type": "media_player",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "error_state": {
                 "variables": {
                     "msg['error']['code']": "home_assistant_error",
@@ -671,35 +656,24 @@
         },
         "transitions": [
             {
-                "action": "browse_media_error_flow",
+                "action": "media_player/browse_media",
                 "starting_state": "initial_state",
                 "ending_state": "error_state",
                 "inputs": {
-                    "status_modification": {
-                        "media": "STATUS_AUDIO_FILE"
-                    },
-                    "side_effect": "side_effect",
-                    "init_integration": {
-                        "hass": "hass",
-                        "device_count": 2,
-                        "model": "MODEL_WALL_DISPLAY"
-                    },
-                    "websocket_payload": {
-                        "id": 1,
-                        "type": "media_player/browse_media",
-                        "entity_id": "ENTITY_ID",
-                        "media_content_type": "CONTENT_TYPE_AUDIO",
-                        "media_content_id": "CONTENT_TYPE_AUDIO"
-                    }
+                    "id": 1,
+                    "type": "media_player/browse_media",
+                    "entity_id": "ENTITY_ID",
+                    "media_content_type": "CONTENT_TYPE_AUDIO",
+                    "media_content_id": "CONTENT_TYPE_AUDIO"
                 }
             }
         ]
     },
     {
         "name": "test_rpc_media_player_no_media_meta",
-        "device_type": "media_player",
+        "device_type": "rpc_media_player",
         "states": {
-            "state_playing_no_meta": {
+            "state_1": {
                 "variables": {
                     "state.state": "STATE_PLAYING",
                     "state.attributes.get(ATTR_MEDIA_TITLE)": "None",
@@ -714,9 +688,9 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_playing_no_meta",
+                "ending_state": "state_1",
                 "inputs": {
-                    "hass": "hass",
+                    "hass": "<hass>",
                     "entity_count": 2,
                     "model": "MODEL_WALL_DISPLAY"
                 }
@@ -727,6 +701,9 @@
         "name": "test_rpc_media_player_unavailable",
         "device_type": "media_player",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "STATE_PLAYING": {
                 "variables": {
                     "state.state": "STATE_PLAYING"
@@ -744,19 +721,16 @@
                 "starting_state": "initial_state",
                 "ending_state": "STATE_PLAYING",
                 "inputs": {
-                    "hass": "hass",
-                    "config_entry": 2,
+                    "hass": "<hass instance>",
+                    "device_id": 2,
                     "model": "MODEL_WALL_DISPLAY"
                 }
             },
             {
-                "action": "mock_rpc_device.mock_disconnected",
+                "action": "mock_disconnected",
                 "starting_state": "STATE_PLAYING",
                 "ending_state": "STATE_UNAVAILABLE",
-                "inputs": {
-                    "connected": false,
-                    "initialized": false
-                }
+                "inputs": {}
             }
         ]
     }

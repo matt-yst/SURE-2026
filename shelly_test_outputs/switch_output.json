@@ -1,0 +1,1301 @@
+[
+    {
+        "name": "test_block_device_services",
+        "device_type": "block device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_on": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            },
+            "state_off": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "initial_state",
+                "ending_state": "state_on",
+                "inputs": {
+                    "domain": "SWITCH_DOMAIN",
+                    "service": "SERVICE_TURN_ON",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "entity_id"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "state_on",
+                "ending_state": "state_off",
+                "inputs": {
+                    "domain": "SWITCH_DOMAIN",
+                    "service": "SERVICE_TURN_OFF",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "entity_id"
+                    },
+                    "blocking": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_motion_switch",
+        "device_type": "block",
+        "states": {
+            "state_on_1": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            },
+            "state_off": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "state_on_2": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_on_1",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 1,
+                    "sleep_period": 1000,
+                    "model": "model"
+                }
+            },
+            {
+                "action": "service_call",
+                "starting_state": "state_on_1",
+                "ending_state": "state_off",
+                "inputs": {
+                    "domain": "switch",
+                    "service": "turn_off",
+                    "service_data": {
+                        "entity_id": "entity_id"
+                    }
+                }
+            },
+            {
+                "action": "service_call",
+                "starting_state": "state_off",
+                "ending_state": "state_on_2",
+                "inputs": {
+                    "domain": "switch",
+                    "service": "turn_on",
+                    "service_data": {
+                        "entity_id": "entity_id"
+                    }
+                }
+            },
+            {
+                "action": "mock_update_and_assert",
+                "starting_state": "state_on_1",
+                "ending_state": "state_off",
+                "inputs": {
+                    "monkeypatch_setattr": {
+                        "target": "mock_block_device.blocks[MOTION_BLOCK_ID].motionActive",
+                        "value": 0
+                    },
+                    "assert_called_with": {
+                        "method": "set_shelly_motion_detection",
+                        "args": [
+                            false
+                        ]
+                    }
+                }
+            },
+            {
+                "action": "mock_update_and_assert",
+                "starting_state": "state_off",
+                "ending_state": "state_on_2",
+                "inputs": {
+                    "monkeypatch_setattr": {
+                        "target": "mock_block_device.blocks[MOTION_BLOCK_ID].motionActive",
+                        "value": 1
+                    },
+                    "assert_called_with": {
+                        "method": "set_shelly_motion_detection",
+                        "args": [
+                            true
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_restored_motion_switch",
+        "device_type": "switch",
+        "states": {
+            "STATE_OFF": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "STATE_ON": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mock_restore_cache",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_OFF",
+                "inputs": {
+                    "cache": [
+                        {
+                            "entity_id": "<entity_id_placeholder>",
+                            "state": "STATE_OFF"
+                        }
+                    ]
+                }
+            },
+            {
+                "action": "mock_block_device.mock_online",
+                "starting_state": "STATE_OFF",
+                "ending_state": "STATE_ON",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_block_restored_motion_switch_no_last_state",
+        "device_type": "motion_switch",
+        "states": {
+            "STATE_UNKNOWN": {
+                "variables": {
+                    "state.state": "STATE_UNKNOWN"
+                }
+            },
+            "STATE_ON": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_UNKNOWN",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "mock_online",
+                "starting_state": "STATE_UNKNOWN",
+                "ending_state": "STATE_ON",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_block_device_unique_ids",
+        "device_type": "block_device",
+        "states": {
+            "snapshot_state": {
+                "variables": {
+                    "entry.unique_id": "unique_id"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot_state",
+                "inputs": {
+                    "hass": "hass",
+                    "device_id": 1,
+                    "model": "model",
+                    "sleep_period": "sleep"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_set_state_connection_error",
+        "device_type": "block",
+        "states": {
+            "error_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "initial_state",
+                "ending_state": "error_state",
+                "inputs": {
+                    "domain": "switch",
+                    "service": "turn_off",
+                    "service_data": {
+                        "entity_id": "switch.test_name_channel_1"
+                    },
+                    "blocking": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_set_state_auth_error",
+        "device_type": "block",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_0": {
+                "variables": {
+                    "entry.state": "ConfigEntryState.LOADED"
+                }
+            },
+            "state_1": {
+                "variables": {
+                    "entry.state": "ConfigEntryState.LOADED"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "len(flows)": "1"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "flow.get('step_id')": "'reauth_confirm'",
+                    "flow.get('handler')": "DOMAIN",
+                    "'context'": "flow",
+                    "flow['context'].get('source')": "SOURCE_REAUTH",
+                    "flow['context'].get('entry_id')": "entry.entry_id"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_0",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": 1
+                }
+            },
+            {
+                "action": "service_call",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
+                "inputs": {
+                    "domain": "SWITCH_DOMAIN",
+                    "service": "SERVICE_TURN_OFF",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "switch.test_name_channel_1"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "async_progress",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
+            },
+            {
+                "action": "extract_flow",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_block_device_update",
+        "device_type": "block_device",
+        "states": {
+            "STATE_OFF": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "STATE_ON": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_OFF",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 1
+                }
+            },
+            {
+                "action": "mock_update",
+                "starting_state": "STATE_OFF",
+                "ending_state": "STATE_ON",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_block_device_no_relay_blocks",
+        "device_type": "block_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "switch.test_name_channel_1": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 1
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_device_mode_roller",
+        "device_type": "block_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_after_patch": {
+                "variables": {}
+            },
+            "state_after_init": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "switch.test_name_channel_1": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.setitem",
+                "starting_state": "initial_state",
+                "ending_state": "state_after_patch",
+                "inputs": {
+                    "target": "mock_block_device.settings",
+                    "key": "mode",
+                    "value": "roller"
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "state_after_patch",
+                "ending_state": "state_after_init",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 1
+                }
+            },
+            {
+                "action": "snapshot_assert",
+                "starting_state": "state_after_init",
+                "ending_state": "final_state",
+                "inputs": {
+                    "snapshot": {
+                        "switch.test_name_channel_1": "None"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_device_app_type_light",
+        "device_type": "block_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_light_none": {
+                "variables": {
+                    "hass.states.get(light_entity_id)": "None"
+                }
+            },
+            "state_switch_none": {
+                "variables": {
+                    "hass.states.get(switch_entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_light_none",
+                "inputs": {
+                    "hass": "hass",
+                    "instance_id": 1
+                }
+            },
+            {
+                "action": "mock_update_and_time_advance",
+                "starting_state": "state_light_none",
+                "ending_state": "state_switch_none",
+                "inputs": {
+                    "operations": [
+                        "monkeypatch.setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'cfgChanged', 1)",
+                        "mock_block_device.mock_update()",
+                        "monkeypatch.setitem(mock_block_device.settings['relays'][RELAY_BLOCK_ID], 'appliance_type', 'light')",
+                        "monkeypatch.setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'cfgChanged', 2)",
+                        "mock_block_device.mock_update()",
+                        "await hass.async_block_till_done()",
+                        "freezer.tick(timedelta(seconds=ENTRY_RELOAD_COOLDOWN))",
+                        "async_fire_time_changed(hass)",
+                        "await hass.async_block_till_done()"
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_services",
+        "device_type": "switch",
+        "states": {
+            "STATE_ON": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            },
+            "STATE_OFF": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "SERVICE_TURN_ON",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_ON",
+                "inputs": {
+                    "entity_id": "switch.test_name_test_switch_0"
+                }
+            },
+            {
+                "action": "SERVICE_TURN_OFF",
+                "starting_state": "STATE_ON",
+                "ending_state": "STATE_OFF",
+                "inputs": {
+                    "entity_id": "switch.test_name_test_switch_0"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_unique_ids",
+        "device_type": "switch",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_monkeypatch": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "entry.unique_id": "123456789ABC-switch:0"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "monkeypatch.delitem",
+                "starting_state": "initial_state",
+                "ending_state": "post_monkeypatch",
+                "inputs": {
+                    "target": "mock_rpc_device.status",
+                    "key": "cover:0"
+                }
+            },
+            {
+                "action": "monkeypatch.setitem",
+                "starting_state": "post_monkeypatch",
+                "ending_state": "post_monkeypatch",
+                "inputs": {
+                    "target": "mock_rpc_device.status['sys']",
+                    "key": "relay_in_thermostat",
+                    "value": false
+                }
+            },
+            {
+                "action": "init_integration",
+                "starting_state": "post_monkeypatch",
+                "ending_state": "final_state",
+                "inputs": {
+                    "hass": "hass",
+                    "device_count": 2
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_switch_type_lights_mode",
+        "device_type": "rpc_device",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "hass.states.get(light_entity_id)": "None"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "hass.states.get(switch_entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "count": 2
+                }
+            },
+            {
+                "action": "inject_rpc_device_event",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "event_data": {
+                        "events": [
+                            {
+                                "data": [],
+                                "event": "config_changed",
+                                "id": 1,
+                                "ts": 1668522399.2
+                            },
+                            {
+                                "data": [],
+                                "id": 2,
+                                "ts": 1668522399.2
+                            }
+                        ],
+                        "ts": 1668522399.2
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_set_state_errors",
+        "device_type": "switch",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "error_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "<HomeAssistant instance>",
+                    "device_count": 2
+                }
+            },
+            {
+                "action": "service_call_turn_off",
+                "starting_state": "integration_initialized",
+                "ending_state": "error_state",
+                "inputs": {
+                    "domain": "switch",
+                    "service": "turn_off",
+                    "entity_id": "switch.test_name_test_switch_0",
+                    "blocking": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_auth_error",
+        "device_type": "switch",
+        "states": {
+            "state1": {
+                "variables": {
+                    "entry.state": "ConfigEntryState.LOADED"
+                }
+            },
+            "state2": {
+                "variables": {
+                    "entry.state": "ConfigEntryState.LOADED"
+                }
+            },
+            "state3": {
+                "variables": {
+                    "len(flows)": "1"
+                }
+            },
+            "state4": {
+                "variables": {
+                    "flow.get('step_id')": "'reauth_confirm'",
+                    "flow.get('handler')": "DOMAIN",
+                    "'context'": "flow",
+                    "flow['context'].get('source')": "SOURCE_REAUTH",
+                    "flow['context'].get('entry_id')": "entry.entry_id"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state1",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 2
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "state1",
+                "ending_state": "state2",
+                "inputs": {
+                    "domain": "SWITCH_DOMAIN",
+                    "service": "SERVICE_TURN_OFF",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "switch.test_name_test_switch_0"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "hass.config_entries.flow.async_progress",
+                "starting_state": "state2",
+                "ending_state": "state3",
+                "inputs": {}
+            },
+            {
+                "action": "retrieve_flow_details",
+                "starting_state": "state3",
+                "ending_state": "state4",
+                "inputs": {
+                    "flow_index": 0
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_wall_display_relay_mode",
+        "device_type": "wall_display",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "len(hass.states.async_entity_ids(CLIMATE_DOMAIN))": "1"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "hass.states.get(climate_entity_id)": "None",
+                    "len(hass.states.async_entity_ids(CLIMATE_DOMAIN))": "0",
+                    "state.state": "STATE_ON",
+                    "len(hass.states.async_entity_ids(SWITCH_DOMAIN))": "1",
+                    "entry.unique_id": "'123456789ABC-switch:0'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "<HomeAssistant instance>",
+                    "device_count": 2,
+                    "model": "MODEL_WALL_DISPLAY"
+                }
+            },
+            {
+                "action": "reload_config_entry",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "config_entry_id": "config_entry.entry_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_virtual_switch",
+        "device_type": "switch",
+        "states": {
+            "state_on_initial": {
+                "variables": {
+                    "state.state": "STATE_ON",
+                    "entry.unique_id": "123456789ABC-boolean:200-boolean_generic"
+                }
+            },
+            "state_off": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "state_on": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_on_initial",
+                "inputs": {
+                    "hass": "hass",
+                    "param": 3
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "state_on_initial",
+                "ending_state": "state_off",
+                "inputs": {
+                    "domain": "SWITCH_DOMAIN",
+                    "service": "SERVICE_TURN_OFF",
+                    "service_data": {
+                        "entity_id": "entity_id"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "state_off",
+                "ending_state": "state_on",
+                "inputs": {
+                    "domain": "SWITCH_DOMAIN",
+                    "service": "SERVICE_TURN_ON",
+                    "service_data": {
+                        "entity_id": "entity_id"
+                    },
+                    "blocking": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_virtual_binary_sensor",
+        "device_type": "virtual_binary_sensor",
+        "states": {
+            "snapshot_state": {
+                "variables": {
+                    "hass.states.get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot_state",
+                "inputs": {
+                    "hass": "hass",
+                    "port": 3
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_remove_virtual_switch_when_mode_label",
+        "device_type": "virtual_switch",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "device_registered": {
+                "variables": {}
+            },
+            "entity_registered": {
+                "variables": {}
+            },
+            "setup_completed": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "config_version": 3,
+                    "skip_setup": true
+                }
+            },
+            {
+                "action": "register_device",
+                "starting_state": "integration_initialized",
+                "ending_state": "device_registered",
+                "inputs": {
+                    "device_registry": "device_registry",
+                    "config_entry": "config_entry"
+                }
+            },
+            {
+                "action": "register_entity",
+                "starting_state": "device_registered",
+                "ending_state": "entity_registered",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "SWITCH_DOMAIN",
+                    "name": "test_name_boolean_200",
+                    "entity_type": "boolean:200-boolean_generic",
+                    "config_entry": "config_entry",
+                    "device_id": "device_entry.id"
+                }
+            },
+            {
+                "action": "hass.config_entries.async_setup",
+                "starting_state": "entity_registered",
+                "ending_state": "setup_completed",
+                "inputs": {
+                    "entry_id": "config_entry.entry_id"
+                }
+            },
+            {
+                "action": "snapshot_assert",
+                "starting_state": "setup_completed",
+                "ending_state": "final_state",
+                "inputs": {
+                    "entity_registry.async_get(entity_id)": "None"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_remove_virtual_switch_when_orphaned",
+        "device_type": "virtual_switch",
+        "states": {
+            "pre_setup_state": {
+                "variables": {
+                    "entity_registry.async_get(entity_id1)": "None",
+                    "entity_registry.async_get(entity_id2)": "None"
+                }
+            },
+            "post_setup_state": {
+                "variables": {
+                    "entity_registry.async_get(entity_id1)": "None",
+                    "entity_registry.async_get(entity_id2)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialization",
+                "starting_state": "initial_state",
+                "ending_state": "pre_setup_state",
+                "inputs": {
+                    "config_entry": "await init_integration(hass, 3, skip_setup=True)",
+                    "device_entry": "register_device(device_registry, config_entry)",
+                    "entity_id1": "register_entity(hass, SWITCH_DOMAIN, 'test_name_boolean_200', 'boolean:200-boolean_generic', config_entry, device_id=device_entry.id)",
+                    "sub_device_entry": "register_sub_device(device_registry, config_entry, 'boolean:201-boolean_generic')",
+                    "entity_id2": "register_entity(hass, SWITCH_DOMAIN, 'boolean_201', 'boolean:201-boolean_generic', config_entry, device_id=sub_device_entry.id)"
+                }
+            },
+            {
+                "action": "setup_config_entry",
+                "starting_state": "pre_setup_state",
+                "ending_state": "post_setup_state",
+                "inputs": {
+                    "setup": "await hass.config_entries.async_setup(config_entry.entry_id)",
+                    "block": "await hass.async_block_till_done()"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_device_script_switch",
+        "device_type": "rpc_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state.state": "STATE_ON",
+                    "entry.unique_id": "123456789ABC-script:1-script"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "device_index": 3
+                }
+            },
+            {
+                "action": "SERVICE_TURN_OFF",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "entity_id": "switch.test_name_aioshelly_ble_integration"
+                }
+            },
+            {
+                "action": "SERVICE_TURN_ON",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "entity_id": "switch.test_name_aioshelly_ble_integration"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_cury_switch_entity",
+        "device_type": "cury",
+        "states": {
+            "away_mode": {
+                "variables": {
+                    "away_mode": "False"
+                }
+            },
+            "left_slot": {
+                "variables": {
+                    "intensity": "70",
+                    "on": "True",
+                    "boost": "{'started_at': 1760365354, 'duration': 1800}",
+                    "vial": "{'level': 27, 'name': 'Forest Dream'}"
+                }
+            },
+            "left_slot_boost": {
+                "variables": {
+                    "started_at": "1760365354",
+                    "duration": "1800"
+                }
+            },
+            "right_slot": {
+                "variables": {
+                    "intensity": "70",
+                    "on": "False",
+                    "boost": "None",
+                    "vial": "{'level': 84, 'name': 'Velvet Rose'}"
+                }
+            },
+            "right_slot_boost": {
+                "variables": {}
+            },
+            "initial_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "post_init",
+                "inputs": {
+                    "hass": "hass",
+                    "param": "3"
+                }
+            },
+            {
+                "action": "switch.turn_off",
+                "starting_state": "left_slot",
+                "ending_state": "left_slot_off",
+                "inputs": {
+                    "entity_id": "switch.test_name_left_slot"
+                }
+            },
+            {
+                "action": "switch.turn_on",
+                "starting_state": "right_slot",
+                "ending_state": "right_slot_on",
+                "inputs": {
+                    "entity_id": "switch.test_name_right_slot"
+                }
+            },
+            {
+                "action": "switch.turn_off",
+                "starting_state": "left_slot_boost",
+                "ending_state": "left_slot_boost_off",
+                "inputs": {
+                    "entity_id": "switch.test_name_left_slot_boost"
+                }
+            },
+            {
+                "action": "switch.turn_on",
+                "starting_state": "right_slot_boost",
+                "ending_state": "right_slot_boost_on",
+                "inputs": {
+                    "entity_id": "switch.test_name_right_slot_boost"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_cury_switch_availability",
+        "device_type": "cury",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "STATE_ON": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            },
+            "STATE_UNAVAILABLE": {
+                "variables": {
+                    "state.state": "STATE_UNAVAILABLE"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_ON",
+                "inputs": {
+                    "hass": "<hass\u2011fixture>",
+                    "entity_count": 3
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "STATE_ON",
+                "ending_state": "STATE_UNAVAILABLE",
+                "inputs": {
+                    "monkeypatch": "<monkeypatch\u2011fixture>",
+                    "rpc_device": "mock_rpc_device",
+                    "device_id": "cury:0",
+                    "field": "slots",
+                    "value": "slots (vial level set to -1)"
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status",
+                "starting_state": "STATE_UNAVAILABLE",
+                "ending_state": "STATE_ON",
+                "inputs": {
+                    "monkeypatch": "<monkeypatch\u2011fixture>",
+                    "rpc_device": "mock_rpc_device",
+                    "device_id": "cury:0",
+                    "field": "slots",
+                    "value": "slots (left slot restored to valid vial)"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_ev_charging_switch",
+        "device_type": "EV Charger",
+        "states": {
+            "STATE_OFF": {
+                "variables": {
+                    "state.state": "STATE_OFF",
+                    "entry.unique_id": "123456789ABC-boolean:200-boolean_start_charging"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_OFF",
+                "inputs": {
+                    "hass": "hass",
+                    "index": 3,
+                    "model": "MODEL_TOP_EV_CHARGER_EVE01"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_circuit_breaker_switch",
+        "device_type": "circuit_breaker",
+        "states": {
+            "STATE_OFF": {
+                "variables": {
+                    "state.state": "STATE_OFF",
+                    "entry.unique_id": "123456789ABC-cb:0-cb"
+                }
+            },
+            "STATE_ON": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_OFF",
+                "inputs": {
+                    "hass": "hass",
+                    "parameter": 2
+                }
+            },
+            {
+                "action": "service_call",
+                "starting_state": "STATE_OFF",
+                "ending_state": "STATE_ON",
+                "inputs": {
+                    "domain": "switch",
+                    "service": "turn_on",
+                    "entity_id": "switch.test_name"
+                }
+            },
+            {
+                "action": "service_call",
+                "starting_state": "STATE_ON",
+                "ending_state": "STATE_OFF",
+                "inputs": {
+                    "domain": "switch",
+                    "service": "turn_off",
+                    "entity_id": "switch.test_name"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_cb_switch_unavailable_when_safety_switch_locked",
+        "device_type": "circuit_breaker",
+        "states": {
+            "STATE_OFF": {
+                "variables": {
+                    "state.state": "STATE_OFF"
+                }
+            },
+            "STATE_UNAVAILABLE": {
+                "variables": {
+                    "state.state": "STATE_UNAVAILABLE"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "STATE_OFF",
+                "inputs": {
+                    "hass": "<hass\u2011object>",
+                    "instance_id": 2
+                }
+            },
+            {
+                "action": "mutate_rpc_device_status + mock_update",
+                "starting_state": "STATE_OFF",
+                "ending_state": "STATE_UNAVAILABLE",
+                "inputs": {
+                    "monkeypatch": "<monkeypatch\u2011fixture>",
+                    "device": "mock_rpc_device",
+                    "entity_id": "cb:0",
+                    "field": "safety",
+                    "value": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_circuit_breaker_turn_on_errors",
+        "device_type": "circuit_breaker",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "error_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "hass": "hass",
+                    "device_count": 2
+                }
+            },
+            {
+                "action": "service_call",
+                "starting_state": "initial_state",
+                "ending_state": "error_state",
+                "inputs": {
+                    "domain": "switch",
+                    "service": "turn_on",
+                    "service_data": {
+                        "entity_id": "switch.test_name"
+                    },
+                    "blocking": true,
+                    "expected_exception": {
+                        "type": "HomeAssistantError",
+                        "match": "error"
+                    },
+                    "mock_side_effect": "exc"
+                }
+            }
+        ]
+    }
+]

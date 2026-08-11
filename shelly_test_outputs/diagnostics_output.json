@@ -1,0 +1,214 @@
+[
+    {
+        "name": "test_block_config_entry_diagnostics",
+        "device_type": "block device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "entry_fetched": {
+                "variables": {
+                    "entry_dict": "<entry.as_dict()>"
+                }
+            },
+            "error_set": {
+                "variables": {
+                    "last_error": "DeviceConnectionError()"
+                }
+            },
+            "diagnostics_state": {
+                "variables": {
+                    "entry": "entry_dict | {'discovery_keys': {}}",
+                    "bluetooth": "not initialized",
+                    "device_info": "{'name': 'Test name', 'model': MODEL_25, 'sw_version': 'some fw string'}",
+                    "device_settings": "{'coiot': {'update_period': 15, 'enabled': true, 'peer': '10.10.10.10:5683'}}",
+                    "device_status": "MOCK_STATUS_COAP",
+                    "last_error": "DeviceConnectionError()"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "<HomeAssistant instance>",
+                    "num_devices": 1
+                }
+            },
+            {
+                "action": "fetch_entry",
+                "starting_state": "integration_initialized",
+                "ending_state": "entry_fetched",
+                "inputs": {
+                    "hass": "<HomeAssistant instance>"
+                }
+            },
+            {
+                "action": "set_last_error",
+                "starting_state": "entry_fetched",
+                "ending_state": "error_set",
+                "inputs": {
+                    "error": "DeviceConnectionError()"
+                }
+            },
+            {
+                "action": "get_diagnostics_for_config_entry",
+                "starting_state": "error_set",
+                "ending_state": "diagnostics_state",
+                "inputs": {
+                    "hass": "<HomeAssistant instance>",
+                    "hass_client": "<Hass client>",
+                    "entry": "<Config entry>"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_config_entry_diagnostics",
+        "device_type": "rpc device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "rpc_event_injected": {
+                "variables": {}
+            },
+            "diagnostics_state": {
+                "variables": {
+                    "entry": "entry_dict | {'discovery_keys': {}}",
+                    "bluetooth": "{\n  'scanner': {\n    'connect_completed_total': 0,\n    'connect_failed_total': 0,\n    'connect_failures': {},\n    'connect_in_progress': {},\n    'connectable': False,\n    'current_mode': {'__type': \"<enum 'BluetoothScanningMode'>\", 'repr': \"<BluetoothScanningMode.ACTIVE: 'active'>\"},\n    'requested_mode': {'__type': \"<enum 'BluetoothScanningMode'>\", 'repr': \"<BluetoothScanningMode.ACTIVE: 'active'>\"},\n    'last_connect_completed_time': 0.0,\n    'discovered_device_timestamps': {'AA:BB:CC:DD:EE:FF': \"ANY\"},\n    'discovered_devices_and_advertisement_data': [\n      {\n        'address': 'AA:BB:CC:DD:EE:FF',\n        'advertisement_data': [\n          null,\n          {'89': {'__type': \"<class 'bytes'>\", 'repr': \"b'\\\\xd1\\\\xfb;t\\\\xc8\\\\x90'\"}},\n          {'00000d00-0000-1000-8000-00805f9b34fb': {'__type': \"<class 'bytes'>\", 'repr': \"b'H\\\\x10a'\"}},\n          ['cba20d00-224d-11e6-9fb8-0002a5d5c51b']\n        ],\n        'rssi': -62,\n        'details': {'source': '12:34:56:78:9A:BE'},\n        'name': null,\n        'details': {'source': '12:34:56:78:9A:BE'}\n      }\n    ],\n    'last_detection': \"ANY\",\n    'monotonic_time': \"ANY\",\n    'name': 'Test name (12:34:56:78:9A:BE)',\n    'scanning': True,\n    'start_time': \"ANY\",\n    'source': '12:34:56:78:9A:BE',\n    'time_since_last_device_detection': {'AA:BB:CC:DD:EE:FF': \"ANY\"},\n    'raw_advertisement_data': {\n      'AA:BB:CC:DD:EE:FF': {\n        '__type': \"<class 'bytes'>\",\n        'repr': \"b'\\\\x02\\\\x01\\\\x06\\\\t\\\\xffY\\\\x00\\\\xd1\\\\xfb;t\\\\xc8\\\\x90\\\\x11\\\\x07\\\\x1b\\\\xc5\\\\xd5\\\\xa5\\\\x02\\\\x00\\\\xb8\\\\x9f\\\\xe6\\\\x11M\\\\x00\\\\r\\\\xa2\\\\xcb\\\\x06\\\\x16\\\\x00\\\\rH\\\\x10a'\"\n      }\n    },\n    'type': 'ShellyBLEScanner'\n  }\n},\n        'device_info': {\n          'name': 'Test name',\n          'model': 'MODEL_25',\n          'sw_version': 'some fw string'\n        },\n        'device_settings': {\n          'ws_outbound_enabled': False\n        },\n        'device_status': {\n          'sys': {\n            'available_updates': {\n              'beta': {'version': 'some_beta_version'},\n              'stable': {'version': 'some_beta_version'}\n            },\n            'relay_in_thermostat': True\n          },\n          'wifi': {'rssi': -63}\n        },\n        'last_error': 'DeviceConnectionError()'\n      }"
+                }
+            },
+            "transitions": {
+                "variables": {
+                    "integration_init": "initial_state",
+                    "rpc_event": "integration_initialized",
+                    "diagnostics_fetch": "rpc_event_injected"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "version": 2,
+                    "options": {
+                        "CONF_BLE_SCANNER_MODE": "BLEScannerMode.ACTIVE"
+                    }
+                }
+            },
+            {
+                "action": "inject_rpc_device_event",
+                "starting_state": "integration_initialized",
+                "ending_state": "rpc_event_injected",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "mock_rpc_device": "mock_rpc_device",
+                    "event": {
+                        "events": [
+                            {
+                                "component": "script:1",
+                                "data": [
+                                    1,
+                                    "aa:bb:cc:dd:ee:ff",
+                                    -62,
+                                    "AgEGCf9ZANH7O3TIkA==",
+                                    "EQcbxdWlAgC4n+YRTSIADaLLBhYADUgQYQ=="
+                                ],
+                                "event": "BLE_SCAN_RESULT_EVENT",
+                                "id": 1,
+                                "ts": 1668522399.2
+                            }
+                        ],
+                        "ts": 1668522399.2
+                    }
+                }
+            },
+            {
+                "action": "get_diagnostics_for_config_entry",
+                "starting_state": "rpc_event_injected",
+                "ending_state": "diagnostics_state",
+                "inputs": {
+                    "hass": "hass",
+                    "hass_client": "hass_client",
+                    "entry": "entry"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_config_entry_diagnostics_ws_outbound",
+        "device_type": "rpc",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "result['device_settings']['ws_outbound_server_valid']": "ws_outbound_server_valid"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_diagnostics_for_config_entry",
+                "starting_state": "initial_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "hass": "hass",
+                    "hass_client": "hass_client",
+                    "entry": "entry"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_config_entry_diagnostics_no_ws",
+        "device_type": "rpc",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "diagnostics_state": {
+                "variables": {
+                    "result['device_settings']['ws_outbound']": "not supported"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "integration_initialized",
+                "inputs": {
+                    "hass": "hass",
+                    "integration_id": 3
+                }
+            },
+            {
+                "action": "get_diagnostics_for_config_entry",
+                "starting_state": "integration_initialized",
+                "ending_state": "diagnostics_state",
+                "inputs": {
+                    "hass": "hass",
+                    "hass_client": "hass_client",
+                    "entry": "entry"
+                }
+            }
+        ]
+    }
+]

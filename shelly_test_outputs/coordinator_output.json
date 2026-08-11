@@ -1,18 +1,18 @@
 [
     {
         "name": "test_block_reload_on_cfg_change",
-        "device_type": "block",
+        "device_type": "block_device",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "state0": {
+            "state_1": {
                 "variables": {}
             },
-            "state1": {
+            "state_2": {
                 "variables": {}
             },
-            "state2": {
+            "state_3": {
                 "variables": {
                     "hass.states.get(entity_id)": "None"
                 }
@@ -20,51 +20,31 @@
         },
         "transitions": [
             {
-                "action": "initialisation_and_first_cfg_change",
+                "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state0",
+                "ending_state": "state_1",
                 "inputs": {
-                    "description": "Setup integration, set entity id, trigger first cfgChanged (1), update mock, clear cfgChanged, update mock again, wait for debounce period and fire time change.",
-                    "steps": [
-                        "await init_integration(hass, 1)",
-                        "entity_id = 'switch.test_name_channel_1'",
-                        "monkeypatch.setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'cfgChanged', 1)",
-                        "mock_block_device.mock_update()",
-                        "await hass.async_block_till_done()",
-                        "monkeypatch.setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'cfgChanged', None)",
-                        "mock_block_device.mock_update()",
-                        "await hass.async_block_till_done()",
-                        "freezer.tick(timedelta(seconds=ENTRY_RELOAD_COOLDOWN))",
-                        "async_fire_time_changed(hass)",
-                        "await hass.async_block_till_done()"
-                    ]
+                    "hass": "hass",
+                    "parameter": 1
                 }
             },
             {
-                "action": "second_cfg_change_with_appliance_type_change",
-                "starting_state": "state0",
-                "ending_state": "state1",
+                "action": "set_appliance_type_and_cfgChanged",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "description": "Change appliance type to light, trigger second cfgChanged (2), update mock and wait for processing.",
-                    "steps": [
-                        "monkeypatch.setitem(mock_block_device.settings['relays'][RELAY_BLOCK_ID], 'appliance_type', 'light')",
-                        "monkeypatch.setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'cfgChanged', 2)",
-                        "mock_block_device.mock_update()",
-                        "await hass.async_block_till_done()"
-                    ]
+                    "appliance_type": "light",
+                    "cfgChanged": 2,
+                    "relay_block_id": "RELAY_BLOCK_ID",
+                    "device_block_id": "DEVICE_BLOCK_ID"
                 }
             },
             {
-                "action": "final_cooldown_and_state_verification",
-                "starting_state": "state1",
-                "ending_state": "state2",
+                "action": "check_entity_state",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
-                    "description": "Wait for reload cooldown, fire time change, then verify the entity state is None.",
-                    "steps": [
-                        "freezer.tick(timedelta(seconds=ENTRY_RELOAD_COOLDOWN))",
-                        "async_fire_time_changed(hass)",
-                        "await hass.async_block_till_done()"
-                    ]
+                    "entity_id": "switch.test_name_channel_1"
                 }
             }
         ]
@@ -73,67 +53,100 @@
         "name": "test_block_no_reload_on_bulb_changes",
         "device_type": "bulb",
         "states": {
-            "state1": {
+            "initial_state": {
                 "variables": {}
             },
-            "state2": {
+            "state_1": {
                 "variables": {}
             },
-            "state3": {
+            "state_2": {
                 "variables": {}
             },
-            "state4": {
+            "state_3": {
                 "variables": {}
             },
-            "state5": {
+            "state_4": {
                 "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "init_integration + mock_update",
+                "action": "setup",
                 "starting_state": "initial_state",
-                "ending_state": "state1",
+                "ending_state": "state_1",
                 "inputs": {
-                    "hass": "hass",
-                    "device_id": 1,
-                    "model": "MODEL_BULB",
-                    "cfgChanged": 1
+                    "init_integration": {
+                        "hass": "hass",
+                        "num_devices": 1,
+                        "model": "MODEL_BULB"
+                    },
+                    "mock_block_device_changes": [
+                        {
+                            "target": "mock_block_device.shelly['num_outputs']",
+                            "value": 1
+                        },
+                        {
+                            "target": "mock_block_device.blocks[DEVICE_BLOCK_ID].cfgChanged",
+                            "value": 1
+                        },
+                        {
+                            "target": "mock_block_device.settings['relays'][RELAY_BLOCK_ID]['appliance_type']",
+                            "value": "light"
+                        },
+                        {
+                            "target": "mock_block_device.blocks[LIGHT_BLOCK_ID].mode",
+                            "value": "white"
+                        },
+                        {
+                            "target": "mock_block_device.blocks[DEVICE_BLOCK_ID].cfgChanged",
+                            "value": 2
+                        }
+                    ],
+                    "calls": [
+                        "mock_block_device.mock_update()",
+                        "await hass.async_block_till_done()"
+                    ]
                 }
             },
             {
-                "action": "set_appliance_type_mode + mock_update",
-                "starting_state": "state1",
-                "ending_state": "state2",
+                "action": "time_advance",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "appliance_type": "light",
-                    "mode": "white",
-                    "cfgChanged": 2
+                    "freeze_seconds": "ENTRY_RELOAD_COOLDOWN",
+                    "fire_time_changed": true,
+                    "await_block_till_done": true
                 }
             },
             {
-                "action": "time_tick_reload_cooldown",
-                "starting_state": "state2",
-                "ending_state": "state3",
+                "action": "effect_change",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
-                    "seconds": "ENTRY_RELOAD_COOLDOWN"
+                    "mock_block_device_changes": [
+                        {
+                            "target": "mock_block_device.blocks[LIGHT_BLOCK_ID].effect",
+                            "value": 1
+                        },
+                        {
+                            "target": "mock_block_device.blocks[DEVICE_BLOCK_ID].cfgChanged",
+                            "value": 3
+                        }
+                    ],
+                    "calls": [
+                        "mock_block_device.mock_update()",
+                        "await hass.async_block_till_done()"
+                    ]
                 }
             },
             {
-                "action": "set_effect + mock_update",
-                "starting_state": "state3",
-                "ending_state": "state4",
+                "action": "time_advance",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
                 "inputs": {
-                    "effect": 1,
-                    "cfgChanged": 3
-                }
-            },
-            {
-                "action": "time_tick_reload_cooldown",
-                "starting_state": "state4",
-                "ending_state": "state5",
-                "inputs": {
-                    "seconds": "ENTRY_RELOAD_COOLDOWN"
+                    "freeze_seconds": "ENTRY_RELOAD_COOLDOWN",
+                    "fire_time_changed": true,
+                    "await_block_till_done": true
                 }
             }
         ]
@@ -145,26 +158,26 @@
             "initial_state": {
                 "variables": {}
             },
-            "state_entry_loaded_1": {
+            "entry_loaded": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "state_entry_loaded_2": {
+            "entry_loaded_post_tick": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "state_flows_present": {
+            "flows_progress": {
                 "variables": {
                     "len(flows)": "1"
                 }
             },
-            "state_flow_details": {
+            "flow_details": {
                 "variables": {
                     "flow.get('step_id')": "'reauth_confirm'",
                     "flow.get('handler')": "DOMAIN",
-                    "context": "flow",
+                    "'context'": "flow",
                     "flow['context'].get('source')": "SOURCE_REAUTH",
                     "flow['context'].get('entry_id')": "entry.entry_id"
                 }
@@ -172,33 +185,49 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "mock_update_error",
                 "starting_state": "initial_state",
-                "ending_state": "state_entry_loaded_1",
+                "ending_state": "initial_state",
                 "inputs": {
-                    "hass": "hass",
-                    "config_entry_id": "1"
+                    "target": "mock_block_device.update",
+                    "exception": "InvalidAuthError"
                 }
             },
             {
-                "action": "tick_and_fire_time",
-                "starting_state": "state_entry_loaded_1",
-                "ending_state": "state_entry_loaded_2",
+                "action": "init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "entry_loaded",
                 "inputs": {
-                    "tick": "timedelta(seconds=UPDATE_PERIOD_MULTIPLIER * 15)",
-                    "hass": "hass"
+                    "hass": "hass",
+                    "device_id": 1
+                }
+            },
+            {
+                "action": "advance_time",
+                "starting_state": "entry_loaded",
+                "ending_state": "entry_loaded_post_tick",
+                "inputs": {
+                    "seconds": "UPDATE_PERIOD_MULTIPLIER * 15"
                 }
             },
             {
                 "action": "async_progress",
-                "starting_state": "state_entry_loaded_2",
-                "ending_state": "state_flows_present",
+                "starting_state": "entry_loaded_post_tick",
+                "ending_state": "flows_progress",
                 "inputs": {}
             },
             {
-                "action": "extract_flow",
-                "starting_state": "state_flows_present",
-                "ending_state": "state_flow_details",
+                "action": "select_flow",
+                "starting_state": "flows_progress",
+                "ending_state": "flow_details",
+                "inputs": {
+                    "index": 0
+                }
+            },
+            {
+                "action": "await_hass_block_till_done",
+                "starting_state": "entry_loaded_post_tick",
+                "ending_state": "entry_loaded_post_tick",
                 "inputs": {}
             }
         ]
@@ -207,6 +236,9 @@
         "name": "test_block_rest_update_auth_error",
         "device_type": "block",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state_1": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
@@ -226,7 +258,7 @@
                 "variables": {
                     "flow.get('step_id')": "'reauth_confirm'",
                     "flow.get('handler')": "DOMAIN",
-                    "context": "flow",
+                    "'context'": "flow",
                     "flow['context'].get('source')": "SOURCE_REAUTH",
                     "flow['context'].get('entry_id')": "entry.entry_id"
                 }
@@ -239,7 +271,7 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "config_entry_id": 1
+                    "parameter": 1
                 }
             },
             {
@@ -258,12 +290,10 @@
                 "inputs": {}
             },
             {
-                "action": "get_flow",
+                "action": "access_flow_details",
                 "starting_state": "state_3",
                 "ending_state": "state_4",
-                "inputs": {
-                    "flows_index": 0
-                }
+                "inputs": {}
             }
         ]
     },
@@ -271,6 +301,18 @@
         "name": "test_block_sleeping_device_firmware_unsupported",
         "device_type": "block_sleeping_device",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "firmware_flag_set": {
+                "variables": {}
+            },
+            "integration_initialized": {
+                "variables": {}
+            },
+            "device_online": {
+                "variables": {}
+            },
             "final_state": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED",
@@ -282,15 +324,16 @@
             {
                 "action": "monkeypatch.setattr",
                 "starting_state": "initial_state",
-                "ending_state": "setup_state",
+                "ending_state": "firmware_flag_set",
                 "inputs": {
-                    "target": "mock_block_device.firmware_supported",
+                    "target": "mock_block_device",
+                    "attribute": "firmware_supported",
                     "value": false
                 }
             },
             {
                 "action": "init_integration",
-                "starting_state": "setup_state",
+                "starting_state": "firmware_flag_set",
                 "ending_state": "integration_initialized",
                 "inputs": {
                     "hass": "hass",
@@ -316,7 +359,7 @@
     },
     {
         "name": "test_block_polling_connection_error",
-        "device_type": "block",
+        "device_type": "block device",
         "states": {
             "STATE_ON": {
                 "variables": {
@@ -336,11 +379,11 @@
                 "ending_state": "STATE_ON",
                 "inputs": {
                     "hass": "hass",
-                    "param": 1
+                    "arg": 1
                 }
             },
             {
-                "action": "tick_and_fire_time_changed",
+                "action": "advance_time_and_update",
                 "starting_state": "STATE_ON",
                 "ending_state": "STATE_UNAVAILABLE",
                 "inputs": {
@@ -351,14 +394,17 @@
     },
     {
         "name": "test_block_rest_update_connection_error",
-        "device_type": "block",
+        "device_type": "binary_sensor",
         "states": {
-            "STATE_ON": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_on": {
                 "variables": {
                     "state.state": "STATE_ON"
                 }
             },
-            "STATE_UNAVAILABLE": {
+            "state_unavailable": {
                 "variables": {
                     "state.state": "STATE_UNAVAILABLE"
                 }
@@ -368,7 +414,7 @@
             {
                 "action": "mock_rest_update",
                 "starting_state": "initial_state",
-                "ending_state": "STATE_ON",
+                "ending_state": "state_on",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer"
@@ -376,8 +422,8 @@
             },
             {
                 "action": "mock_rest_update",
-                "starting_state": "STATE_ON",
-                "ending_state": "STATE_UNAVAILABLE",
+                "starting_state": "state_on",
+                "ending_state": "state_unavailable",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer"
@@ -387,14 +433,14 @@
     },
     {
         "name": "test_block_sleeping_device_no_periodic_updates",
-        "device_type": "block_device",
+        "device_type": "block_sleeping_device",
         "states": {
-            "state_1": {
+            "state_22_1": {
                 "variables": {
-                    "state.state": "'22.1'"
+                    "state.state": "22.1"
                 }
             },
-            "state_2": {
+            "state_unavailable": {
                 "variables": {
                     "state.state": "STATE_UNAVAILABLE"
                 }
@@ -402,35 +448,22 @@
         },
         "transitions": [
             {
-                "action": "initialise_device",
+                "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "state_22_1",
                 "inputs": {
-                    "entity_id": "f'{SENSOR_DOMAIN}.test_name_temperature'",
-                    "sleep_mode": {
-                        "period": 60,
-                        "unit": "m"
-                    },
-                    "init_integration": {
-                        "sleep_period": 3600
-                    },
-                    "mock_online": true
+                    "hass": "hass",
+                    "device_id": 1,
+                    "sleep_period": 3600
                 }
             },
             {
-                "action": "simulate_time_passage",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "time_advance",
+                "starting_state": "state_22_1",
+                "ending_state": "state_unavailable",
                 "inputs": {
-                    "tick": "timedelta(seconds=UPDATE_PERIOD_MULTIPLIER * 3600)",
-                    "fire_time_changed": true
+                    "seconds": "UPDATE_PERIOD_MULTIPLIER * 3600"
                 }
-            },
-            {
-                "action": "await_completion",
-                "starting_state": "state_2",
-                "ending_state": "state_2",
-                "inputs": {}
             }
         ]
     },
@@ -460,8 +493,8 @@
                 "starting_state": "initial_state",
                 "ending_state": "integration_initialized",
                 "inputs": {
-                    "hass": "<hass instance>",
-                    "count": 1
+                    "hass": "hass",
+                    "value": 1
                 }
             },
             {
@@ -469,8 +502,8 @@
                 "starting_state": "integration_initialized",
                 "ending_state": "push_update_failure_mocked",
                 "inputs": {
-                    "hass": "<hass instance>",
-                    "mock_block_device": "<mock_block_device>"
+                    "hass": "hass",
+                    "mock_block_device": "mock_block_device"
                 }
             },
             {
@@ -491,13 +524,13 @@
         "name": "test_block_button_click_event",
         "device_type": "button",
         "states": {
-            "state1": {
+            "state_1": {
                 "variables": {
                     "len(events)": "1",
                     "events[0].data": "{ATTR_DEVICE_ID: device.id, ATTR_DEVICE: 'test-host', ATTR_CHANNEL: 1, ATTR_CLICK_TYPE: 'single', ATTR_GENERATION: 1}"
                 }
             },
-            "state2": {
+            "state_2": {
                 "variables": {
                     "len(events)": "1"
                 }
@@ -505,20 +538,34 @@
         },
         "transitions": [
             {
-                "action": "initialize_and_first_update",
+                "action": "initialise integration and bring mock device online",
                 "starting_state": "initial_state",
-                "ending_state": "state1",
+                "ending_state": "state_1",
                 "inputs": {
-                    "model": "MODEL_BUTTON1",
-                    "sleep_period": 1000
+                    "steps": [
+                        "monkeypatch.setattr(mock_block_device.blocks[RELAY_BLOCK_ID], 'sensor_ids', {})",
+                        "monkeypatch.setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'sensor_ids', {'inputEvent': 'S', 'inputEventCnt': 0})",
+                        "entry = await init_integration(hass, 1, model=MODEL_BUTTON1, sleep_period=1000)",
+                        "mock_block_device.mock_online()",
+                        "await hass.async_block_till_done(wait_background_tasks=True)",
+                        "device = dr.async_entries_for_config_entry(device_registry, entry.entry_id)[0]",
+                        "mock_block_device.mock_update()",
+                        "await hass.async_block_till_done()"
+                    ]
                 }
             },
             {
-                "action": "clear_inputEvent_and_update",
-                "starting_state": "state1",
-                "ending_state": "state2",
+                "action": "clear inputEvent and trigger device update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "inputEvent": ""
+                    "steps": [
+                        "monkeypatch.setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'inputEvent', '')",
+                        "mock_block_device.mock_update()",
+                        "await hass.async_block_till_done()",
+                        "mock_block_device.mock_update()",
+                        "await hass.async_block_till_done()"
+                    ]
                 }
             }
         ]
@@ -527,10 +574,13 @@
         "name": "test_rpc_reload_on_cfg_change",
         "device_type": "switch",
         "states": {
-            "state_1": {
+            "initial_state": {
                 "variables": {}
             },
-            "state_2": {
+            "state_0": {
+                "variables": {}
+            },
+            "state_1": {
                 "variables": {
                     "hass.states.get(entity_id)": "None"
                 }
@@ -538,35 +588,21 @@
         },
         "transitions": [
             {
-                "action": "initialize_and_process_config_change",
+                "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "state_0",
                 "inputs": {
-                    "entity_id": "switch.test_name_test_switch_0",
-                    "monkeypatch_operations": [
-                        "delitem(mock_rpc_device.status, 'cover:0')",
-                        "setitem(mock_rpc_device.status['sys'], 'relay_in_thermostat', False)",
-                        "setitem(mock_rpc_device.config['sys']['ui_data'], 'consumption_types', ['lights'])"
-                    ],
-                    "calls": [
-                        "await init_integration(hass, 2)",
-                        "inject_rpc_device_event(monkeypatch, mock_rpc_device, {...config_changed event...})",
-                        "await hass.async_block_till_done()"
-                    ]
+                    "hass": "hass",
+                    "param": 2
                 }
             },
             {
-                "action": "reload_after_cooldown",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "time_advance_and_fire",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
                 "inputs": {
-                    "time_manipulation": [
-                        "freezer.tick(timedelta(seconds=ENTRY_RELOAD_COOLDOWN))",
-                        "async_fire_time_changed(hass)"
-                    ],
-                    "calls": [
-                        "await hass.async_block_till_done()"
-                    ]
+                    "tick_seconds": "ENTRY_RELOAD_COOLDOWN",
+                    "event": "async_fire_time_changed"
                 }
             }
         ]
@@ -602,36 +638,24 @@
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "num_devices": 2
+                    "device_count": 2
                 }
             },
             {
-                "action": "inject_rpc_device_event",
+                "action": "rpc_reload_with_invalid_auth",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
-                    "monkeypatch": "monkeypatch",
-                    "mock_rpc_device": "mock_rpc_device",
-                    "event": {
-                        "events": [
-                            {
-                                "data": [],
-                                "event": "config_changed",
-                                "id": 1,
-                                "ts": 1668522399.2
-                            },
-                            {
-                                "data": [],
-                                "id": 2,
-                                "ts": 1668522399.2
-                            }
-                        ],
-                        "ts": 1668522399.2
-                    }
+                    "patch_side_effects": [
+                        "None",
+                        "InvalidAuthError",
+                        "None"
+                    ],
+                    "freezer_tick_seconds": "RPC_RECONNECT_INTERVAL"
                 }
             },
             {
-                "action": "async_progress_flow",
+                "action": "inspect_reauth_flow",
                 "starting_state": "state_2",
                 "ending_state": "state_3",
                 "inputs": {}
@@ -640,14 +664,17 @@
     },
     {
         "name": "test_rpc_connection_error_during_unload",
-        "device_type": "RPC",
+        "device_type": "Shelly RPC",
         "states": {
-            "loaded": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "not_loaded": {
+            "state_2": {
                 "variables": {
                     "'Error during shutdown for device'": "caplog.text",
                     "entry.state": "ConfigEntryState.NOT_LOADED"
@@ -658,20 +685,18 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "loaded",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "num_devices": 2
+                    "device_count": 2
                 }
             },
             {
                 "action": "async_unload",
-                "starting_state": "loaded",
-                "ending_state": "not_loaded",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "entry_id": "entry.entry_id",
-                    "patch": "homeassistant.components.shelly.coordinator.async_stop_scanner",
-                    "side_effect": "DeviceConnectionError"
+                    "entry_id": "entry.entry_id"
                 }
             }
         ]
@@ -680,7 +705,7 @@
         "name": "test_rpc_click_event",
         "device_type": "rpc",
         "states": {
-            "post_event_state": {
+            "state_1": {
                 "variables": {
                     "len(events)": "1",
                     "events[0].data": "{ATTR_DEVICE_ID: device.id, ATTR_DEVICE: 'test-host', ATTR_CHANNEL: 1, ATTR_CLICK_TYPE: 'single_push', ATTR_GENERATION: 2}"
@@ -689,10 +714,21 @@
         },
         "transitions": [
             {
-                "action": "inject_rpc_device_event",
+                "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "post_event_state",
+                "ending_state": "initialized",
                 "inputs": {
+                    "hass": "hass",
+                    "generation": 2
+                }
+            },
+            {
+                "action": "inject_rpc_device_event",
+                "starting_state": "initialized",
+                "ending_state": "state_1",
+                "inputs": {
+                    "monkeypatch": "monkeypatch",
+                    "device": "mock_rpc_device",
                     "event_payload": {
                         "events": [
                             {
@@ -705,6 +741,18 @@
                         "ts": 1668522399.2
                     }
                 }
+            },
+            {
+                "action": "hass.async_block_till_done",
+                "starting_state": "state_1",
+                "ending_state": "state_1",
+                "inputs": {}
+            },
+            {
+                "action": "await hass.async_block_till_done",
+                "starting_state": "state_1",
+                "ending_state": "state_1",
+                "inputs": {}
             }
         ]
     },
@@ -712,9 +760,6 @@
         "name": "test_rpc_ignore_virtual_click_event",
         "device_type": "rpc",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
             "state_0": {
                 "variables": {
                     "len(events)": "0"
@@ -732,19 +777,10 @@
                 "starting_state": "initial_state",
                 "ending_state": "state_0",
                 "inputs": {
-                    "monkeypatch": "monkeypatch",
-                    "mock_rpc_device": "mock_rpc_device",
-                    "event_payload": {
-                        "events": [
-                            {
-                                "component": "button:200",
-                                "id": 200,
-                                "event": "single_push",
-                                "ts": 1757358109.89
-                            }
-                        ],
-                        "ts": 757358109.89
-                    }
+                    "component": "button:200",
+                    "id": 200,
+                    "event": "single_push",
+                    "ts": 1757358109.89
                 }
             },
             {
@@ -752,36 +788,27 @@
                 "starting_state": "state_0",
                 "ending_state": "state_1",
                 "inputs": {
-                    "monkeypatch": "monkeypatch",
-                    "mock_rpc_device": "mock_rpc_device",
-                    "event_payload": {
-                        "events": [
-                            {
-                                "data": [],
-                                "event": "single_push",
-                                "id": 0,
-                                "ts": 1668522399.2
-                            }
-                        ],
-                        "ts": 1668522399.2
-                    }
+                    "data": [],
+                    "event": "single_push",
+                    "id": 0,
+                    "ts": 1668522399.2
                 }
             }
         ]
     },
     {
         "name": "test_rpc_update_entry_sleep_period",
-        "device_type": "rpc_device",
+        "device_type": "RPC",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "state_600": {
+            "state_1": {
                 "variables": {
                     "entry.data[CONF_SLEEP_PERIOD]": "600"
                 }
             },
-            "state_3600": {
+            "state_2": {
                 "variables": {
                     "entry.data[CONF_SLEEP_PERIOD]": "3600"
                 }
@@ -791,17 +818,30 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_600",
+                "ending_state": "state_1",
                 "inputs": {
-                    "sleep_period": 600
+                    "hass": "hass (HomeAssistant fixture)",
+                    "device_id": 2,
+                    "sleep_period": 600,
+                    "mock_rpc_device.connected": false,
+                    "mock_rpc_device.status['sys']['wakeup_period']": 600,
+                    "register_entity": {
+                        "domain": "sensor",
+                        "entity_id": "test_name_temperature",
+                        "unique_id": "temperature:0-temperature_tc",
+                        "entry": "entry"
+                    },
+                    "mock_rpc_device.mock_online": true
                 }
             },
             {
-                "action": "update_wakeup_period",
-                "starting_state": "state_600",
-                "ending_state": "state_3600",
+                "action": "update_wakeup_period_and_advance_time",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "new_wakeup_period": 3600
+                    "mock_rpc_device.status['sys']['wakeup_period']": 3600,
+                    "time_advance_seconds": "600 * UPDATE_PERIOD_MULTIPLIER",
+                    "async_fire_time_changed": "hass"
                 }
             }
         ]
@@ -810,12 +850,12 @@
         "name": "test_rpc_sleeping_device_no_periodic_updates",
         "device_type": "rpc_sleeping_device",
         "states": {
-            "available_state": {
+            "snapshot_1": {
                 "variables": {
                     "state.state": "22.9"
                 }
             },
-            "unavailable_state": {
+            "snapshot_2": {
                 "variables": {
                     "state.state": "STATE_UNAVAILABLE"
                 }
@@ -823,24 +863,26 @@
         },
         "transitions": [
             {
-                "action": "initialize_and_brings_device_online",
+                "action": "setup_and_initialize",
                 "starting_state": "initial_state",
-                "ending_state": "available_state",
+                "ending_state": "snapshot_1",
                 "inputs": {
-                    "connected": false,
-                    "wakeup_period": 1000,
-                    "sleep_period": 1000,
-                    "mock_online_called": true,
-                    "entity_id": "sensor.test_name_temperature"
+                    "set_connected_false": "monkeypatch.setattr(mock_rpc_device, 'connected', False)",
+                    "set_wakeup_period": "monkeypatch.setitem(mock_rpc_device.status['sys'], 'wakeup_period', 1000)",
+                    "init_integration": "await init_integration(hass, 2, sleep_period=1000)",
+                    "register_entity": "register_entity(hass, SENSOR_DOMAIN, 'test_name_temperature', 'temperature:0-temperature_tc', entry)",
+                    "mock_online": "mock_rpc_device.mock_online()",
+                    "await_background_tasks": "await hass.async_block_till_done(wait_background_tasks=True)"
                 }
             },
             {
-                "action": "time_elapsed_without_periodic_update",
-                "starting_state": "available_state",
-                "ending_state": "unavailable_state",
+                "action": "time_advance_and_unavailability",
+                "starting_state": "snapshot_1",
+                "ending_state": "snapshot_2",
                 "inputs": {
-                    "tick_seconds": "UPDATE_PERIOD_MULTIPLIER * 1000",
-                    "time_changed": true
+                    "tick_time": "freezer.tick(timedelta(seconds=UPDATE_PERIOD_MULTIPLIER * 1000))",
+                    "fire_time_changed": "async_fire_time_changed(hass)",
+                    "await_background_tasks": "await hass.async_block_till_done(wait_background_tasks=True)"
                 }
             }
         ]
@@ -849,6 +891,36 @@
         "name": "test_rpc_sleeping_device_firmware_unsupported",
         "device_type": "rpc_sleeping_device",
         "states": {
+            "final_state": {
+                "variables": {
+                    "entry.state": "ConfigEntryState.LOADED",
+                    "(DOMAIN, 'firmware_unsupported_123456789ABC')": "issue_registry.issues"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_and_verify",
+                "starting_state": "initial_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "connected": false,
+                    "firmware_supported": false,
+                    "init_integration": {
+                        "hass": "hass",
+                        "device_id": 2,
+                        "sleep_period": 3600
+                    },
+                    "mock_online": true,
+                    "wait_background_tasks": true
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_reconnect_auth_error",
+        "device_type": "RPC",
+        "states": {
             "state_1": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
@@ -856,49 +928,15 @@
             },
             "state_2": {
                 "variables": {
-                    "(DOMAIN, 'firmware_unsupported_123456789ABC')": "issue_registry.issues"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "init_integration",
-                "starting_state": "initial_state",
-                "ending_state": "state_1",
-                "inputs": {
-                    "hass": "hass",
-                    "config_entry_id": 2,
-                    "sleep_period": 3600
-                }
-            },
-            {
-                "action": "mock_rpc_device.mock_online + hass.async_block_till_done",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
-                "inputs": {}
-            }
-        ]
-    },
-    {
-        "name": "test_rpc_reconnect_auth_error",
-        "device_type": "rpc",
-        "states": {
-            "state1": {
-                "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "state2": {
-                "variables": {
-                    "entry.state": "ConfigEntryState.LOADED"
-                }
-            },
-            "state3": {
+            "state_3": {
                 "variables": {
                     "len(flows)": "1"
                 }
             },
-            "state4": {
+            "state_4": {
                 "variables": {
                     "flow.get('step_id')": "reauth_confirm",
                     "flow.get('handler')": "DOMAIN",
@@ -912,45 +950,37 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state1",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "param": 2
+                    "config_entry_id": 2
                 }
             },
             {
-                "action": "rpc_reconnect_attempt",
-                "starting_state": "state1",
-                "ending_state": "state2",
+                "action": "rpc_reconnect_wait",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "monkeypatch_set_connected": false,
-                    "monkeypatch_initialize_side_effect": "InvalidAuthError",
-                    "freeze_tick_seconds": "RPC_RECONNECT_INTERVAL",
-                    "async_fire_time_changed": "hass",
-                    "await_block_till_done": true
+                    "tick_interval_seconds": "RPC_RECONNECT_INTERVAL"
                 }
             },
             {
-                "action": "fetch_flows",
-                "starting_state": "state2",
-                "ending_state": "state3",
-                "inputs": {
-                    "flows_source": "hass.config_entries.flow.async_progress()"
-                }
+                "action": "async_progress",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {}
             },
             {
-                "action": "extract_flow_details",
-                "starting_state": "state3",
-                "ending_state": "state4",
-                "inputs": {
-                    "flow_index": 0
-                }
+                "action": "select_flow",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
+                "inputs": {}
             }
         ]
     },
     {
         "name": "test_rpc_polling_auth_error",
-        "device_type": "rpc",
+        "device_type": "rpc_device",
         "states": {
             "state1": {
                 "variables": {
@@ -971,7 +1001,7 @@
                 "variables": {
                     "flow.get('step_id')": "'reauth_confirm'",
                     "flow.get('handler')": "DOMAIN",
-                    "'context'": "flow",
+                    "context": "flow",
                     "flow['context'].get('source')": "SOURCE_REAUTH",
                     "flow['context'].get('entry_id')": "entry.entry_id"
                 }
@@ -983,44 +1013,32 @@
                 "starting_state": "initial_state",
                 "ending_state": "state1",
                 "inputs": {
-                    "hass": "hass",
+                    "hass": "<hass>",
                     "domain": "SENSOR_DOMAIN",
                     "name": "test_name_rssi",
-                    "unique_id": "wifi-rssi"
-                }
-            },
-            {
-                "action": "init_integration",
-                "starting_state": "state1",
-                "ending_state": "state2",
-                "inputs": {
-                    "hass": "hass",
-                    "config_entry_id": 2
+                    "entity_id": "wifi-rssi"
                 }
             },
             {
                 "action": "mock_polling_rpc_update",
-                "starting_state": "state2",
-                "ending_state": "state3",
+                "starting_state": "state1",
+                "ending_state": "state2",
                 "inputs": {
-                    "hass": "hass",
-                    "freezer": "freezer"
+                    "hass": "<hass>",
+                    "freezer": "<freezer>"
                 }
             },
             {
-                "action": "async_progress",
-                "starting_state": "state3",
-                "ending_state": "state4",
+                "action": "hass.config_entries.flow.async_progress",
+                "starting_state": "state2",
+                "ending_state": "state3",
                 "inputs": {}
             },
             {
-                "action": "get_flow",
-                "starting_state": "state4",
+                "action": "access_flow[0]",
+                "starting_state": "state3",
                 "ending_state": "state4",
-                "inputs": {
-                    "flows": "flows",
-                    "index": 0
-                }
+                "inputs": {}
             }
         ]
     },
@@ -1046,15 +1064,26 @@
                 "ending_state": "STATE_ON",
                 "inputs": {
                     "hass": "hass",
-                    "device_count": 2
+                    "parameter": 2
                 }
             },
             {
-                "action": "freezer.tick",
+                "action": "rpc_reconnect_cycle",
                 "starting_state": "STATE_ON",
                 "ending_state": "STATE_UNAVAILABLE",
                 "inputs": {
-                    "duration": "timedelta(seconds=RPC_RECONNECT_INTERVAL)"
+                    "connected": false,
+                    "initialize_side_effect": "exc",
+                    "tick_seconds": "RPC_RECONNECT_INTERVAL"
+                }
+            },
+            {
+                "action": "time_change",
+                "starting_state": "STATE_ON",
+                "ending_state": "STATE_UNAVAILABLE",
+                "inputs": {
+                    "freezer_tick": "timedelta(seconds=RPC_RECONNECT_INTERVAL)",
+                    "async_fire_time_changed": true
                 }
             }
         ]
@@ -1063,16 +1092,13 @@
         "name": "test_rpc_error_running_connected_events",
         "device_type": "switch",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "snapshot_1": {
+            "state_1": {
                 "variables": {
                     "Error running connected events for device": "caplog.text",
                     "state.state": "STATE_UNAVAILABLE"
                 }
             },
-            "snapshot_2": {
+            "state_2": {
                 "variables": {
                     "state.state": "STATE_ON"
                 }
@@ -1082,22 +1108,24 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "snapshot_1",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
                     "device_index": 2,
                     "options": {
                         "CONF_BLE_SCANNER_MODE": "BLEScannerMode.ACTIVE"
-                    }
+                    },
+                    "side_effect": "DeviceConnectionError"
                 }
             },
             {
-                "action": "reconnect_after_error",
-                "starting_state": "snapshot_1",
-                "ending_state": "snapshot_2",
+                "action": "reconnect_sequence",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "tick_interval": "timedelta(seconds=RPC_RECONNECT_INTERVAL)",
-                    "time_change": "hass"
+                    "tick": "timedelta(seconds=RPC_RECONNECT_INTERVAL)",
+                    "fire_time_changed": "hass",
+                    "await_block_till_done": true
                 }
             }
         ]
@@ -1106,6 +1134,9 @@
         "name": "test_rpc_polling_connection_error",
         "device_type": "sensor",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state_1": {
                 "variables": {
                     "state.state": "-63"
@@ -1119,14 +1150,12 @@
         },
         "transitions": [
             {
-                "action": "register_entity",
+                "action": "init_integration",
                 "starting_state": "initial_state",
                 "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "domain": "SENSOR_DOMAIN",
-                    "name": "test_name_rssi",
-                    "entity_type": "wifi-rssi"
+                    "devices": 2
                 }
             },
             {
@@ -1144,12 +1173,15 @@
         "name": "test_rpc_polling_disconnected",
         "device_type": "rpc_polling",
         "states": {
-            "state_connected": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
                 "variables": {
                     "state.state": "-63"
                 }
             },
-            "state_unavailable": {
+            "state_2": {
                 "variables": {
                     "state.state": "STATE_UNAVAILABLE"
                 }
@@ -1157,21 +1189,18 @@
         },
         "transitions": [
             {
-                "action": "register_entity_and_init",
+                "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_connected",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "domain": "SENSOR_DOMAIN",
-                    "entity_name": "test_name_rssi",
-                    "entity_id_suffix": "wifi-rssi",
-                    "integration_config": 2
+                    "count": 2
                 }
             },
             {
                 "action": "mock_polling_rpc_update",
-                "starting_state": "state_connected",
-                "ending_state": "state_unavailable",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
                     "hass": "hass",
                     "freezer": "freezer"
@@ -1181,45 +1210,43 @@
     },
     {
         "name": "test_rpc_update_entry_fw_ver",
-        "device_type": "rpc_device",
+        "device_type": "rpc",
         "states": {
-            "initial_state": {
+            "state_0": {
                 "variables": {}
             },
-            "state0": {
-                "variables": {}
-            },
-            "state1": {
+            "state_1": {
                 "variables": {
-                    "device.sw_version": "some fw string"
+                    "device.sw_version": "'some fw string'"
                 }
             },
-            "state2": {
+            "state_2": {
                 "variables": {
-                    "device.sw_version": "99.0.0"
+                    "device.sw_version": "'99.0.0'"
                 }
             }
         },
         "transitions": [
             {
-                "action": "setup integration and bring device online",
+                "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state0",
+                "ending_state": "state_0",
                 "inputs": {
-                    "wakeup_period": 600,
+                    "hass": "hass",
+                    "device_index": 2,
                     "sleep_period": 600
                 }
             },
             {
-                "action": "retrieve device information after init",
-                "starting_state": "state0",
-                "ending_state": "state1",
+                "action": "mock_rpc_device.mock_online",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
                 "inputs": {}
             },
             {
-                "action": "update firmware version and refresh device",
-                "starting_state": "state1",
-                "ending_state": "state2",
+                "action": "mock_rpc_device.mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
                     "firmware_version": "99.0.0"
                 }
@@ -1230,6 +1257,9 @@
         "name": "test_rpc_runs_connected_events_when_initialized",
         "device_type": "rpc",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state1": {
                 "variables": {
                     "call.script_list()": "mock_rpc_device.mock_calls"
@@ -1250,22 +1280,22 @@
         },
         "transitions": [
             {
-                "action": "await init_integration",
+                "action": "await init_integration(hass, 2)",
                 "starting_state": "initial_state",
                 "ending_state": "state1",
                 "inputs": {
                     "hass": "hass",
-                    "arg": 2
+                    "arg2": 2
                 }
             },
             {
-                "action": "mock_rpc_device.mock_initialized",
+                "action": "mock_rpc_device.mock_initialized()",
                 "starting_state": "state1",
                 "ending_state": "state2",
                 "inputs": {}
             },
             {
-                "action": "mock_rpc_device.mock_initialized",
+                "action": "mock_rpc_device.mock_initialized()",
                 "starting_state": "state2",
                 "ending_state": "state3",
                 "inputs": {}
@@ -1279,16 +1309,16 @@
             "initial_state": {
                 "variables": {}
             },
-            "state_1": {
+            "integration_initialized": {
                 "variables": {}
             },
-            "state_2": {
+            "device_online": {
                 "variables": {}
             },
-            "state_3": {
+            "integration_unloaded": {
                 "variables": {}
             },
-            "state_4": {
+            "final_state": {
                 "variables": {
                     "call.script_list()": "mock_rpc_device.mock_calls"
                 }
@@ -1296,19 +1326,18 @@
         },
         "transitions": [
             {
-                "action": "monkeypatch.setattr",
+                "action": "setattr",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "initial_state",
                 "inputs": {
-                    "object": "mock_rpc_device",
-                    "attribute": "connected",
+                    "target": "mock_rpc_device.connected",
                     "value": true
                 }
             },
             {
                 "action": "init_integration",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "starting_state": "initial_state",
+                "ending_state": "integration_initialized",
                 "inputs": {
                     "hass": "hass",
                     "device_id": 2,
@@ -1317,23 +1346,92 @@
             },
             {
                 "action": "mock_online",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
+                "starting_state": "integration_initialized",
+                "ending_state": "device_online",
                 "inputs": {}
             },
             {
+                "action": "async_block_till_done",
+                "starting_state": "device_online",
+                "ending_state": "device_online",
+                "inputs": {
+                    "wait_background_tasks": true
+                }
+            },
+            {
                 "action": "async_unload",
-                "starting_state": "state_3",
-                "ending_state": "state_4",
+                "starting_state": "device_online",
+                "ending_state": "integration_unloaded",
                 "inputs": {
                     "entry_id": "entry.entry_id"
                 }
+            },
+            {
+                "action": "async_block_till_done",
+                "starting_state": "integration_unloaded",
+                "ending_state": "final_state",
+                "inputs": {}
             }
         ]
     },
     {
         "name": "test_block_sleeping_device_connection_error",
         "device_type": "block_sleeping_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_on_initial": {
+                "variables": {
+                    "state.state": "STATE_ON"
+                }
+            },
+            "state_on_error": {
+                "variables": {
+                    "'Error connecting to Shelly device'": "caplog.text",
+                    "state.state": "STATE_ON"
+                }
+            },
+            "state_unavailable_sleep": {
+                "variables": {
+                    "'Sleeping device Test name did not update'": "caplog.text",
+                    "state.state": "STATE_UNAVAILABLE"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialize_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_on_initial",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry_id": "entry.entry_id",
+                    "sleep_period": 1000,
+                    "skip_setup": true
+                }
+            },
+            {
+                "action": "initialize_device_failure",
+                "starting_state": "state_on_initial",
+                "ending_state": "state_on_error",
+                "inputs": {
+                    "initialize_side_effect": "DeviceConnectionError"
+                }
+            },
+            {
+                "action": "sleep_update_cycle",
+                "starting_state": "state_on_error",
+                "ending_state": "state_unavailable_sleep",
+                "inputs": {
+                    "tick_seconds": "sleep_period * UPDATE_PERIOD_MULTIPLIER"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_rpc_sleeping_device_connection_error",
+        "device_type": "rpc_sleeping_device",
         "states": {
             "state_1": {
                 "variables": {
@@ -1355,7 +1453,7 @@
         },
         "transitions": [
             {
-                "action": "await hass.config_entries.async_setup",
+                "action": "config_entry_setup",
                 "starting_state": "initial_state",
                 "ending_state": "state_1",
                 "inputs": {
@@ -1363,74 +1461,20 @@
                 }
             },
             {
-                "action": "mock initialize with DeviceConnectionError and bring device online",
+                "action": "initialize_device",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
-                    "side_effect": "DeviceConnectionError"
-                }
-            },
-            {
-                "action": "advance time and fire time changed",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
-                "inputs": {
-                    "sleep_period_seconds": 1000,
-                    "multiplier": "UPDATE_PERIOD_MULTIPLIER"
-                }
-            }
-        ]
-    },
-    {
-        "name": "test_rpc_sleeping_device_connection_error",
-        "device_type": "Shelly RPC sleeping device",
-        "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "STATE_ON_initial": {
-                "variables": {
-                    "state.state": "STATE_ON"
-                }
-            },
-            "STATE_ON_error": {
-                "variables": {
-                    "'Error connecting to Shelly device'": "caplog.text",
-                    "state.state": "STATE_ON"
-                }
-            },
-            "STATE_UNAVAILABLE": {
-                "variables": {
-                    "'Sleeping device Test name did not update'": "caplog.text",
-                    "state.state": "STATE_UNAVAILABLE"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "async_setup_entry",
-                "starting_state": "initial_state",
-                "ending_state": "STATE_ON_initial",
-                "inputs": {
-                    "entry_id": "entry.entry_id"
-                }
-            },
-            {
-                "action": "initialize_device",
-                "starting_state": "STATE_ON_initial",
-                "ending_state": "STATE_ON_error",
-                "inputs": {
-                    "initialize_side_effect": "DeviceConnectionError",
-                    "mock_online_called": true
+                    "initialize_side_effect": "DeviceConnectionError"
                 }
             },
             {
                 "action": "time_tick_update",
-                "starting_state": "STATE_ON_error",
-                "ending_state": "STATE_UNAVAILABLE",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
-                    "tick_seconds": "sleep_period * UPDATE_PERIOD_MULTIPLIER",
-                    "time_changed": true
+                    "sleep_period_seconds": 1000,
+                    "tick_multiplier": "UPDATE_PERIOD_MULTIPLIER"
                 }
             }
         ]
@@ -1439,12 +1483,15 @@
         "name": "test_rpc_sleeping_device_late_setup",
         "device_type": "rpc_sleeping_device",
         "states": {
-            "state_1": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_with_sleep_period": {
                 "variables": {
                     "entry.data[CONF_SLEEP_PERIOD]": "1000"
                 }
             },
-            "state_2": {
+            "final_state": {
                 "variables": {}
             }
         },
@@ -1452,36 +1499,121 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "state_with_sleep_period",
                 "inputs": {
                     "hass": "hass",
-                    "param": 2,
+                    "device_index": 2,
                     "sleep_period": 1000,
                     "skip_setup": true
                 }
             },
             {
-                "action": "device_setup_complete",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "device_setup_sequence",
+                "starting_state": "state_with_sleep_period",
+                "ending_state": "final_state",
                 "inputs": {
-                    "initialized": true,
-                    "connected": true
+                    "steps": [
+                        {
+                            "action": "register_device",
+                            "inputs": {
+                                "device_registry": "device_registry",
+                                "entry": "entry"
+                            }
+                        },
+                        {
+                            "action": "monkeypatch.setattr",
+                            "inputs": {
+                                "target": "mock_rpc_device",
+                                "attribute": "connected",
+                                "value": false
+                            }
+                        },
+                        {
+                            "action": "monkeypatch.setattr",
+                            "inputs": {
+                                "target": "mock_rpc_device",
+                                "attribute": "initialized",
+                                "value": false
+                            }
+                        },
+                        {
+                            "action": "patch.object (initialize)",
+                            "inputs": {
+                                "target": "mock_rpc_device",
+                                "method": "initialize",
+                                "new_callable": "AsyncMock",
+                                "side_effect": "DeviceConnectionError",
+                                "inner_actions": [
+                                    {
+                                        "action": "hass.config_entries.async_setup",
+                                        "inputs": {
+                                            "entry_id": "entry.entry_id"
+                                        }
+                                    },
+                                    {
+                                        "action": "hass.async_block_till_done",
+                                        "inputs": {
+                                            "wait_background_tasks": true
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "action": "monkeypatch.setattr",
+                            "inputs": {
+                                "target": "mock_rpc_device",
+                                "attribute": "initialized",
+                                "value": true
+                            }
+                        },
+                        {
+                            "action": "mock_rpc_device.mock_online",
+                            "inputs": {}
+                        },
+                        {
+                            "action": "hass.async_block_till_done",
+                            "inputs": {
+                                "wait_background_tasks": true
+                            }
+                        },
+                        {
+                            "action": "monkeypatch.setattr",
+                            "inputs": {
+                                "target": "mock_rpc_device",
+                                "attribute": "connected",
+                                "value": true
+                            }
+                        },
+                        {
+                            "action": "mock_rpc_device.mock_initialized",
+                            "inputs": {}
+                        },
+                        {
+                            "action": "hass.async_block_till_done",
+                            "inputs": {
+                                "wait_background_tasks": true
+                            }
+                        }
+                    ]
                 }
             }
         ]
     },
     {
         "name": "test_rpc_already_connected",
-        "device_type": "rpc_device",
+        "device_type": "rpc",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "init_state": {
+            "initialized": {
                 "variables": {}
             },
-            "online_state": {
+            "online": {
+                "variables": {}
+            },
+            "processed": {
                 "variables": {}
             },
             "already_connected": {
@@ -1494,86 +1626,160 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "init_state",
+                "ending_state": "initialized",
                 "inputs": {
                     "hass": "hass",
-                    "timeout": 2
+                    "device_index": 2
                 }
             },
             {
-                "action": "mock_rpc_device.mock_online",
-                "starting_state": "init_state",
-                "ending_state": "online_state",
+                "action": "mock_online",
+                "starting_state": "initialized",
+                "ending_state": "online",
                 "inputs": {}
             },
             {
-                "action": "hass.async_block_till_done",
-                "starting_state": "online_state",
-                "ending_state": "already_connected",
+                "action": "async_block_till_done",
+                "starting_state": "online",
+                "ending_state": "processed",
                 "inputs": {
                     "wait_background_tasks": true
                 }
+            },
+            {
+                "action": "snapshot_assert",
+                "starting_state": "processed",
+                "ending_state": "already_connected",
+                "inputs": {
+                    "already connected": "caplog.text"
+                }
+            },
+            {
+                "action": "assert_initialize_called_once",
+                "starting_state": "already_connected",
+                "ending_state": "already_connected",
+                "inputs": {}
             }
         ]
     },
     {
         "name": "test_xmod_model_lookup",
-        "device_type": "XMOD",
+        "device_type": "xmod",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "snapshot_state": {
                 "variables": {
-                    "device.model": "Test XMOD model name"
+                    "device.model": "xmod_model"
                 }
             }
         },
         "transitions": [
+            {
+                "action": "set_xmod_info",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "xmod_model": "Test XMOD model name"
+                }
+            },
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
                 "ending_state": "snapshot_state",
                 "inputs": {
                     "hass": "hass",
-                    "param": 2
+                    "config_entry_id": 2
                 }
             }
         ]
     },
     {
         "name": "test_sub_device_area_from_main_device",
-        "device_type": "shelly_2pm_gen3",
+        "device_type": "Shelly 2PM Gen3",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "post_setup": {
+            "post_creation": {
                 "variables": {
-                    "entity_id_pattern": "switch.living_room_test_name_output_{relay_index}",
-                    "entity_exists": "true",
-                    "area_id": "living_room"
+                    "area_id": "living_room",
+                    "entity_exists": "True",
+                    "device_entry_exists": "True"
                 }
             }
         },
         "transitions": [
             {
-                "action": "setup_integration_and_device_entries",
+                "action": "setup_sub_device_area",
                 "starting_state": "initial_state",
-                "ending_state": "post_setup",
+                "ending_state": "post_creation",
                 "inputs": {
-                    "fixture_file": "2pm_gen3.json",
-                    "domain": "shelly",
-                    "gen": 3,
-                    "model": "MODEL_2PM_G3",
-                    "skip_setup": true,
-                    "device_name": "Test name",
-                    "suggested_area": "living_room",
-                    "connections": [
-                        "CONNECTION_NETWORK_MAC",
-                        "MOCK_MAC"
+                    "fixture_load": {
+                        "function": "async_load_json_object_fixture",
+                        "args": [
+                            "2pm_gen3.json",
+                            "DOMAIN"
+                        ]
+                    },
+                    "monkeypatch_setattr": [
+                        {
+                            "target": "mock_rpc_device.shelly",
+                            "value_source": "device_fixture['shelly']"
+                        },
+                        {
+                            "target": "mock_rpc_device.status",
+                            "value_source": "device_fixture['status']"
+                        },
+                        {
+                            "target": "mock_rpc_device.config",
+                            "value_source": "device_fixture['config']"
+                        }
                     ],
-                    "identifiers": [
-                        "DOMAIN",
-                        "MOCK_MAC"
-                    ]
+                    "init_integration": {
+                        "function": "init_integration",
+                        "kwargs": {
+                            "gen": 3,
+                            "model": "MODEL_2PM_G3",
+                            "skip_setup": true
+                        }
+                    },
+                    "create_device_entry": {
+                        "function": "device_registry.async_get_or_create",
+                        "kwargs": {
+                            "config_entry_id": "config_entry.entry_id",
+                            "name": "Test name",
+                            "connections": [
+                                [
+                                    "CONNECTION_NETWORK_MAC",
+                                    "MOCK_MAC"
+                                ]
+                            ],
+                            "identifiers": [
+                                [
+                                    "DOMAIN",
+                                    "MOCK_MAC"
+                                ]
+                            ],
+                            "suggested_area": "living_room"
+                        }
+                    },
+                    "setup_config_entry": {
+                        "function": "hass.config_entries.async_setup",
+                        "args": [
+                            "config_entry.entry_id"
+                        ]
+                    },
+                    "block_until_done": {
+                        "function": "hass.async_block_till_done",
+                        "args": []
+                    },
+                    "entity_verification_loop": {
+                        "description": "Iterate over 2 relays and verify each switch entity exists and is assigned to the living_room area.",
+                        "range": "relay_index in [0,1]",
+                        "entity_id_pattern": "switch.living_room_test_name_output_{relay_index}"
+                    }
                 }
             }
         ]
@@ -1582,9 +1788,13 @@
         "name": "test_rpc_ble_scanner_enable_reboot",
         "device_type": "BLE scanner",
         "states": {
-            "post_init": {
+            "state_1": {
                 "variables": {
-                    "bool('BLE enable required a reboot' in caplog.text)": "restart_required",
+                    "bool('BLE enable required a reboot' in caplog.text)": "restart_required"
+                }
+            },
+            "state_2": {
+                "variables": {
                     "mock_rpc_device.trigger_reboot.call_count": "int(restart_required)"
                 }
             }
@@ -1593,14 +1803,20 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "post_init",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "device_id": 2,
+                    "config_entry_id": 2,
                     "options": {
                         "CONF_BLE_SCANNER_MODE": "BLEScannerMode.ACTIVE"
                     }
                 }
+            },
+            {
+                "action": "trigger_reboot",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
             }
         ]
     }

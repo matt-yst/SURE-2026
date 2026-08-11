@@ -3,7 +3,7 @@
         "name": "test_climate_hvac_mode",
         "device_type": "climate",
         "states": {
-            "initial_snapshot": {
+            "initial_state": {
                 "variables": {
                     "hass.states.get(ENTITY_ID)": "snapshot(name=f'{ENTITY_ID}-state')",
                     "entity_registry.async_get(ENTITY_ID)": "snapshot(name=f'{ENTITY_ID}-entry')"
@@ -27,44 +27,28 @@
         },
         "transitions": [
             {
-                "action": "initialize_integration",
+                "action": "climate.set_hvac_mode",
                 "starting_state": "initial_state",
-                "ending_state": "initial_snapshot",
-                "inputs": {
-                    "hass": "hass",
-                    "device_id": 1,
-                    "sleep_period": 1000,
-                    "model": "MODEL_VALVE"
-                }
-            },
-            {
-                "action": "set_hvac_mode",
-                "starting_state": "initial_snapshot",
                 "ending_state": "heat_state",
                 "inputs": {
-                    "domain": "CLIMATE_DOMAIN",
-                    "service": "SERVICE_SET_HVAC_MODE",
                     "entity_id": "ENTITY_ID",
                     "hvac_mode": "HVACMode.HEAT"
                 }
             },
             {
-                "action": "set_hvac_mode",
+                "action": "climate.set_hvac_mode",
                 "starting_state": "heat_state",
                 "ending_state": "off_state",
                 "inputs": {
-                    "domain": "CLIMATE_DOMAIN",
-                    "service": "SERVICE_SET_HVAC_MODE",
                     "entity_id": "ENTITY_ID",
                     "hvac_mode": "HVACMode.OFF"
                 }
             },
             {
-                "action": "set_valve_error_unavailable",
+                "action": "set_valve_error",
                 "starting_state": "off_state",
                 "ending_state": "unavailable_state",
                 "inputs": {
-                    "block_id": "DEVICE_BLOCK_ID",
                     "valveError": 1
                 }
             }
@@ -77,18 +61,24 @@
             "initial_state": {
                 "variables": {}
             },
-            "post_init_state": {
+            "state_1": {
                 "variables": {
                     "state.state": "HVACMode.OFF",
                     "state.attributes[ATTR_TEMPERATURE]": "4"
                 }
+            },
+            "state_2": {
+                "variables": {}
+            },
+            "state_3": {
+                "variables": {}
             }
         },
         "transitions": [
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "post_init_state",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
                     "device_id": 1,
@@ -96,29 +86,29 @@
                 }
             },
             {
-                "action": "services.async_call",
-                "starting_state": "post_init_state",
-                "ending_state": "post_init_state",
+                "action": "hass.services.async_call",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "domain": "climate",
-                    "service": "set_temperature",
+                    "domain": "CLIMATE_DOMAIN",
+                    "service": "SERVICE_SET_TEMPERATURE",
                     "service_data": {
-                        "entity_id": "ENTITY_ID",
-                        "temperature": 23
+                        "ATTR_ENTITY_ID": "ENTITY_ID",
+                        "ATTR_TEMPERATURE": 23
                     },
                     "blocking": true
                 }
             },
             {
-                "action": "services.async_call",
-                "starting_state": "post_init_state",
-                "ending_state": "post_init_state",
+                "action": "hass.services.async_call",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
-                    "domain": "climate",
-                    "service": "set_temperature",
+                    "domain": "CLIMATE_DOMAIN",
+                    "service": "SERVICE_SET_TEMPERATURE",
                     "service_data": {
-                        "entity_id": "ENTITY_ID",
-                        "temperature": 20
+                        "ATTR_ENTITY_ID": "ENTITY_ID",
+                        "ATTR_TEMPERATURE": 20
                     },
                     "blocking": true
                 }
@@ -129,25 +119,22 @@
         "name": "test_climate_set_preset_mode",
         "device_type": "climate",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state_1": {
+            "state_0": {
                 "variables": {
                     "state.attributes[ATTR_PRESET_MODE]": "PRESET_NONE"
                 }
             },
-            "state_2": {
+            "state_1": {
                 "variables": {
-                    "state.attributes[ATTR_PRESET_MODE]": "'Profile2'"
+                    "state.attributes[ATTR_PRESET_MODE]": "Profile2"
                 }
             },
-            "state_3": {
+            "state_2": {
                 "variables": {
                     "len(mock_block_device.set_thermostat_state.mock_calls)": "2"
                 }
             },
-            "state_4": {
+            "state_3": {
                 "variables": {
                     "state.attributes[ATTR_PRESET_MODE]": "PRESET_NONE"
                 }
@@ -155,48 +142,36 @@
         },
         "transitions": [
             {
-                "action": "await init_integration(...)",
+                "action": "initialize",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "state_0",
                 "inputs": {
                     "hass": "hass",
-                    "device_count": 1,
+                    "device_id": 1,
                     "sleep_period": 1000,
                     "model": "MODEL_VALVE"
                 }
             },
             {
-                "action": "await hass.services.async_call(...)",
+                "action": "set_preset_mode",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
+                "inputs": {
+                    "preset_mode": "Profile2"
+                }
+            },
+            {
+                "action": "set_preset_mode",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
-                    "domain": "CLIMATE_DOMAIN",
-                    "service": "SERVICE_SET_PRESET_MODE",
-                    "data": {
-                        "ATTR_ENTITY_ID": "ENTITY_ID",
-                        "ATTR_PRESET_MODE": "Profile2"
-                    },
-                    "blocking": true
+                    "preset_mode": "PRESET_NONE"
                 }
             },
             {
-                "action": "await hass.services.async_call(...)",
+                "action": "mock_update",
                 "starting_state": "state_2",
                 "ending_state": "state_3",
-                "inputs": {
-                    "domain": "CLIMATE_DOMAIN",
-                    "service": "SERVICE_SET_PRESET_MODE",
-                    "data": {
-                        "ATTR_ENTITY_ID": "ENTITY_ID",
-                        "ATTR_PRESET_MODE": "PRESET_NONE"
-                    },
-                    "blocking": true
-                }
-            },
-            {
-                "action": "mock_block_device.mock_update()",
-                "starting_state": "state_3",
-                "ending_state": "state_4",
                 "inputs": {}
             }
         ]
@@ -205,6 +180,9 @@
         "name": "test_block_restored_climate",
         "device_type": "climate",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "off_state": {
                 "variables": {
                     "state.state": "HVACMode.OFF",
@@ -220,7 +198,23 @@
         },
         "transitions": [
             {
-                "action": "hass.services.async_call",
+                "action": "setup_integration",
+                "starting_state": "initial_state",
+                "ending_state": "off_state",
+                "inputs": {
+                    "function": "init_integration",
+                    "args": [
+                        "hass",
+                        1
+                    ],
+                    "kwargs": {
+                        "sleep_period": 1000,
+                        "skip_setup": true
+                    }
+                }
+            },
+            {
+                "action": "service_call_set_hvac_mode",
                 "starting_state": "off_state",
                 "ending_state": "heat_state",
                 "inputs": {
@@ -228,8 +222,9 @@
                     "service": "set_hvac_mode",
                     "service_data": {
                         "entity_id": "ENTITY_ID",
-                        "hvac_mode": "HVACMode.HEAT"
-                    }
+                        "hvac_mode": "HEAT"
+                    },
+                    "blocking": true
                 }
             }
         ]
@@ -241,28 +236,21 @@
             "initial_state": {
                 "variables": {}
             },
+            "state_0": {
+                "variables": {
+                    "state.state": "HVACMode.OFF",
+                    "state.attributes.get(ATTR_TEMPERATURE)": "39",
+                    "state.attributes.get(ATTR_CURRENT_TEMPERATURE)": "67"
+                }
+            },
             "state_1": {
-                "variables": {
-                    "state.state": "HVACMode.OFF",
-                    "state.attributes.get(ATTR_TEMPERATURE)": "39",
-                    "state.attributes.get(ATTR_CURRENT_TEMPERATURE)": "67"
-                }
-            },
-            "state_2": {
-                "variables": {
-                    "state.state": "HVACMode.OFF",
-                    "state.attributes.get(ATTR_TEMPERATURE)": "39",
-                    "state.attributes.get(ATTR_CURRENT_TEMPERATURE)": "67"
-                }
-            },
-            "state_3": {
                 "variables": {
                     "state.state": "HVACMode.OFF",
                     "state.attributes.get(ATTR_TEMPERATURE)": "39",
                     "state.attributes.get(ATTR_CURRENT_TEMPERATURE)": "65"
                 }
             },
-            "state_4": {
+            "state_2": {
                 "variables": {
                     "state.state": "HVACMode.HEAT",
                     "state.attributes.get(ATTR_TEMPERATURE)": "50"
@@ -271,37 +259,78 @@
         },
         "transitions": [
             {
-                "action": "mock_restore_cache_with_extra_data",
+                "action": "init_integration_and_registration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "state_0",
                 "inputs": {
-                    "hass": "hass",
-                    "data": "((State(entity_id, HVACMode.OFF, attributes=attrs), extra_data),)"
+                    "init_integration": {
+                        "hass": "hass",
+                        "device_count": 1,
+                        "sleep_period": 1000,
+                        "skip_setup": true
+                    },
+                    "register_device": {
+                        "device_registry": "device_registry",
+                        "entry": "entry"
+                    },
+                    "register_entity": {
+                        "hass": "hass",
+                        "domain": "CLIMATE_DOMAIN",
+                        "name": "test_name",
+                        "entity_id": "sensor_0",
+                        "config_entry": "entry",
+                        "device_id": "device.id"
+                    },
+                    "mock_restore_cache_with_extra_data": {
+                        "entity_id": "entity_id",
+                        "state": "HVACMode.OFF",
+                        "attributes": {
+                            "current_temperature": 67,
+                            "temperature": 39
+                        },
+                        "extra_data": {
+                            "last_target_temp": 10.0
+                        }
+                    },
+                    "unit_system": "US_CUSTOMARY_SYSTEM"
                 }
             },
             {
-                "action": "mock_block_device.mock_update",
+                "action": "mock_online_and_update_temperature",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
+                "inputs": {
+                    "setattr_sensor_targetTemp": 4.0,
+                    "setattr_sensor_temp": 18.2,
+                    "mock_block_device.mock_online": null,
+                    "await_hass_async_block_till_done": {
+                        "wait_background_tasks": true
+                    }
+                }
+            },
+            {
+                "action": "set_hvac_mode_to_heat",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
-                "inputs": {}
-            },
-            {
-                "action": "mock_block_device.mock_online",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
-                "inputs": {}
-            },
-            {
-                "action": "hass.services.async_call",
-                "starting_state": "state_3",
-                "ending_state": "state_4",
                 "inputs": {
-                    "domain": "climate",
-                    "service": "set_hvac_mode",
-                    "service_data": {
-                        "entity_id": "ENTITY_ID",
-                        "hvac_mode": "HVACMode.HEAT"
-                    }
+                    "service_call": {
+                        "domain": "CLIMATE_DOMAIN",
+                        "service": "SERVICE_SET_HVAC_MODE",
+                        "service_data": {
+                            "ATTR_ENTITY_ID": "ENTITY_ID",
+                            "ATTR_HVAC_MODE": "HVACMode.HEAT"
+                        },
+                        "blocking": true
+                    },
+                    "setattr_sensor_targetTemp": 10.0,
+                    "mock_block_device.mock_update": null,
+                    "assert_set_thermostat_state_called_once_with": [
+                        0,
+                        {
+                            "target_t_enabled": 1,
+                            "target_t": 10.0
+                        }
+                    ]
                 }
             }
         ]
@@ -310,7 +339,7 @@
         "name": "test_block_restored_climate_unavailable",
         "device_type": "climate",
         "states": {
-            "state_1": {
+            "unavailable_restored_state": {
                 "variables": {
                     "state.state": "HVACMode.OFF"
                 }
@@ -318,11 +347,21 @@
         },
         "transitions": [
             {
-                "action": "hass.config_entries.async_setup",
+                "action": "setup_and_restore",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "unavailable_restored_state",
                 "inputs": {
-                    "entry_id": "entry.entry_id"
+                    "behaviour_steps": [
+                        "monkeypatch.delattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'targetTemp')",
+                        "monkeypatch.setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'valveError', 0)",
+                        "entry = await init_integration(hass, 1, sleep_period=1000, skip_setup=True)",
+                        "device = register_device(device_registry, entry)",
+                        "entity_id = register_entity(hass, CLIMATE_DOMAIN, 'test_name', 'sensor_0', entry, device_id=device.id)",
+                        "mock_restore_cache(hass, [State(entity_id, STATE_UNAVAILABLE)])",
+                        "monkeypatch.setattr(mock_block_device, 'initialized', False)",
+                        "await hass.config_entries.async_setup(entry.entry_id)",
+                        "await hass.async_block_till_done()"
+                    ]
                 }
             }
         ]
@@ -334,7 +373,7 @@
             "initial_state": {
                 "variables": {}
             },
-            "restored_state": {
+            "state_1": {
                 "variables": {
                     "state.state": "HVACMode.HEAT"
                 }
@@ -342,52 +381,22 @@
         },
         "transitions": [
             {
-                "action": "setup_integration_and_restore_cache",
+                "action": "async_setup config entry",
                 "starting_state": "initial_state",
-                "ending_state": "restored_state",
+                "ending_state": "state_1",
                 "inputs": {
-                    "init_integration": {
-                        "hass": "hass",
-                        "num_devices": 1,
-                        "sleep_period": 1000,
-                        "skip_setup": true
-                    },
-                    "device_registration": {
-                        "device_registry": "device_registry",
-                        "entry": "entry"
-                    },
-                    "entity_registration": {
-                        "hass": "hass",
-                        "domain": "CLIMATE_DOMAIN",
-                        "name": "test_name",
-                        "sensor_id": "sensor_0",
-                        "entry": "entry",
-                        "device_id": "device.id"
-                    },
-                    "restore_cache": {
-                        "entity_id": "entity_id",
-                        "state": "HVACMode.HEAT"
-                    },
-                    "block_device_initialised": false,
-                    "monkeypatch_operations": [
-                        "delattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'targetTemp')",
-                        "setattr(mock_block_device.blocks[DEVICE_BLOCK_ID], 'valveError', 0)"
-                    ]
+                    "entry_id": "entry.entry_id"
                 }
             },
             {
-                "action": "set_preset_mode_service_call",
-                "starting_state": "restored_state",
-                "ending_state": "restored_state",
+                "action": "service call set_preset_mode (expected failure)",
+                "starting_state": "state_1",
+                "ending_state": "state_1",
                 "inputs": {
-                    "domain": "CLIMATE_DOMAIN",
-                    "service": "SERVICE_SET_PRESET_MODE",
-                    "service_data": {
-                        "ATTR_ENTITY_ID": "ENTITY_ID",
-                        "ATTR_PRESET_MODE": "Profile1"
-                    },
-                    "expected_exception": "ServiceValidationError",
-                    "http_request_assertion": "not_called"
+                    "domain": "climate",
+                    "service": "set_preset_mode",
+                    "entity_id": "ENTITY_ID",
+                    "preset_mode": "Profile1"
                 }
             }
         ]
@@ -399,47 +408,108 @@
             "initial_state": {
                 "variables": {}
             },
-            "initialized_state": {
-                "variables": {}
-            },
             "error_state": {
                 "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "set_hvac_mode",
                 "starting_state": "initial_state",
-                "ending_state": "initialized_state",
-                "inputs": {
-                    "hass": "hass",
-                    "config_entry_id": 1,
-                    "sleep_period": 1000
-                }
-            },
-            {
-                "action": "hass.services.async_call",
-                "starting_state": "initialized_state",
                 "ending_state": "error_state",
                 "inputs": {
-                    "domain": "CLIMATE_DOMAIN",
-                    "service": "SERVICE_SET_HVAC_MODE",
-                    "service_data": {
-                        "entity_id": "ENTITY_ID",
-                        "hvac_mode": "HVACMode.HEAT"
-                    },
-                    "blocking": true,
-                    "expected_exception": {
-                        "type": "HomeAssistantError",
-                        "match": "Device communication error occurred while calling action for climate.test_name of Test name"
-                    }
+                    "entity_id": "ENTITY_ID",
+                    "hvac_mode": "HVACMode.HEAT"
                 }
             }
         ]
     },
     {
         "name": "test_block_set_mode_auth_error",
-        "device_type": "block",
+        "device_type": "block_device",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "entry.state": "ConfigEntryState.LOADED"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "entry.state": "ConfigEntryState.LOADED"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "len(flows)": "1"
+                }
+            },
+            "state_4": {
+                "variables": {
+                    "flow.get('step_id')": "'reauth_confirm'",
+                    "flow.get('handler')": "DOMAIN",
+                    "context": "flow",
+                    "flow['context'].get('source')": "SOURCE_REAUTH",
+                    "flow['context'].get('entry_id')": "entry.entry_id"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_and_init_integration",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "monkeypatch": [
+                        {
+                            "target": "mock_block_device.blocks[DEVICE_BLOCK_ID].valveError",
+                            "value": 0
+                        },
+                        {
+                            "target": "mock_block_device.set_thermostat_state",
+                            "side_effect": "InvalidAuthError"
+                        }
+                    ],
+                    "init_integration": {
+                        "hass": "hass",
+                        "device_count": 1,
+                        "sleep_period": 1000
+                    },
+                    "mock_online": true
+                }
+            },
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "domain": "CLIMATE_DOMAIN",
+                    "service": "SERVICE_SET_HVAC_MODE",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "ENTITY_ID",
+                        "ATTR_HVAC_MODE": "HVACMode.HEAT"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "hass.config_entries.flow.async_progress",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {}
+            },
+            {
+                "action": "select_flow",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
+                "inputs": {
+                    "index": 0
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_block_restored_climate_auth_error",
+        "device_type": "climate",
         "states": {
             "state_1": {
                 "variables": {
@@ -468,101 +538,32 @@
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "async_setup_config_entry",
                 "starting_state": "initial_state",
                 "ending_state": "state_1",
-                "inputs": {
-                    "hass": "hass",
-                    "config_entry_id": 1,
-                    "sleep_period": 1000
-                }
-            },
-            {
-                "action": "hass.services.async_call",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
-                "inputs": {
-                    "domain": "CLIMATE_DOMAIN",
-                    "service": "SERVICE_SET_HVAC_MODE",
-                    "service_data": {
-                        "entity_id": "ENTITY_ID",
-                        "hvac_mode": "HVACMode.HEAT"
-                    },
-                    "blocking": true
-                }
-            },
-            {
-                "action": "hass.config_entries.flow.async_progress",
-                "starting_state": "state_2",
-                "ending_state": "state_3",
-                "inputs": {}
-            },
-            {
-                "action": "retrieve_flow",
-                "starting_state": "state_3",
-                "ending_state": "state_4",
-                "inputs": {}
-            }
-        ]
-    },
-    {
-        "name": "test_block_restored_climate_auth_error",
-        "device_type": "climate",
-        "states": {
-            "state1": {
-                "variables": {
-                    "entry.state": "ConfigEntryState.LOADED"
-                }
-            },
-            "state2": {
-                "variables": {
-                    "entry.state": "ConfigEntryState.LOADED"
-                }
-            },
-            "state3": {
-                "variables": {
-                    "len(flows)": "1"
-                }
-            },
-            "state4": {
-                "variables": {
-                    "flow.get('step_id')": "'reauth_confirm'",
-                    "flow.get('handler')": "DOMAIN",
-                    "'context'": "flow",
-                    "flow['context'].get('source')": "SOURCE_REAUTH",
-                    "flow['context'].get('entry_id')": "entry.entry_id"
-                }
-            }
-        },
-        "transitions": [
-            {
-                "action": "await hass.config_entries.async_setup(entry.entry_id)",
-                "starting_state": "initial_state",
-                "ending_state": "state1",
                 "inputs": {
                     "entry_id": "entry.entry_id"
                 }
             },
             {
-                "action": "handle InvalidAuthError during settings access",
-                "starting_state": "state1",
-                "ending_state": "state2",
+                "action": "handle_auth_error_during_init",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "mock_block_device.initialized": true,
-                    "mock_block_device.settings.side_effect": "InvalidAuthError",
-                    "mock_block_device.mock_online": "called"
+                    "initialized_set_true": true,
+                    "settings_side_effect": "InvalidAuthError"
                 }
             },
             {
-                "action": "hass.config_entries.flow.async_progress()",
-                "starting_state": "state2",
-                "ending_state": "state3",
+                "action": "get_async_progress",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {}
             },
             {
-                "action": "flow = flows[0]",
-                "starting_state": "state3",
-                "ending_state": "state4",
+                "action": "select_flow",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
                 "inputs": {}
             }
         ]
@@ -571,6 +572,9 @@
         "name": "test_device_not_calibrated",
         "device_type": "valve",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "state_1": {
                 "variables": {}
             },
@@ -580,16 +584,33 @@
         },
         "transitions": [
             {
-                "action": "mock_update",
+                "action": "initialise_and_update",
                 "starting_state": "initial_state",
                 "ending_state": "state_1",
-                "inputs": {}
+                "inputs": {
+                    "init_integration": {
+                        "hass": "hass",
+                        "device_id": 1,
+                        "sleep_period": 1000,
+                        "model": "MODEL_VALVE"
+                    },
+                    "mock_online": true,
+                    "status": {
+                        "calibrated": false
+                    },
+                    "mock_update": true,
+                    "await_block_till_done": true
+                }
             },
             {
-                "action": "mock_update",
+                "action": "reset_status_and_update",
                 "starting_state": "state_1",
                 "ending_state": "state_2",
-                "inputs": {}
+                "inputs": {
+                    "status": "MOCK_STATUS_COAP",
+                    "mock_update": true,
+                    "await_block_till_done": true
+                }
             }
         ]
     },
@@ -597,19 +618,19 @@
         "name": "test_rpc_climate_hvac_mode",
         "device_type": "climate",
         "states": {
-            "initial_snapshot": {
+            "state_1": {
                 "variables": {
                     "(state := hass.states.get(entity_id))": "snapshot(name=f'{entity_id}-state')",
                     "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
                 }
             },
-            "post_update_snapshot": {
+            "state_2": {
                 "variables": {
                     "state.attributes[ATTR_HVAC_ACTION]": "HVACAction.IDLE",
                     "state.attributes[ATTR_CURRENT_HUMIDITY]": "44.4"
                 }
             },
-            "final_snapshot": {
+            "state_3": {
                 "variables": {
                     "state.state": "HVACMode.OFF"
                 }
@@ -619,39 +640,38 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "initial_snapshot",
+                "ending_state": "state_1",
                 "inputs": {
                     "hass": "hass",
-                    "config_entry_id": 2,
+                    "device_count": 2,
                     "model": "MODEL_WALL_DISPLAY"
                 }
             },
             {
-                "action": "set_output_and_update",
-                "starting_state": "initial_snapshot",
-                "ending_state": "post_update_snapshot",
-                "inputs": {
-                    "mock_rpc_device.status['thermostat:0']['output']": false,
-                    "mock_rpc_device.mock_update": "called"
-                }
+                "action": "mock_rpc_device.mock_update",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
             },
             {
-                "action": "set_hvac_mode_service",
-                "starting_state": "post_update_snapshot",
-                "ending_state": "final_snapshot",
+                "action": "hass.services.async_call",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
                     "domain": "CLIMATE_DOMAIN",
                     "service": "SERVICE_SET_HVAC_MODE",
-                    "data": {
+                    "service_data": {
                         "ATTR_ENTITY_ID": "entity_id",
                         "ATTR_HVAC_MODE": "HVACMode.OFF"
                     },
-                    "mock_rpc_device.mock_update": "called",
-                    "mock_rpc_device.climate_set_hvac_mode.assert_called_once_with": [
-                        0,
-                        "str(HVACMode.OFF)"
-                    ]
+                    "blocking": true
                 }
+            },
+            {
+                "action": "mock_rpc_device.mock_update",
+                "starting_state": "state_3",
+                "ending_state": "state_3",
+                "inputs": {}
             }
         ]
     },
@@ -659,7 +679,7 @@
         "name": "test_rpc_climate_without_humidity",
         "device_type": "climate",
         "states": {
-            "initialized_state": {
+            "post_init": {
                 "variables": {
                     "state.state": "HVACMode.HEAT",
                     "state.attributes[ATTR_TEMPERATURE]": "23",
@@ -674,7 +694,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "initialized_state",
+                "ending_state": "post_init",
                 "inputs": {
                     "hass": "hass",
                     "device_count": 2,
@@ -714,8 +734,11 @@
                 "starting_state": "state_1",
                 "ending_state": "state_2",
                 "inputs": {
+                    "domain": "CLIMATE_DOMAIN",
+                    "service": "SERVICE_SET_TEMPERATURE",
                     "entity_id": "climate.test_name",
-                    "temperature": 28
+                    "temperature": 28,
+                    "blocking": true
                 }
             }
         ]
@@ -724,7 +747,7 @@
         "name": "test_rpc_climate_hvac_mode_cool",
         "device_type": "climate",
         "states": {
-            "expected_state": {
+            "cool_state": {
                 "variables": {
                     "state.state": "HVACMode.COOL",
                     "state.attributes[ATTR_HVAC_ACTION]": "HVACAction.COOLING"
@@ -735,10 +758,10 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "expected_state",
+                "ending_state": "cool_state",
                 "inputs": {
-                    "hass": "hass",
-                    "device_count": 2,
+                    "hass": "<hass\u2011instance>",
+                    "device_index": 2,
                     "model": "MODEL_WALL_DISPLAY"
                 }
             }
@@ -746,12 +769,12 @@
     },
     {
         "name": "test_wall_display_thermostat_mode",
-        "device_type": "wall_display",
+        "device_type": "Wall Display",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "post_init": {
+            "post_init_state": {
                 "variables": {
                     "hass.states.get(switch_entity_id)": "None",
                     "len(hass.states.async_entity_ids(SWITCH_DOMAIN))": "0"
@@ -773,7 +796,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "post_init",
+                "ending_state": "post_init_state",
                 "inputs": {
                     "hass": "hass",
                     "count": "2",
@@ -782,7 +805,7 @@
             },
             {
                 "action": "hass.states.get",
-                "starting_state": "post_init",
+                "starting_state": "post_init_state",
                 "ending_state": "climate_state",
                 "inputs": {
                     "entity_id": "climate_entity_id"
@@ -802,12 +825,9 @@
         "name": "test_wall_display_thermostat_mode_external_actuator",
         "device_type": "wall_display",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "snapshot_state": {
+            "post_init": {
                 "variables": {
-                    "state.state": "STATE_ON",
+                    "state.state (switch)": "STATE_ON",
                     "len(hass.states.async_entity_ids(SWITCH_DOMAIN))": "1",
                     "state.state (climate)": "HVACMode.HEAT",
                     "len(hass.states.async_entity_ids(CLIMATE_DOMAIN))": "1",
@@ -819,10 +839,10 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "snapshot_state",
+                "ending_state": "post_init",
                 "inputs": {
                     "hass": "hass",
-                    "device_count": 2,
+                    "config_entry_id": 2,
                     "model": "MODEL_WALL_DISPLAY"
                 }
             }
@@ -830,18 +850,18 @@
     },
     {
         "name": "test_blu_trv_climate_set_temperature",
-        "device_type": "TRV",
+        "device_type": "blu_trv",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "state_1": {
+            "state_0": {
                 "variables": {
                     "(state := hass.states.get(entity_id))": "snapshot(name=f'{entity_id}-state')",
                     "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
                 }
             },
-            "state_2": {
+            "state_1": {
                 "variables": {
                     "state.attributes[ATTR_TEMPERATURE]": "28"
                 }
@@ -851,25 +871,20 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "state_0",
                 "inputs": {
                     "hass": "hass",
-                    "config_entry_id": 3,
+                    "gateway_id": 3,
                     "model": "MODEL_BLU_GATEWAY_G3"
                 }
             },
             {
-                "action": "hass.services.async_call",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "action": "climate.set_temperature",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
                 "inputs": {
-                    "domain": "CLIMATE_DOMAIN",
-                    "service": "SERVICE_SET_TEMPERATURE",
-                    "service_data": {
-                        "ATTR_ENTITY_ID": "entity_id",
-                        "ATTR_TEMPERATURE": 28
-                    },
-                    "blocking": true
+                    "ATTR_ENTITY_ID": "entity_id",
+                    "ATTR_TEMPERATURE": 28
                 }
             }
         ]
@@ -878,15 +893,12 @@
         "name": "test_blu_trv_climate_disabled",
         "device_type": "TRV",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "state_1": {
+            "state1": {
                 "variables": {
                     "state.attributes[ATTR_TEMPERATURE]": "17.1"
                 }
             },
-            "state_2": {
+            "state2": {
                 "variables": {
                     "state.attributes[ATTR_TEMPERATURE]": "None"
                 }
@@ -896,7 +908,7 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "state_1",
+                "ending_state": "state1",
                 "inputs": {
                     "hass": "hass",
                     "device_count": 3,
@@ -905,12 +917,11 @@
             },
             {
                 "action": "disable_and_update",
-                "starting_state": "state_1",
-                "ending_state": "state_2",
+                "starting_state": "state1",
+                "ending_state": "state2",
                 "inputs": {
-                    "config_key": "f'{BLU_TRV_IDENTIFIER}:200'",
-                    "enable": false,
-                    "update_method": "mock_blu_trv.mock_update"
+                    "config_key": "f\"{BLU_TRV_IDENTIFIER}:200\"",
+                    "enable": false
                 }
             }
         ]
@@ -919,12 +930,12 @@
         "name": "test_blu_trv_climate_hvac_action",
         "device_type": "TRV",
         "states": {
-            "idle_state": {
+            "idle": {
                 "variables": {
                     "state.attributes[ATTR_HVAC_ACTION]": "HVACAction.IDLE"
                 }
             },
-            "heating_state": {
+            "heating": {
                 "variables": {
                     "state.attributes[ATTR_HVAC_ACTION]": "HVACAction.HEATING"
                 }
@@ -934,71 +945,44 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "idle_state",
+                "ending_state": "idle",
                 "inputs": {
                     "hass": "hass",
-                    "device_count": 3,
+                    "parameter": 3,
                     "model": "MODEL_BLU_GATEWAY_G3"
                 }
             },
             {
                 "action": "set_position_and_update",
-                "starting_state": "idle_state",
-                "ending_state": "heating_state",
+                "starting_state": "idle",
+                "ending_state": "heating",
                 "inputs": {
-                    "identifier": "BLU_TRV_IDENTIFIER:200",
+                    "identifier": "f\"{BLU_TRV_IDENTIFIER}:200\"",
                     "pos": 10,
-                    "mock_update": true
+                    "method": "mock_update"
                 }
             }
         ]
     },
     {
         "name": "test_blu_trv_set_target_temp_exc",
-        "device_type": "BLU_TRV",
+        "device_type": "TRV",
         "states": {
             "initial_state": {
                 "variables": {}
             },
-            "initialized": {
-                "variables": {}
-            },
-            "error_state": {
+            "exception_state": {
                 "variables": {}
             }
         },
         "transitions": [
             {
-                "action": "init_integration",
+                "action": "set_target_temperature",
                 "starting_state": "initial_state",
-                "ending_state": "initialized",
+                "ending_state": "exception_state",
                 "inputs": {
-                    "hass": "hass",
-                    "gateway_id": 3,
-                    "model": "MODEL_BLU_GATEWAY_G3"
-                }
-            },
-            {
-                "action": "set_side_effect",
-                "starting_state": "initialized",
-                "ending_state": "initialized",
-                "inputs": {
-                    "target": "mock_blu_trv.blu_trv_set_target_temperature",
-                    "side_effect": "exception"
-                }
-            },
-            {
-                "action": "hass.services.async_call",
-                "starting_state": "initialized",
-                "ending_state": "error_state",
-                "inputs": {
-                    "domain": "CLIMATE_DOMAIN",
-                    "service": "SERVICE_SET_TEMPERATURE",
-                    "data": {
-                        "ATTR_ENTITY_ID": "climate.trv_name",
-                        "ATTR_TEMPERATURE": 28
-                    },
-                    "blocking": true
+                    "entity_id": "climate.trv_name",
+                    "temperature": 28
                 }
             }
         ]
@@ -1007,23 +991,26 @@
         "name": "test_blu_trv_set_target_temp_auth_error",
         "device_type": "BLU TRV",
         "states": {
+            "initial_state": {
+                "variables": {}
+            },
             "entry_loaded": {
                 "variables": {
                     "entry.state": "ConfigEntryState.LOADED"
                 }
             },
-            "flows_retrieved": {
+            "flows_present": {
                 "variables": {
                     "len(flows)": "1"
                 }
             },
             "reauth_flow": {
                 "variables": {
-                    "flow.get('step_id')": "reauth_confirm",
-                    "flow.get('handler')": "DOMAIN",
-                    "context": "flow",
-                    "flow['context'].get('source')": "SOURCE_REAUTH",
-                    "flow['context'].get('entry_id')": "entry.entry_id"
+                    "flow.step_id": "reauth_confirm",
+                    "flow.handler": "DOMAIN",
+                    "flow.context": "flow",
+                    "flow.context.source": "SOURCE_REAUTH",
+                    "flow.context.entry_id": "entry.entry_id"
                 }
             }
         },
@@ -1034,27 +1021,25 @@
                 "ending_state": "entry_loaded",
                 "inputs": {
                     "hass": "hass",
-                    "param": 3,
+                    "config_entry_index": 3,
                     "model": "MODEL_BLU_GATEWAY_G3"
                 }
             },
             {
-                "action": "hass.services.async_call",
+                "action": "async_call_service",
                 "starting_state": "entry_loaded",
-                "ending_state": "flows_retrieved",
+                "ending_state": "flows_present",
                 "inputs": {
-                    "domain": "CLIMATE_DOMAIN",
-                    "service": "SERVICE_SET_TEMPERATURE",
-                    "data": {
-                        "entity_id": "climate.trv_name",
-                        "temperature": 28
-                    },
-                    "blocking": true
+                    "domain": "climate",
+                    "service": "set_temperature",
+                    "entity_id": "climate.trv_name",
+                    "temperature": 28,
+                    "side_effect": "InvalidAuthError"
                 }
             },
             {
-                "action": "hass.config_entries.flow.async_progress",
-                "starting_state": "flows_retrieved",
+                "action": "async_progress",
+                "starting_state": "flows_present",
                 "ending_state": "reauth_flow",
                 "inputs": {}
             }
@@ -1064,47 +1049,44 @@
         "name": "test_rpc_linkedgo_st802_thermostat",
         "device_type": "LinkedGO ST802 Thermostat",
         "states": {
-            "initial_state": {
-                "variables": {}
-            },
-            "init_snapshot": {
+            "state_0": {
                 "variables": {
                     "hass.states.get(entity_id)": "snapshot(name=f'{entity_id}-state')",
                     "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
                 }
             },
-            "hvac_cool_state": {
+            "state_1": {
                 "variables": {
                     "state.state": "HVACMode.COOL"
                 }
             },
-            "temperature_25_state": {
+            "state_2": {
                 "variables": {
                     "state.attributes.get(ATTR_TEMPERATURE)": "25"
                 }
             },
-            "humidity_66_state": {
+            "state_3": {
                 "variables": {
                     "state.attributes.get(ATTR_HUMIDITY)": "66"
                 }
             },
-            "preset_frost_protection_state": {
+            "state_4": {
                 "variables": {
                     "state.attributes[ATTR_PRESET_MODE]": "PRESET_FROST_PROTECTION"
                 }
             },
-            "fan_low_state": {
+            "state_5": {
                 "variables": {
                     "state.attributes.get(ATTR_FAN_MODE)": "FAN_LOW"
                 }
             },
-            "hvac_off_state": {
+            "state_6": {
                 "variables": {
                     "state.state": "HVACMode.OFF",
                     "state.attributes[ATTR_CURRENT_TEMPERATURE]": "25.1"
                 }
             },
-            "current_temp_22_4_state": {
+            "state_7": {
                 "variables": {
                     "state.attributes[ATTR_CURRENT_TEMPERATURE]": "22.4"
                 }
@@ -1114,85 +1096,73 @@
             {
                 "action": "init_integration",
                 "starting_state": "initial_state",
-                "ending_state": "init_snapshot",
+                "ending_state": "state_0",
                 "inputs": {
                     "hass": "hass",
-                    "model": "MODEL_LINKEDGO_ST802_THERMOSTAT",
-                    "version": 3
+                    "param": 3,
+                    "model": "MODEL_LINKEDGO_ST802_THERMOSTAT"
                 }
             },
             {
-                "action": "service_call",
-                "starting_state": "init_snapshot",
-                "ending_state": "hvac_cool_state",
+                "action": "SERVICE_SET_HVAC_MODE",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
                 "inputs": {
-                    "domain": "climate",
-                    "service": "set_hvac_mode",
                     "entity_id": "entity_id",
                     "hvac_mode": "HVACMode.COOL"
                 }
             },
             {
-                "action": "service_call",
-                "starting_state": "hvac_cool_state",
-                "ending_state": "temperature_25_state",
+                "action": "SERVICE_SET_TEMPERATURE",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
                 "inputs": {
-                    "domain": "climate",
-                    "service": "set_temperature",
                     "entity_id": "entity_id",
                     "temperature": 25
                 }
             },
             {
-                "action": "service_call",
-                "starting_state": "temperature_25_state",
-                "ending_state": "humidity_66_state",
+                "action": "SERVICE_SET_HUMIDITY",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
                 "inputs": {
-                    "domain": "climate",
-                    "service": "set_humidity",
                     "entity_id": "entity_id",
                     "humidity": 66
                 }
             },
             {
-                "action": "service_call",
-                "starting_state": "humidity_66_state",
-                "ending_state": "preset_frost_protection_state",
+                "action": "SERVICE_SET_PRESET_MODE",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
                 "inputs": {
-                    "domain": "climate",
-                    "service": "set_preset_mode",
                     "entity_id": "entity_id",
                     "preset_mode": "PRESET_FROST_PROTECTION"
                 }
             },
             {
-                "action": "service_call",
-                "starting_state": "preset_frost_protection_state",
-                "ending_state": "fan_low_state",
+                "action": "SERVICE_SET_FAN_MODE",
+                "starting_state": "state_4",
+                "ending_state": "state_5",
                 "inputs": {
-                    "domain": "climate",
-                    "service": "set_fan_mode",
                     "entity_id": "entity_id",
                     "fan_mode": "FAN_LOW"
                 }
             },
             {
-                "action": "service_call",
-                "starting_state": "fan_low_state",
-                "ending_state": "hvac_off_state",
+                "action": "SERVICE_SET_HVAC_MODE",
+                "starting_state": "state_5",
+                "ending_state": "state_6",
                 "inputs": {
-                    "domain": "climate",
-                    "service": "set_hvac_mode",
                     "entity_id": "entity_id",
                     "hvac_mode": "HVACMode.OFF"
                 }
             },
             {
                 "action": "mutate_rpc_device_status",
-                "starting_state": "hvac_off_state",
-                "ending_state": "current_temp_22_4_state",
+                "starting_state": "state_6",
+                "ending_state": "state_7",
                 "inputs": {
-                    "target": "number:201",
+                    "path": "number:201",
                     "field": "value",
                     "value": 22.4
                 }
@@ -1209,12 +1179,12 @@
                     "entity_registry.async_get(entity_id)": "snapshot(name=f'{entity_id}-entry')"
                 }
             },
-            "temperature_set_state": {
+            "temp_set_state": {
                 "variables": {
                     "state.attributes.get(ATTR_TEMPERATURE)": "25"
                 }
             },
-            "preset_mode_set_state": {
+            "preset_mode_state": {
                 "variables": {
                     "state.attributes[ATTR_PRESET_MODE]": "PRESET_FROST_PROTECTION"
                 }
@@ -1228,45 +1198,51 @@
         "transitions": [
             {
                 "action": "init_integration",
-                "starting_state": "null_state",
+                "starting_state": "null",
                 "ending_state": "initial_state",
                 "inputs": {
                     "hass": "hass",
-                    "version": 3,
+                    "config_entry_version": 3,
                     "model": "MODEL_LINKEDGO_ST1820_THERMOSTAT"
                 }
             },
             {
                 "action": "service_call",
                 "starting_state": "initial_state",
-                "ending_state": "temperature_set_state",
+                "ending_state": "temp_set_state",
                 "inputs": {
-                    "domain": "climate",
-                    "service": "set_temperature",
-                    "entity_id": "entity_id",
-                    "temperature": 25
+                    "domain": "CLIMATE_DOMAIN",
+                    "service": "SERVICE_SET_TEMPERATURE",
+                    "service_data": {
+                        "entity_id": "entity_id",
+                        "temperature": 25
+                    }
                 }
             },
             {
                 "action": "service_call",
-                "starting_state": "temperature_set_state",
-                "ending_state": "preset_mode_set_state",
+                "starting_state": "temp_set_state",
+                "ending_state": "preset_mode_state",
                 "inputs": {
-                    "domain": "climate",
-                    "service": "set_preset_mode",
-                    "entity_id": "entity_id",
-                    "preset_mode": "PRESET_FROST_PROTECTION"
+                    "domain": "CLIMATE_DOMAIN",
+                    "service": "SERVICE_SET_PRESET_MODE",
+                    "service_data": {
+                        "entity_id": "entity_id",
+                        "preset_mode": "PRESET_FROST_PROTECTION"
+                    }
                 }
             },
             {
                 "action": "service_call",
-                "starting_state": "preset_mode_set_state",
+                "starting_state": "preset_mode_state",
                 "ending_state": "hvac_off_state",
                 "inputs": {
-                    "domain": "climate",
-                    "service": "set_hvac_mode",
-                    "entity_id": "entity_id",
-                    "hvac_mode": "HVACMode.OFF"
+                    "domain": "CLIMATE_DOMAIN",
+                    "service": "SERVICE_SET_HVAC_MODE",
+                    "service_data": {
+                        "entity_id": "entity_id",
+                        "hvac_mode": "HVACMode.OFF"
+                    }
                 }
             }
         ]
