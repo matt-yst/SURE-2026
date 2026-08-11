@@ -16,7 +16,6 @@ from ollama import chat
 # file declaration
 script_dir = Path("repo_parser.py").resolve().parent
 component_dir = script_dir.parent / "core" / "tests" / "components" / "shelly"
-path = script_dir.parent / "core" / "tests" / "components" / "shelly" / "test_light.py"
 
 
 
@@ -85,7 +84,7 @@ class TestFile(BaseModel):
 schema = TestScenario.model_json_schema()
 
 # **********************************************FUNTCION DEFS**********************************************
-def extract_input_data(tree, test):
+def extract_input_data(tree, tests, assert_types):
     num = 0
     for node in tree.body:
         if isinstance(node, ast.AsyncFunctionDef) and node.name.startswith("test_"):
@@ -116,7 +115,7 @@ def extract_input_data(tree, test):
     print("number of functions: " + str(num))
     return num
 
-def LLM_prompt(prompt):
+def LLM_prompt(prompt, output):
     response = chat(
         messages=[
             {
@@ -129,6 +128,7 @@ def LLM_prompt(prompt):
     )
     curr = json.loads(response.message.content)
     output.append(curr)
+    return output
 
 def print_files(dir, indent):
     indent_str = "      " * indent
@@ -166,17 +166,14 @@ if __name__ == "__main__":
             with path.open("r") as file:
                 raw = file.read()
 
-
-
             tree = ast.parse(raw)
             tests = []
 
             assert_types = {""}
-            output = []
 
             print("INPUT TESTS: ")
             print("\n")
-            no_of_tests += extract_input_data(tree, tests)
+            no_of_tests += extract_input_data(tree, tests, assert_types)
 
 
             print("\n")
@@ -201,8 +198,7 @@ if __name__ == "__main__":
                 If you find that an initialisation state is not explicityly defined by asserts but a transition action is present (let's say an initiialisation function is called for example), you can assume the initial state has no variables to assert. However, do name this null state as "initial_state" in the list of transitions
                 """
 
-                LLM_prompt(prompt)
-
+                output = LLM_prompt(prompt, [])
 
             output_file.write(json.dumps(output, indent=4))
             print(assert_types)
