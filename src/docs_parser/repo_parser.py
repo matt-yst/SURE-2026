@@ -93,7 +93,6 @@ def extract_input_data(tree, tests, assert_types):
             behaviour = []
             i = 0
             while i < len(node.body):
-                node.body[i]
                 if not isinstance(node.body[i], ast.Assert):
                     behaviour.append(ast.unparse(node.body[i])) 
                     i += 1

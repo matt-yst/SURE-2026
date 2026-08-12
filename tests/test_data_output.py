@@ -17,12 +17,15 @@ def extract_asserts(file_dir):
 
     for node in tree.body:
         if isinstance(node, ast.AsyncFunctionDef) and node.name.startswith("test_"):
-            print(node.name)
             i = 0
             while i < len(node.body):
-                node.body[i]
                 if isinstance(node.body[i], ast.Assert):
-                    assert_list.append(ast.unparse(node.body[i])) 
+                    curr = {"snapshot": []}
+                    while i < len(node.body) and isinstance(node.body[i], ast.Assert):
+                        curr_assert = ast.unparse(node.body[i])
+                        curr["snapshot"].append(curr_assert)     
+                        i +=  1
+                    assert_list.append(curr)
                 i += 1
     return assert_list
 
