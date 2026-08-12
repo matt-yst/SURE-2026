@@ -22,24 +22,34 @@ def extract_asserts(file_dir):
                 if isinstance(node.body[i], ast.Assert):
                     curr = {"snapshot": []}
                     while i < len(node.body) and isinstance(node.body[i], ast.Assert):
-                        curr_assert = ast.unparse(node.body[i])
+                        curr_assert = ast.unparse(node.body[i].test)
                         curr["snapshot"].append(curr_assert)     
                         i +=  1
                     assert_list.append(curr)
                 i += 1
     return assert_list
 
+def extract_snapshots(data):
+    output = []
+    for test in data:
+        for key, value in test["states"].items():
+            snapshot = {"snapshot": []}
+            if not key == "initial_state":
+                snapshot["snapshot"].append({key : value})
+            output.append(snapshot)
+    return output
+
 # **********************************************TESTS**********************************************
 file_dir = source_dir / "test_light.py"
 assert_list = extract_asserts(file_dir)
+
+output_file = output_dir / "light_output.json"
+
+with open(output_file) as f:
+    data = json.load(f)
+
+print(extract_snapshots(data))
+print("\n")
+print("********************************************************************************************************")
+print("\n")
 print(assert_list)
-
-# output_list = list(output_dir.iterdir())
-# output_list.sort()
-
-# source_list = [f for f in source_dir.iterdir() if (f.is_file and f.name.startswith("test_"))]
-# source_list.sort()
-
-# for i in range(len(source_list)):
-#     print(source_list[i].name)
-#     print(output_list[i].name)
