@@ -143,7 +143,7 @@ if __name__ == "__main__":
     print("FILES IN COMPONENT DIRECTORY: ")
     print_files(component_dir, 0)
 
-    output_folder = script_dir / "shelly_test_outputs2"
+    output_folder = script_dir / "shelly_test_outputs"
     output_folder.mkdir(exist_ok=True)
 
     print("\n")
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     print("\n")
     no_of_tests = 0
     for child in component_dir.iterdir():
-        if child.is_file() and child.name.startswith("test_"):
+        if child.is_file() and child.name.startswith("test_") and child.name.endswith(".py"):
             path = child
             output_name = child.stem.removeprefix("test_") + "_output.json"
             output_file = output_folder / output_name

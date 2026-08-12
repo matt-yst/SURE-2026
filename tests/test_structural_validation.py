@@ -5,7 +5,7 @@ import pydantic
 import json
 
 
-def _load_all_cases():
+def load_all_cases():
     output_dir = Path("shelly_test_outputs").resolve()
     all_cases = []
     for child in output_dir.iterdir():
@@ -15,6 +15,6 @@ def _load_all_cases():
     return all_cases
 
 
-@pytest.mark.parametrize("test_case", _load_all_cases(), ids=lambda x: x["name"])
+@pytest.mark.parametrize("test_case", load_all_cases(), ids=lambda x: x["name"])
 def test_schema_validity(test_case):
     TestScenario.model_validate(test_case)
