@@ -202,3 +202,108 @@ class Test_hue_device_trigger_v2():
         test_case = self.data[0]
 
         assert len(test_case["transitions"]) == 1
+
+class Test_elgato_button():
+    def setup_method(self):
+        output_dir = Path("elgato_test_outputs").resolve()
+        path = output_dir / "button_output.json"
+        with open(path) as f:
+            data = json.load(f) 
+        self.data = data
+
+    def test_button_length(self):
+        test_case = self.data[0]
+
+        assert len(test_case["transitions"]) == 5
+
+class Test_elgato_config_flow():
+    def setup_method(self):
+        output_dir = Path("elgato_test_outputs").resolve()
+        path = output_dir / "config_flow_output.json"
+        with open(path) as f:
+            data = json.load(f) 
+        self.data = data
+
+    def test_full_user_flow_implementation_length(self):
+        test_case = self.data[0]
+
+        assert len(test_case["transitions"]) == 3
+
+    def test_full_zeroconf_flow_implementation_length(self):
+        test_case = self.data[1]
+
+        assert len(test_case["transitions"]) == 4
+
+    def test_connection_error_length(self):
+        test_case = self.data[2]
+
+        assert len(test_case["transitions"]) == 3
+
+    @pytest.mark.xfail(reason="1 extra transition(s)")
+    def test_zeroconf_connection_error_length(self):
+        test_case = self.data[3]
+
+        assert len(test_case["transitions"]) == 1
+
+    def test_user_device_exists_abort_length(self):
+        test_case = self.data[4]
+
+        assert len(test_case["transitions"]) == 1
+
+    def test_zeroconf_device_exists_abort_length(self):
+        test_case = self.data[5]
+
+        assert len(test_case["transitions"]) == 4
+
+    def test_zeroconf_during_onboarding_length(self):
+        test_case = self.data[6]
+
+        assert len(test_case["transitions"]) == 2
+
+    def test_dhcp_discovery_updates_host_length(self):
+        test_case = self.data[7]
+
+        assert len(test_case["transitions"]) == 1
+
+    def test_dhcp_discovery_same_host_length(self):
+        test_case = self.data[8]
+
+        assert len(test_case["transitions"]) == 1
+
+    def test_dhcp_discovery_no_match_length(self):
+        test_case = self.data[9]
+
+        assert len(test_case["transitions"]) == 1
+
+    def test_reconfigure_flow_length(self):
+        test_case = self.data[10]
+
+        assert len(test_case["transitions"]) == 3
+
+    def test_reconfigure_flow_cannot_connect_length(self):
+        test_case = self.data[11]
+
+        assert len(test_case["transitions"]) == 2
+
+    def test_reconfigure_flow_different_device_length(self):
+        test_case = self.data[12]
+
+        assert len(test_case["transitions"]) == 3
+
+class Test_elgato_light():
+    def setup_method(self):
+        output_dir = Path("elgato_test_outputs").resolve()
+        path = output_dir / "light_output.json"
+        with open(path) as f:
+            data = json.load(f) 
+        self.data = data
+
+    def test_light_state_temperature_length(self):
+        test_case = self.data[0]
+
+        assert len(test_case["transitions"]) == 0
+
+    def test_light_change_state_temperature_length(self):
+        test_case = self.data[1]
+
+        assert len(test_case["transitions"]) == 4
