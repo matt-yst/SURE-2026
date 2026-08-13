@@ -1,0 +1,36 @@
+[
+    {
+        "name": "test_sensors",
+        "device_type": "Elgato sensors",
+        "states": {
+            "state": {
+                "variables": {
+                    "state": "snapshot"
+                }
+            },
+            "entry": {
+                "variables": {
+                    "entry": "snapshot"
+                }
+            },
+            "device_entry": {
+                "variables": {
+                    "device_entry": "snapshot"
+                }
+            }
+        },
+        "transitions": []
+    },
+    {
+        "name": "test_disabled_by_default_sensors",
+        "device_type": "Elgato sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "entry.disabled_by": "er.RegistryEntryDisabler.INTEGRATION"
+                }
+            }
+        },
+        "transitions": []
+    }
+]

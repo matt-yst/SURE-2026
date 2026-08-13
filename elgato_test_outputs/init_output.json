@@ -1,0 +1,79 @@
+[
+    {
+        "name": "test_load_unload_config_entry",
+        "device_type": "Elgato",
+        "states": {
+            "loaded": {
+                "variables": {
+                    "mock_config_entry.state": "ConfigEntryState.LOADED",
+                    "len(mock_elgato.info.mock_calls)": "1"
+                }
+            },
+            "not_loaded": {
+                "variables": {
+                    "mock_config_entry.state": "ConfigEntryState.NOT_LOADED"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup",
+                "starting_state": "initial_state",
+                "ending_state": "loaded",
+                "inputs": {
+                    "entry_id": "mock_config_entry.entry_id"
+                }
+            },
+            {
+                "action": "async_unload",
+                "starting_state": "loaded",
+                "ending_state": "not_loaded",
+                "inputs": {
+                    "entry_id": "mock_config_entry.entry_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_config_entry_not_ready",
+        "device_type": "Elgato",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "added_state": {
+                "variables": {}
+            },
+            "setup_retry_state": {
+                "variables": {
+                    "len(mock_elgato.state.mock_calls)": "1",
+                    "mock_config_entry.state": "ConfigEntryState.SETUP_RETRY"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "add_to_hass",
+                "starting_state": "initial_state",
+                "ending_state": "added_state",
+                "inputs": {
+                    "hass": "hass"
+                }
+            },
+            {
+                "action": "async_setup",
+                "starting_state": "added_state",
+                "ending_state": "setup_retry_state",
+                "inputs": {
+                    "entry_id": "mock_config_entry.entry_id"
+                }
+            },
+            {
+                "action": "async_block_till_done",
+                "starting_state": "added_state",
+                "ending_state": "setup_retry_state",
+                "inputs": {}
+            }
+        ]
+    }
+]

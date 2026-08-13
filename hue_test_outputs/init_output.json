@@ -1,0 +1,260 @@
+[
+    {
+        "name": "test_setup_with_no_config",
+        "device_type": "bridge",
+        "states": {
+            "assert_state": {
+                "variables": {
+                    "await async_setup_component(hass, hue.DOMAIN, {})": "True",
+                    "len(hass.config_entries.flow.async_progress())": "0"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup_component",
+                "starting_state": "initial_state",
+                "ending_state": "assert_state",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "hue.DOMAIN",
+                    "config": {}
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_unload_entry",
+        "device_type": "hue",
+        "states": {
+            "post_setup": {
+                "variables": {
+                    "await async_setup_component(hass, hue.DOMAIN, {})": "True",
+                    "len(mock_bridge_setup.mock_calls)": "1"
+                }
+            },
+            "post_unload": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup_component",
+                "starting_state": "initial_state",
+                "ending_state": "post_setup",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "hue.DOMAIN",
+                    "config": "{}"
+                }
+            },
+            {
+                "action": "entry.unload",
+                "starting_state": "post_setup",
+                "ending_state": "post_unload",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_setting_unique_id",
+        "device_type": "hue",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "added_state": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "await async_setup_component(hass, hue.DOMAIN, {})": "True",
+                    "entry.unique_id": "mock-id"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "entry.add_to_hass",
+                "starting_state": "initial_state",
+                "ending_state": "added_state",
+                "inputs": {
+                    "hass": "hass"
+                }
+            },
+            {
+                "action": "async_setup_component",
+                "starting_state": "added_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "hue.DOMAIN",
+                    "config": {}
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_fixing_unique_id_no_other",
+        "device_type": "hue",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "entry_created": {
+                "variables": {
+                    "entry.domain": "hue.DOMAIN",
+                    "entry.data": "{'host': '0.0.0.0', 'api_version': 2}",
+                    "entry.unique_id": "'invalid-id'"
+                }
+            },
+            "entry_added": {
+                "variables": {}
+            },
+            "snapshot_state": {
+                "variables": {
+                    "await async_setup_component(hass, hue.DOMAIN, {})": "True",
+                    "entry.unique_id": "'mock-id'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "MockConfigEntry",
+                "starting_state": "initial_state",
+                "ending_state": "entry_created",
+                "inputs": {
+                    "domain": "hue.DOMAIN",
+                    "data": {
+                        "host": "0.0.0.0",
+                        "api_version": 2
+                    },
+                    "unique_id": "invalid-id"
+                }
+            },
+            {
+                "action": "entry.add_to_hass",
+                "starting_state": "entry_created",
+                "ending_state": "entry_added",
+                "inputs": {
+                    "hass": "hass"
+                }
+            },
+            {
+                "action": "async_setup_component",
+                "starting_state": "entry_added",
+                "ending_state": "snapshot_state",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "hue.DOMAIN",
+                    "config": {}
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_fixing_unique_id_other_ignored",
+        "device_type": "hue",
+        "states": {
+            "state_after_setup": {
+                "variables": {
+                    "await async_setup_component(hass, hue.DOMAIN, {})": "True"
+                }
+            },
+            "final_state": {
+                "variables": {
+                    "entry.unique_id": "'mock-id'",
+                    "hass.config_entries.async_entries()": "[entry]"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup_component",
+                "starting_state": "initial_state",
+                "ending_state": "state_after_setup",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "hue.DOMAIN",
+                    "config": {}
+                }
+            },
+            {
+                "action": "hass.async_block_till_done",
+                "starting_state": "state_after_setup",
+                "ending_state": "final_state",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_fixing_unique_id_other_correct",
+        "device_type": "hue",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "await async_setup_component(hass, hue.DOMAIN, {})": "True"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "hass.config_entries.async_entries()": "[correct_entry]"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup_component",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "hue.DOMAIN",
+                    "config": "{}"
+                }
+            },
+            {
+                "action": "async_block_till_done",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_security_vuln_check",
+        "device_type": "Hue Bridge",
+        "states": {
+            "hue_hub_firmware": {
+                "variables": {
+                    "hue_hub_firmware": "notifications"
+                }
+            },
+            "CVE-2020-6007": {
+                "variables": {
+                    "CVE-2020-6007": "notifications['hue_hub_firmware']['message']"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup_component",
+                "starting_state": "initial_state",
+                "ending_state": "hue_hub_firmware",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "DOMAIN",
+                    "config": {}
+                }
+            },
+            {
+                "action": "assert_snapshot",
+                "starting_state": "hue_hub_firmware",
+                "ending_state": "CVE-2020-6007",
+                "inputs": {
+                    "notifications": "notifications"
+                }
+            }
+        ]
+    }
+]

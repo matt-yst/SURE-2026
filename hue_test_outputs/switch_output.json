@@ -1,0 +1,251 @@
+[
+    {
+        "name": "test_switch",
+        "device_type": "switch",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "setup_complete": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": ": 0",
+                    "len(hass.states.async_all())": ": 4"
+                }
+            },
+            "hue_motion_sensor_state": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.name": "Hue motion sensor Motion sensor enabled",
+                    "test_entity.state": "on",
+                    "test_entity.attributes['device_class']": "switch"
+                }
+            },
+            "automation_timer_state": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.name": "Philips hue Automation: Timer Test",
+                    "test_entity.state": "on",
+                    "test_entity.attributes['device_class']": "switch"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialize_test_environment",
+                "starting_state": "initial_state",
+                "ending_state": "setup_complete",
+                "inputs": {
+                    "load_test_data": "v2_resources_test_data",
+                    "setup_platform": "Platform.SWITCH"
+                }
+            },
+            {
+                "action": "get_state",
+                "starting_state": "setup_complete",
+                "ending_state": "hue_motion_sensor_state",
+                "inputs": {
+                    "entity_id": "switch.hue_motion_sensor_motion_sensor_enabled"
+                }
+            },
+            {
+                "action": "get_state",
+                "starting_state": "hue_motion_sensor_state",
+                "ending_state": "automation_timer_state",
+                "inputs": {
+                    "entity_id": "switch.philips_hue_automation_timer_test"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_switch_turn_on_service",
+        "device_type": "switch",
+        "states": {
+            "post_turn_on": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "1",
+                    "mock_bridge_v2.mock_requests[0]['method']": "put",
+                    "mock_bridge_v2.mock_requests[0]['json']['enabled']": "True"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "service_call",
+                "starting_state": "initial_state",
+                "ending_state": "post_turn_on",
+                "inputs": {
+                    "domain": "switch",
+                    "service": "turn_on",
+                    "entity_id": "switch.hue_motion_sensor_motion_sensor_enabled"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_switch_turn_off_service",
+        "device_type": "switch",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_before_turn_off": {
+                "variables": {
+                    "hass.states.get(test_entity_id).state": "on"
+                }
+            },
+            "state_after_service_call": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "1",
+                    "mock_bridge_v2.mock_requests[0]['method']": "put",
+                    "mock_bridge_v2.mock_requests[0]['json']['enabled']": "False"
+                }
+            },
+            "final_state": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.state": "off"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "state_before_turn_off",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "platform": "Platform.SWITCH"
+                }
+            },
+            {
+                "action": "switch.turn_off",
+                "starting_state": "state_before_turn_off",
+                "ending_state": "state_after_service_call",
+                "inputs": {
+                    "domain": "switch",
+                    "service": "turn_off",
+                    "service_data": {
+                        "entity_id": "test_entity_id"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "emit_event_and_process",
+                "starting_state": "state_after_service_call",
+                "ending_state": "final_state",
+                "inputs": {
+                    "event": {
+                        "id": "b6896534-016d-4052-8cb4-ef04454df62c",
+                        "type": "motion",
+                        "enabled": false
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_switch_added",
+        "device_type": "switch",
+        "states": {
+            "initial_state": {
+                "variables": {
+                    "hass.states.get(test_entity_id)": "None"
+                }
+            },
+            "state_after_add": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.state": "'on'"
+                }
+            },
+            "state_after_update": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.state": "'off'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "emit_event",
+                "starting_state": "initial_state",
+                "ending_state": "state_after_add",
+                "inputs": {
+                    "event_type": "add",
+                    "resource": "FAKE_BINARY_SENSOR"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_after_add",
+                "ending_state": "state_after_update",
+                "inputs": {
+                    "event_type": "update",
+                    "resource": "updated_resource"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_internal_behavior_instance_not_added",
+        "device_type": "switch",
+        "states": {
+            "post_setup": {
+                "variables": {
+                    "hass.states.get('switch.philips_hue_automation_wall_switch_hallway')": "None",
+                    "hass.states.get('switch.philips_hue_automation_timer_test')": "None",
+                    "len(hass.states.async_all())": "4"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mock_bridge_v2.api.load_test_data",
+                "starting_state": "initial_state",
+                "ending_state": "post_load_test_data",
+                "inputs": {
+                    "data": "[*v2_resources_test_data, internal_script, FAKE_BEHAVIOR_INSTANCE]"
+                }
+            },
+            {
+                "action": "setup_platform",
+                "starting_state": "post_load_test_data",
+                "ending_state": "post_setup",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "platform": "Platform.SWITCH"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_internal_behavior_instance_entity_removed",
+        "device_type": "switch",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "entity_removed_state": {
+                "variables": {
+                    "entity_registry.async_get(stale_entity.entity_id)": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "entity_removed_state",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "platform": "Platform.SWITCH"
+                }
+            }
+        ]
+    }
+]

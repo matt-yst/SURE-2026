@@ -1,0 +1,337 @@
+[
+    {
+        "name": "test_scene",
+        "device_type": "scene",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_setup_state": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "0",
+                    "len(hass.states.async_all())": "3"
+                }
+            },
+            "zone_dynamic_test_scene_state": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.name": "'Test Zone Dynamic Test Scene'",
+                    "test_entity.state": "STATE_UNKNOWN",
+                    "test_entity.attributes['group_name']": "'Test Zone'",
+                    "test_entity.attributes['group_type']": "'zone'",
+                    "test_entity.attributes['name']": "'Dynamic Test Scene'",
+                    "test_entity.attributes['speed']": "0.6269841194152832",
+                    "test_entity.attributes['brightness']": "119",
+                    "test_entity.attributes['is_dynamic']": "True"
+                }
+            },
+            "room_regular_test_scene_state": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.name": "'Test Room Regular Test Scene'",
+                    "test_entity.state": "STATE_UNKNOWN",
+                    "test_entity.attributes['group_name']": "'Test Room'",
+                    "test_entity.attributes['group_type']": "'room'",
+                    "test_entity.attributes['name']": "'Regular Test Scene'",
+                    "test_entity.attributes['speed']": "0.5",
+                    "test_entity.attributes['brightness']": "255",
+                    "test_entity.attributes['is_dynamic']": "False"
+                }
+            },
+            "room_smart_test_scene_state": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.name": "'Test Room Smart Test Scene'",
+                    "test_entity.state": "STATE_UNKNOWN",
+                    "test_entity.attributes['group_name']": "'Test Room'",
+                    "test_entity.attributes['group_type']": "'room'",
+                    "test_entity.attributes['name']": "'Smart Test Scene'",
+                    "test_entity.attributes['active_timeslot_id']": "1",
+                    "test_entity.attributes['active_timeslot_name']": "'wednesday'",
+                    "test_entity.attributes['active_scene']": "'Regular Test Scene'",
+                    "test_entity.attributes['is_active']": "True"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mock_bridge_v2.api.load_test_data",
+                "starting_state": "initial_state",
+                "ending_state": "post_load_test_data_state",
+                "inputs": {
+                    "data": "v2_resources_test_data"
+                }
+            },
+            {
+                "action": "setup_platform",
+                "starting_state": "post_load_test_data_state",
+                "ending_state": "post_setup_state",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "platform": "Platform.SCENE"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "post_setup_state",
+                "ending_state": "zone_dynamic_test_scene_state",
+                "inputs": {
+                    "entity_id": "scene.test_zone_dynamic_test_scene"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "zone_dynamic_test_scene_state",
+                "ending_state": "room_regular_test_scene_state",
+                "inputs": {
+                    "entity_id": "scene.test_room_test_room_regular_test_scene"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "room_regular_test_scene_state",
+                "ending_state": "room_smart_test_scene_state",
+                "inputs": {
+                    "entity_id": "scene.test_room_test_room_smart_test_scene"
+                }
+            },
+            {
+                "action": "entity_registry.async_get (validation loop)",
+                "starting_state": "room_smart_test_scene_state",
+                "ending_state": "room_smart_test_scene_state",
+                "inputs": {
+                    "entity_ids": [
+                        "scene.test_zone_dynamic_test_scene",
+                        "scene.test_room_test_room_regular_test_scene",
+                        "scene.test_room_test_room_smart_test_scene"
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_scene_turn_on_service",
+        "device_type": "scene",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "1",
+                    "mock_bridge_v2.mock_requests[0]['method']": "put",
+                    "mock_bridge_v2.mock_requests[0]['json']['recall']": "{'action': 'active'}"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "2",
+                    "mock_bridge_v2.mock_requests[1]['json']['recall']": "{'action': 'active', 'duration': 200}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "scene.turn_on",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "entity_id": "scene.test_room_test_room_regular_test_scene"
+                }
+            },
+            {
+                "action": "scene.turn_on",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "entity_id": "scene.test_room_test_room_regular_test_scene",
+                    "transition": 0.25
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_scene_advanced_turn_on_service",
+        "device_type": "scene",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_after_first_activation": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "1",
+                    "mock_bridge_v2.mock_requests[0]['method']": "put",
+                    "mock_bridge_v2.mock_requests[0]['json']['recall']": "{'action': 'active'}"
+                }
+            },
+            "state_after_second_activation": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "3",
+                    "mock_bridge_v2.mock_requests[1]['json']['speed']": "0.8",
+                    "mock_bridge_v2.mock_requests[2]['json']['recall']": "{'action': 'dynamic_palette'}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "activate_scene",
+                "starting_state": "initial_state",
+                "ending_state": "state_after_first_activation",
+                "inputs": {
+                    "entity_id": "scene.test_room_test_room_regular_test_scene"
+                }
+            },
+            {
+                "action": "activate_scene",
+                "starting_state": "state_after_first_activation",
+                "ending_state": "state_after_second_activation",
+                "inputs": {
+                    "entity_id": "scene.test_room_test_room_regular_test_scene",
+                    "speed": 80,
+                    "dynamic": true
+                }
+            },
+            {
+                "action": "await mock_bridge_v2.api.load_test_data(v2_resources_test_data)",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {}
+            },
+            {
+                "action": "await setup_platform(hass, mock_bridge_v2, Platform.SCENE)",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_scene_updates",
+        "device_type": "scene",
+        "states": {
+            "state_0": {
+                "variables": {
+                    "hass.states.get(test_entity_id)": "None"
+                }
+            },
+            "state_1": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.state": "STATE_UNKNOWN",
+                    "test_entity.name": "Test Room Mocked Scene",
+                    "test_entity.attributes['brightness']": "166"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.attributes['brightness']": "89"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "test_entity.attributes['group_name']": "Test Room 2"
+                }
+            },
+            "state_4": {
+                "variables": {
+                    "test_entity": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "state_0",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "platform": "Platform.SCENE"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_0",
+                "ending_state": "state_1",
+                "inputs": {
+                    "event": "add",
+                    "resource": "FAKE_SCENE"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "event": "update",
+                    "resource": "updated_resource"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "event": "update",
+                    "resource": {
+                        "type": "room",
+                        "id": "6ddc9066-7e7d-4a03-a773-c73937968296",
+                        "metadata": {
+                            "name": "Test Room 2"
+                        }
+                    }
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
+                "inputs": {
+                    "event": "delete",
+                    "resource": "updated_resource"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_scene_with_orphaned_group",
+        "device_type": "scene",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "data_loaded_state": {
+                "variables": {}
+            },
+            "post_action_state": {
+                "variables": {
+                    "hass.states.get('scene.test_room_mocked_scene_orphaned')": "None",
+                    "len(hass.states.async_all())": "3",
+                    "'Unable to create Hue scene entity for orphaned_scene_id'": "caplog.text"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "load_test_data",
+                "starting_state": "initial_state",
+                "ending_state": "data_loaded_state",
+                "inputs": {
+                    "data": "[*v2_resources_test_data, orphaned_scene]"
+                }
+            },
+            {
+                "action": "setup_platform",
+                "starting_state": "data_loaded_state",
+                "ending_state": "post_action_state",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "platform": "Platform.SCENE"
+                }
+            }
+        ]
+    }
+]

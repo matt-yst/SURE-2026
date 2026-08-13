@@ -1,0 +1,79 @@
+[
+    {
+        "name": "test_diagnostics_v1",
+        "device_type": "hue",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "after_setup": {
+                "variables": {}
+            },
+            "after_config_entry": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "result": "{}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "after_setup",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v1",
+                    "platforms": []
+                }
+            },
+            {
+                "action": "get_config_entry",
+                "starting_state": "after_setup",
+                "ending_state": "after_config_entry",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "hue"
+                }
+            },
+            {
+                "action": "get_diagnostics_for_config_entry",
+                "starting_state": "after_config_entry",
+                "ending_state": "final_state",
+                "inputs": {
+                    "hass": "hass",
+                    "hass_client": "hass_client",
+                    "config_entry": "config_entry"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_diagnostics_v2",
+        "device_type": "hue",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "diagnostics_state": {
+                "variables": {
+                    "result": "{'hello': 'world'}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "get_diagnostics_for_config_entry",
+                "starting_state": "initial_state",
+                "ending_state": "diagnostics_state",
+                "inputs": {
+                    "hass": "hass",
+                    "hass_client": "hass_client",
+                    "config_entry": "config_entry"
+                }
+            }
+        ]
+    }
+]

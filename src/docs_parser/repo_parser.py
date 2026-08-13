@@ -15,7 +15,7 @@ from ollama import chat
 
 # file declaration
 script_dir = Path("repo_parser.py").resolve().parent
-component_dir = script_dir.parent / "core" / "tests" / "components" / "hue"
+component_dir = script_dir.parent / "core" / "tests" / "components" / "elgato"
 
 
 
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     print("FILES IN COMPONENT DIRECTORY: ")
     print_files(component_dir, 0)
 
-    output_folder = script_dir / "hue_test_outputs"
+    output_folder = script_dir / "elgato_test_outputs"
     output_folder.mkdir(exist_ok=True)
 
     print("\n")
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     no_of_tests = 0
     j = 0
     for child in component_dir.iterdir():
-        if child.is_file() and child.name.startswith("test_") and child.name.endswith(".py") and j < 1:
+        if child.is_file() and child.name.startswith("test_") and child.name.endswith(".py"):
             path = child
             output_name = child.stem.removeprefix("test_") + "_output.json"
             output_file = output_folder / output_name
@@ -163,11 +163,8 @@ if __name__ == "__main__":
             print(f"Processing file: {path.name}")
             print("\n")
 
-            #THE BULLSHIT IS HERE
             with path.open("r") as file:
                 raw = file.read()
-
-            print(raw)
 
             tree = ast.parse(raw)
             tests = []
@@ -185,25 +182,24 @@ if __name__ == "__main__":
 
 
 
-            # for i in range(len(tests)):
-            #     print(tests[i])
-            #     print("\n")
-            #     print("********************************************************************************************************")
-            #     print("\n")
+            for i in range(len(tests)):
+                print(tests[i])
+                print("\n")
+                print("********************************************************************************************************")
+                print("\n")
 
-            #     prompt = f"""Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}.
-            #     Utilise the schema in the provided format
-            #     'name' is the name of the test function
-            #     'device_type' is the type of device being tested, meant to be extracted from the test case name or source code.
-            #     'states' are defined as the snapshot asserts within the test case behaviour. Extract all the listed entries within the snapshot dictionary objects to be the entries in the "variables" field of the state object.
-            #     'transitions' are the actions moving from one state to another, the 'starting_state' and 'ending_state'. The 'action' is the action involved with the state transition, and 'inputs' are the parameters of the action. the statring and ending sattes must be defined in the 'states' field, and the other information must be taken from the behaviour field of the 'tests' list. 
+                prompt = f"""Extract all the test case information following the schema provided, from the following list of test cases {tests[i]}.
+                Utilise the schema in the provided format
+                'name' is the name of the test function
+                'device_type' is the type of device being tested, meant to be extracted from the test case name or source code.
+                'states' are defined as the snapshot asserts within the test case behaviour. Extract all the listed entries within the snapshot dictionary objects to be the entries in the "variables" field of the state object.
+                'transitions' are the actions moving from one state to another, the 'starting_state' and 'ending_state'. The 'action' is the action involved with the state transition, and 'inputs' are the parameters of the action. the statring and ending sattes must be defined in the 'states' field, and the other information must be taken from the behaviour field of the 'tests' list. 
 
-            #     If you find that an initialisation state is not explicityly defined by asserts but a transition action is present (let's say an initiialisation function is called for example), you can assume the initial state has no variables to assert. However, do name this null state as "initial_state" in the list of transitions
-            #     """
+                If you find that an initialisation state is not explicityly defined by asserts but a transition action is present (let's say an initiialisation function is called for example), you can assume the initial state has no variables to assert. However, do name this null state as "initial_state" in the list of transitions
+                """
 
-            #     output = LLM_prompt(prompt, output_json)
-            # output_file.write(json.dumps(output, indent=4))
+                output = LLM_prompt(prompt, output_json)
+            output_file.write(json.dumps(output, indent=4))
             print(assert_types)
-            j += 1
 
     print("total number of tests: " + str(no_of_tests))

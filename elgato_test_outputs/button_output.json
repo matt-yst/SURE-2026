@@ -1,0 +1,97 @@
+[
+    {
+        "name": "test_buttons",
+        "device_type": "button",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "state": "snapshot",
+                    "entry": "snapshot",
+                    "device_entry": "snapshot"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "len(mocked_method.mock_calls)": "1"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.state": "'2021-11-13T11:48:00+00:00'"
+                }
+            },
+            "state_4": {
+                "variables": {
+                    "len(mocked_method.mock_calls)": "2"
+                }
+            },
+            "state_5": {
+                "variables": {
+                    "len(mocked_method.mock_calls)": "3"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.services.async_call",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "domain": "BUTTON_DOMAIN",
+                    "service": "SERVICE_PRESS",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "entity_id"
+                    },
+                    "blocking": true
+                }
+            },
+            {
+                "action": "getattr(mock_elgato, method)",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "entity_id": "entity_id"
+                }
+            },
+            {
+                "action": "hass.services.async_call (ElgatoError)",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
+                "inputs": {
+                    "domain": "BUTTON_DOMAIN",
+                    "service": "SERVICE_PRESS",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "entity_id"
+                    },
+                    "blocking": true,
+                    "expected_exception": "HomeAssistantError",
+                    "exception_match": "An unknown error occurred while communicating with the Elgato device"
+                }
+            },
+            {
+                "action": "hass.services.async_call (ElgatoConnectionError)",
+                "starting_state": "state_4",
+                "ending_state": "state_5",
+                "inputs": {
+                    "domain": "BUTTON_DOMAIN",
+                    "service": "SERVICE_PRESS",
+                    "service_data": {
+                        "ATTR_ENTITY_ID": "entity_id"
+                    },
+                    "blocking": true,
+                    "expected_exception": "HomeAssistantError",
+                    "exception_match": "An error occurred while communicating with the Elgato device"
+                }
+            }
+        ]
+    }
+]

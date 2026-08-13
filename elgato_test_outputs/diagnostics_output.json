@@ -1,0 +1,25 @@
+[
+    {
+        "name": "test_diagnostics",
+        "device_type": "unknown",
+        "states": {
+            "snapshot_state": {
+                "variables": {
+                    "await get_diagnostics_for_config_entry(hass, hass_client, init_integration)": "snapshot"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "await get_diagnostics_for_config_entry",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot_state",
+                "inputs": {
+                    "hass": null,
+                    "hass_client": null,
+                    "init_integration": null
+                }
+            }
+        ]
+    }
+]

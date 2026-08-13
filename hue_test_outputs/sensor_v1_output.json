@@ -1,0 +1,617 @@
+[
+    {
+        "name": "test_no_sensors",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "append_state": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "1",
+                    "len(hass.states.async_all())": "0"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mock_bridge_v1.mock_sensor_responses.append",
+                "starting_state": "initial_state",
+                "ending_state": "append_state",
+                "inputs": {
+                    "value": {}
+                }
+            },
+            {
+                "action": "setup_platform",
+                "starting_state": "append_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v1",
+                    "platforms": [
+                        "Platform.BINARY_SENSOR",
+                        "Platform.SENSOR"
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_sensors_with_multiple_bridges",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_setup_state": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "1",
+                    "len(mock_bridge_2.mock_requests)": "1",
+                    "len(hass.states.async_all())": "10"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "post_setup_state",
+                "inputs": {
+                    "calls": [
+                        {
+                            "hass": "hass",
+                            "bridge": "mock_bridge_v1",
+                            "platforms": [
+                                "Platform.BINARY_SENSOR",
+                                "Platform.SENSOR"
+                            ]
+                        },
+                        {
+                            "hass": "hass",
+                            "bridge": "mock_bridge_2",
+                            "platforms": [
+                                "Platform.BINARY_SENSOR",
+                                "Platform.SENSOR"
+                            ],
+                            "bridge_name": "mock-bridge-2"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_sensors",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "setup_state": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "1",
+                    "len(hass.states.async_all())": "7"
+                }
+            },
+            "living_room_state": {
+                "variables": {
+                    "presence_sensor_1": "None",
+                    "presence_sensor_1.state": "'on'",
+                    "light_level_sensor_1": "None",
+                    "light_level_sensor_1.state": "'1.0'",
+                    "light_level_sensor_1.name": "'Living room sensor Light level'",
+                    "temperature_sensor_1": "None",
+                    "temperature_sensor_1.state": "'17.75'",
+                    "temperature_sensor_1.name": "'Living room sensor Temperature'"
+                }
+            },
+            "kitchen_state": {
+                "variables": {
+                    "presence_sensor_2": "None",
+                    "presence_sensor_2.state": "'off'",
+                    "light_level_sensor_2": "None",
+                    "light_level_sensor_2.state": "'10.0'",
+                    "light_level_sensor_2.name": "'Kitchen sensor Light level'",
+                    "temperature_sensor_2": "None",
+                    "temperature_sensor_2.state": "'18.75'",
+                    "temperature_sensor_2.name": "'Kitchen sensor Temperature'"
+                }
+            },
+            "battery_state": {
+                "variables": {
+                    "battery_remote_1": "None",
+                    "battery_remote_1.state": "'100'",
+                    "battery_remote_1.name": "'Hue dimmer switch 1 Battery level'",
+                    "entity_registry.async_get('sensor.hue_dimmer_switch_1_battery_level').entity_category": "EntityCategory.DIAGNOSTIC"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mock_bridge_v1.mock_sensor_responses.append(SENSOR_RESPONSE) & await setup_platform(hass, mock_bridge_v1, [Platform.BINARY_SENSOR, Platform.SENSOR])",
+                "starting_state": "initial_state",
+                "ending_state": "setup_state",
+                "inputs": {
+                    "mock_bridge_v1.mock_sensor_responses.append": "SENSOR_RESPONSE",
+                    "setup_platform": {
+                        "hass": "hass",
+                        "mock_bridge_v1": "mock_bridge_v1",
+                        "platforms": [
+                            "Platform.BINARY_SENSOR",
+                            "Platform.SENSOR"
+                        ]
+                    }
+                }
+            },
+            {
+                "action": "Retrieve living\u2011room sensors",
+                "starting_state": "setup_state",
+                "ending_state": "living_room_state",
+                "inputs": {
+                    "presence_sensor_1": "hass.states.get('binary_sensor.living_room_sensor_motion')",
+                    "light_level_sensor_1": "hass.states.get('sensor.living_room_sensor_light_level')",
+                    "temperature_sensor_1": "hass.states.get('sensor.living_room_sensor_temperature')"
+                }
+            },
+            {
+                "action": "Retrieve kitchen sensors",
+                "starting_state": "living_room_state",
+                "ending_state": "kitchen_state",
+                "inputs": {
+                    "presence_sensor_2": "hass.states.get('binary_sensor.kitchen_sensor_motion')",
+                    "light_level_sensor_2": "hass.states.get('sensor.kitchen_sensor_light_level')",
+                    "temperature_sensor_2": "hass.states.get('sensor.kitchen_sensor_temperature')"
+                }
+            },
+            {
+                "action": "Retrieve battery level of Hue dimmer switch",
+                "starting_state": "kitchen_state",
+                "ending_state": "battery_state",
+                "inputs": {
+                    "battery_remote_1": "hass.states.get('sensor.hue_dimmer_switch_1_battery_level')"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_unsupported_sensors",
+        "device_type": "sensor",
+        "states": {
+            "snapshot": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "1",
+                    "len(hass.states.async_all())": "7"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v1",
+                    "platforms": [
+                        "Platform.BINARY_SENSOR",
+                        "Platform.SENSOR"
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_new_sensor_discovered",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "1",
+                    "len(hass.states.async_all())": "7"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "2",
+                    "len(hass.states.async_all())": "10"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "presence": "None",
+                    "presence.state": "'on'"
+                }
+            },
+            "state_4": {
+                "variables": {
+                    "temperature": "None",
+                    "temperature.state": "'17.75'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v1",
+                    "platforms": "[Platform.BINARY_SENSOR, Platform.SENSOR]"
+                }
+            },
+            {
+                "action": "append_new_sensor_and_refresh",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "new_sensor_response": "new_sensor_response"
+                }
+            },
+            {
+                "action": "get_state",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "entity_id": "binary_sensor.bedroom_sensor_motion"
+                }
+            },
+            {
+                "action": "get_state",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
+                "inputs": {
+                    "entity_id": "sensor.bedroom_sensor_temperature"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_sensor_removed",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_setup": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "1",
+                    "len(hass.states.async_all())": "7"
+                }
+            },
+            "post_refresh": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "2",
+                    "len(hass.states.async_all())": "3"
+                }
+            },
+            "sensor_check": {
+                "variables": {
+                    "sensor": "None"
+                }
+            },
+            "removed_sensor_check": {
+                "variables": {
+                    "removed_sensor": "None"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mock_bridge_v1.mock_sensor_responses.append",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "item": "SENSOR_RESPONSE"
+                }
+            },
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "post_setup",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v1",
+                    "platforms": [
+                        "Platform.BINARY_SENSOR",
+                        "Platform.SENSOR"
+                    ]
+                }
+            },
+            {
+                "action": "refresh_and_update",
+                "starting_state": "post_setup",
+                "ending_state": "post_refresh",
+                "inputs": {
+                    "steps": [
+                        "mock_bridge_v1.mock_sensor_responses.clear()",
+                        "keys = ('1', '2', '3')",
+                        "mock_bridge_v1.mock_sensor_responses.append({k: SENSOR_RESPONSE[k] for k in keys})",
+                        "await mock_bridge_v1.sensor_manager.coordinator.async_refresh()",
+                        "await hass.async_block_till_done()"
+                    ]
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "post_refresh",
+                "ending_state": "sensor_check",
+                "inputs": {
+                    "entity_id": "binary_sensor.living_room_sensor_motion"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "sensor_check",
+                "ending_state": "removed_sensor_check",
+                "inputs": {
+                    "entity_id": "binary_sensor.kitchen_sensor_motion"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_update_timeout",
+        "device_type": "[binary_sensor, sensor]",
+        "states": {
+            "snapshot": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "0",
+                    "len(hass.states.async_all())": "0"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mock_update_timeout",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "target": "mock_bridge_v1.api.sensors.update",
+                    "side_effect": "TimeoutError"
+                }
+            },
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v1",
+                    "platforms": [
+                        "Platform.BINARY_SENSOR",
+                        "Platform.SENSOR"
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_update_unauthorized",
+        "device_type": "bridge",
+        "states": {
+            "post_update_state": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "0",
+                    "len(hass.states.async_all())": "0",
+                    "len(mock_bridge_v1.handle_unauthorized_error.mock_calls)": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "set_mock_side_effect",
+                "starting_state": "initial_state",
+                "ending_state": "post_update_state",
+                "inputs": {
+                    "target": "mock_bridge_v1.api.sensors.update",
+                    "side_effect": "aiohue.Unauthorized"
+                }
+            },
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "post_update_state",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v1",
+                    "platforms": [
+                        "Platform.BINARY_SENSOR",
+                        "Platform.SENSOR"
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_hue_events",
+        "device_type": "hue",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "after_setup": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "1",
+                    "len(hass.states.async_all())": "7",
+                    "len(events)": "0"
+                }
+            },
+            "tap_device_linked": {
+                "variables": {
+                    "hue_tap_device.via_device_id": "bridge_device.id"
+                }
+            },
+            "first_button_event": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "2",
+                    "len(hass.states.async_all())": "7",
+                    "len(events)": "1",
+                    "events[-1].data": "{'device_id': hue_tap_device.id, 'id': 'hue_tap', 'unique_id': '00:00:00:00:00:44:23:08-f2', 'event': 18, 'last_updated': '2019-12-28T22:58:03'}"
+                }
+            },
+            "second_button_event": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "3",
+                    "len(hass.states.async_all())": "7",
+                    "len(events)": "2",
+                    "events[-1].data": "{'device_id': hue_dimmer_device.id, 'id': 'hue_dimmer_switch_1', 'unique_id': '00:17:88:01:10:3e:3a:dc-02-fc00', 'event': 3002, 'last_updated': '2019-12-28T22:58:03'}"
+                }
+            },
+            "duplicate_event_no_change": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "4",
+                    "len(hass.states.async_all())": "7",
+                    "len(events)": "2"
+                }
+            },
+            "rotary_device_added": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "5",
+                    "len(hass.states.async_all())": "8",
+                    "len(events)": "2"
+                }
+            },
+            "aurora_event": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "6",
+                    "len(hass.states.async_all())": "8",
+                    "len(events)": "3",
+                    "events[-1].data": "{'device_id': hue_aurora_device.id, 'id': 'lutron_aurora_1', 'unique_id': 'ff:ff:00:0f:e7:fd:bc:b7-01-fc00-0014', 'event': 2, 'last_updated': '2020-01-31T15:57:19'}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "after_setup",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v1",
+                    "platforms": [
+                        "Platform.BINARY_SENSOR",
+                        "Platform.SENSOR"
+                    ]
+                }
+            },
+            {
+                "action": "link_tap_device",
+                "starting_state": "after_setup",
+                "ending_state": "tap_device_linked",
+                "inputs": {
+                    "tap_identifier": "(hue.DOMAIN, '00:00:00:00:00:44:23:08')",
+                    "bridge_identifier": "(hue.DOMAIN, mock_bridge_v1.api.config.bridgeid)",
+                    "entry_id": "mock_bridge_v1.config_entry.entry_id"
+                }
+            },
+            {
+                "action": "process_first_button_event",
+                "starting_state": "tap_device_linked",
+                "ending_state": "first_button_event",
+                "inputs": {
+                    "sensor_id": "7",
+                    "buttonevent": 18,
+                    "lastupdated": "2019-12-28T22:58:03",
+                    "tick_interval": "sensor_base.SensorManager.SCAN_INTERVAL"
+                }
+            },
+            {
+                "action": "process_second_button_event",
+                "starting_state": "first_button_event",
+                "ending_state": "second_button_event",
+                "inputs": {
+                    "sensor_id": "8",
+                    "buttonevent": 3002,
+                    "lastupdated": "2019-12-28T22:58:03",
+                    "tick_interval": "sensor_base.SensorManager.SCAN_INTERVAL"
+                }
+            },
+            {
+                "action": "process_duplicate_button_event",
+                "starting_state": "second_button_event",
+                "ending_state": "duplicate_event_no_change",
+                "inputs": {
+                    "sensor_id": "8",
+                    "buttonevent": 18,
+                    "lastupdated": "2019-12-28T22:58:02",
+                    "tick_interval": "sensor_base.SensorManager.SCAN_INTERVAL"
+                }
+            },
+            {
+                "action": "add_rotary_device",
+                "starting_state": "duplicate_event_no_change",
+                "ending_state": "rotary_device_added",
+                "inputs": {
+                    "sensor_id": "21",
+                    "device_payload": {
+                        "state": {
+                            "rotaryevent": 2,
+                            "expectedrotation": 208,
+                            "expectedeventduration": 400,
+                            "lastupdated": "2020-01-31T15:56:19"
+                        },
+                        "swupdate": {
+                            "state": "noupdates",
+                            "lastinstall": "2019-11-26T03:35:21"
+                        },
+                        "config": {
+                            "on": true,
+                            "battery": 100,
+                            "reachable": true,
+                            "pending": []
+                        },
+                        "name": "Lutron Aurora 1",
+                        "type": "ZLLRelativeRotary",
+                        "modelid": "Z3-1BRL",
+                        "manufacturername": "Lutron",
+                        "productname": "Lutron Aurora",
+                        "diversityid": "2c3a75ff-55c4-4e4d-8c44-82d330b8eb9b",
+                        "swversion": "3.4",
+                        "uniqueid": "ff:ff:00:0f:e7:fd:bc:b7-01-fc00-0014",
+                        "capabilities": {
+                            "certified": true,
+                            "primary": true,
+                            "inputs": [
+                                {
+                                    "repeatintervals": [
+                                        400
+                                    ],
+                                    "events": [
+                                        {
+                                            "rotaryevent": 1,
+                                            "eventtype": "start"
+                                        },
+                                        {
+                                            "rotaryevent": 2,
+                                            "eventtype": "repeat"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "tick_interval": "sensor_base.SensorManager.SCAN_INTERVAL"
+                }
+            },
+            {
+                "action": "process_rotary_event",
+                "starting_state": "rotary_device_added",
+                "ending_state": "aurora_event",
+                "inputs": {
+                    "sensor_id": "21",
+                    "new_lastupdated": "2020-01-31T15:57:19",
+                    "tick_interval": "sensor_base.SensorManager.SCAN_INTERVAL",
+                    "aurora_identifier": "(hue.DOMAIN, 'ff:ff:00:0f:e7:fd:bc:b7')"
+                }
+            }
+        ]
+    }
+]

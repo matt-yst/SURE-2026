@@ -1,0 +1,657 @@
+[
+    {
+        "name": "test_full_user_flow_implementation",
+        "device_type": "user_flow",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "form_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "user"
+                }
+            },
+            "create_entry_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.CREATE_ENTRY"
+                }
+            },
+            "final_state": {
+                "variables": {
+                    "config_entry.unique_id": "CN11A1A00001",
+                    "config_entry.data": "{CONF_HOST: '127.0.0.1', CONF_MAC: None}",
+                    "len(mock_setup_entry.mock_calls)": "1",
+                    "len(mock_elgato.info.mock_calls)": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "form_state",
+                "inputs": {
+                    "DOMAIN": "DOMAIN",
+                    "context": {
+                        "source": "SOURCE_USER"
+                    }
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "form_state",
+                "ending_state": "create_entry_state",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {
+                        "CONF_HOST": "127.0.0.1"
+                    }
+                }
+            },
+            {
+                "action": "assign_config_entry",
+                "starting_state": "create_entry_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "config_entry": "result['result']"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_full_zeroconf_flow_implementation",
+        "device_type": "mock_type",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "result['description_placeholders']": "{'serial_number': 'CN11A1A00001'}",
+                    "result['step_id']": "'zeroconf_confirm'",
+                    "result['type']": "FlowResultType.FORM"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "len(progress)": "1",
+                    "progress[0].get('flow_id')": "result['flow_id']",
+                    "context": "progress[0]",
+                    "progress[0]['context'].get('confirm_only')": "True"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "result['type']": "FlowResultType.CREATE_ENTRY"
+                }
+            },
+            "state_4": {
+                "variables": {
+                    "config_entry.unique_id": "'CN11A1A00001'",
+                    "config_entry.data": "{CONF_HOST: '127.0.0.1', CONF_MAC: 'AA:BB:CC:DD:EE:FF'}",
+                    "len(mock_setup_entry.mock_calls)": "1",
+                    "len(mock_elgato.info.mock_calls)": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.config_entries.flow.async_init",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "context": {
+                        "source": "SOURCE_ZEROCONF"
+                    },
+                    "data": "ZeroconfServiceInfo(ip_address=ip_address('127.0.0.1'), ip_addresses=[ip_address('127.0.0.1')], hostname='example.local.', name='mock_name', port=9123, properties={'id': 'AA:BB:CC:DD:EE:FF'}, type='mock_type')"
+                }
+            },
+            {
+                "action": "hass.config_entries.flow.async_progress",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {}
+            },
+            {
+                "action": "hass.config_entries.flow.async_configure",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {}
+                }
+            },
+            {
+                "action": "assign",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
+                "inputs": {
+                    "config_entry": "result['result']"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_connection_error",
+        "device_type": "Elgato Key Light",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "error_form": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['errors']": "{'base': 'cannot_connect'}",
+                    "result['step_id']": "'user'"
+                }
+            },
+            "create_entry": {
+                "variables": {
+                    "result['type']": "FlowResultType.CREATE_ENTRY"
+                }
+            },
+            "entry_details": {
+                "variables": {
+                    "config_entry.unique_id": "'CN11A1A00001'",
+                    "config_entry.data": "{CONF_HOST: '127.0.0.2', CONF_MAC: None}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.config_entries.flow.async_init",
+                "starting_state": "initial_state",
+                "ending_state": "error_form",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "context": {
+                        "source": "SOURCE_USER"
+                    },
+                    "data": {
+                        "CONF_HOST": "127.0.0.1"
+                    }
+                }
+            },
+            {
+                "action": "hass.config_entries.flow.async_init",
+                "starting_state": "error_form",
+                "ending_state": "create_entry",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "context": {
+                        "source": "SOURCE_USER"
+                    },
+                    "data": {
+                        "CONF_HOST": "127.0.0.2"
+                    }
+                }
+            },
+            {
+                "action": "extract_config_entry",
+                "starting_state": "create_entry",
+                "ending_state": "entry_details",
+                "inputs": {
+                    "result": "result['result']"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_zeroconf_connection_error",
+        "device_type": "Elgato Key Light",
+        "states": {
+            "aborted_state": {
+                "variables": {
+                    "result['reason']": "cannot_connect",
+                    "result['type']": "FlowResultType.ABORT"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init zeroconf flow",
+                "starting_state": "initial_state",
+                "ending_state": "aborted_state",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "context": {
+                        "source": "SOURCE_ZEROCONF"
+                    },
+                    "service_info": {
+                        "ip_address": "127.0.0.1",
+                        "ip_addresses": [
+                            "127.0.0.1"
+                        ],
+                        "hostname": "mock_hostname",
+                        "name": "mock_name",
+                        "port": 9123,
+                        "properties": {},
+                        "type": "mock_type"
+                    },
+                    "mock_setup": {
+                        "mock_elgato.info.side_effect": "ElgatoConnectionError"
+                    }
+                }
+            },
+            {
+                "action": "abort flow due to connection error",
+                "starting_state": "initial_state",
+                "ending_state": "aborted_state",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_user_device_exists_abort",
+        "device_type": "Elgato Key Light",
+        "states": {
+            "abort_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "already_configured"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.config_entries.flow.async_init",
+                "starting_state": "initial_state",
+                "ending_state": "abort_state",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "context": {
+                        "source": "SOURCE_USER"
+                    },
+                    "data": {
+                        "CONF_HOST": "127.0.0.1"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_zeroconf_device_exists_abort",
+        "device_type": "Elgato Key Light",
+        "states": {
+            "abort_state_1": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "already_configured"
+                }
+            },
+            "entry_state_1": {
+                "variables": {
+                    "entries[0].data[CONF_HOST]": "127.0.0.1"
+                }
+            },
+            "abort_state_2": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "already_configured"
+                }
+            },
+            "entry_state_2": {
+                "variables": {
+                    "entries[0].data[CONF_HOST]": "127.0.0.2"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.config_entries.flow.async_init",
+                "starting_state": "initial_state",
+                "ending_state": "abort_state_1",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "context": {
+                        "CONF_SOURCE": "SOURCE_ZEROCONF"
+                    },
+                    "data": {
+                        "ip_address": "127.0.0.1",
+                        "ip_addresses": [
+                            "127.0.0.1"
+                        ],
+                        "hostname": "mock_hostname",
+                        "name": "mock_name",
+                        "port": 9123,
+                        "properties": {},
+                        "type": "mock_type"
+                    }
+                }
+            },
+            {
+                "action": "hass.config_entries.async_entries",
+                "starting_state": "abort_state_1",
+                "ending_state": "entry_state_1",
+                "inputs": {
+                    "domain": "DOMAIN"
+                }
+            },
+            {
+                "action": "hass.config_entries.flow.async_init",
+                "starting_state": "entry_state_1",
+                "ending_state": "abort_state_2",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "context": {
+                        "CONF_SOURCE": "SOURCE_ZEROCONF"
+                    },
+                    "data": {
+                        "ip_address": "127.0.0.2",
+                        "ip_addresses": [
+                            "127.0.0.2"
+                        ],
+                        "hostname": "mock_hostname",
+                        "name": "mock_name",
+                        "port": 9123,
+                        "properties": {},
+                        "type": "mock_type"
+                    }
+                }
+            },
+            {
+                "action": "hass.config_entries.async_entries",
+                "starting_state": "abort_state_2",
+                "ending_state": "entry_state_2",
+                "inputs": {
+                    "domain": "DOMAIN"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_zeroconf_during_onboarding",
+        "device_type": "elgato",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_async_init": {
+                "variables": {
+                    "result['type']": "FlowResultType.CREATE_ENTRY"
+                }
+            },
+            "entry_created": {
+                "variables": {
+                    "config_entry.unique_id": "CN11A1A00001",
+                    "config_entry.data": "{CONF_HOST: '127.0.0.1', CONF_MAC: 'AA:BB:CC:DD:EE:FF'}",
+                    "len(mock_setup_entry.mock_calls)": "1",
+                    "len(mock_elgato.info.mock_calls)": "1",
+                    "len(mock_onboarding.mock_calls)": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.config_entries.flow.async_init",
+                "starting_state": "initial_state",
+                "ending_state": "post_async_init",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "context": {
+                        "source": "SOURCE_ZEROCONF"
+                    },
+                    "data": {
+                        "ip_address": "127.0.0.1",
+                        "ip_addresses": [
+                            "127.0.0.1"
+                        ],
+                        "hostname": "example.local.",
+                        "name": "mock_name",
+                        "port": 9123,
+                        "properties": {
+                            "id": "AA:BB:CC:DD:EE:FF"
+                        },
+                        "type": "mock_type"
+                    }
+                }
+            },
+            {
+                "action": "assign config_entry = result['result'] and process entry",
+                "starting_state": "post_async_init",
+                "ending_state": "entry_created",
+                "inputs": {
+                    "result": "result from async_init"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_dhcp_discovery_updates_host",
+        "device_type": "host",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "already_configured",
+                    "mock_config_entry.data[CONF_HOST]": "127.0.0.42"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "dhcp_discovery_flow",
+                "starting_state": "initial_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "hostname": "elgato",
+                    "ip": "127.0.0.42",
+                    "macaddress": "aabbccddeeff"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_dhcp_discovery_same_host",
+        "device_type": "dhcp",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "already_configured",
+                    "mock_config_entry.data[CONF_HOST]": "127.0.0.1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init dhcp discovery flow",
+                "starting_state": "initial_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "context": {
+                        "CONF_SOURCE": "SOURCE_DHCP"
+                    },
+                    "data": {
+                        "hostname": "elgato",
+                        "ip": "127.0.0.1",
+                        "macaddress": "aabbccddeeff"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_dhcp_discovery_no_match",
+        "device_type": "DHCP",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "no_devices_found",
+                    "mock_config_entry.data[CONF_HOST]": "127.0.0.1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init_dhcp_flow",
+                "starting_state": "initial_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "domain": "DOMAIN",
+                    "context": {
+                        "CONF_SOURCE": "SOURCE_DHCP"
+                    },
+                    "data": {
+                        "hostname": "elgato",
+                        "ip": "127.0.0.42",
+                        "macaddress": "001122334455"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_reconfigure_flow",
+        "device_type": "Elgato",
+        "states": {
+            "form_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "reconfigure"
+                }
+            },
+            "abort_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "reconfigure_successful",
+                    "mock_config_entry.data[CONF_HOST]": "127.0.0.42"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "start_reconfigure_flow",
+                "starting_state": "initial_state",
+                "ending_state": "form_state",
+                "inputs": {
+                    "hass": "hass"
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "form_state",
+                "ending_state": "abort_state",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {
+                        "CONF_HOST": "127.0.0.42"
+                    }
+                }
+            },
+            {
+                "action": "add_to_hass",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "hass": "hass"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_reconfigure_flow_cannot_connect",
+        "device_type": "Elgato",
+        "states": {
+            "state_form_error": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "reconfigure",
+                    "result['errors']": "{'base': 'cannot_connect'}"
+                }
+            },
+            "state_abort_success": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "reconfigure_successful"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.config_entries.flow.async_configure",
+                "starting_state": "initial_state",
+                "ending_state": "state_form_error",
+                "inputs": {
+                    "flow_id": "result['flow_id'] (from mock_config_entry.start_reconfigure_flow)",
+                    "user_input": {
+                        "CONF_HOST": "127.0.0.42"
+                    },
+                    "mock_elgato.info.side_effect": "ElgatoError"
+                }
+            },
+            {
+                "action": "hass.config_entries.flow.async_configure",
+                "starting_state": "state_form_error",
+                "ending_state": "state_abort_success",
+                "inputs": {
+                    "flow_id": "result['flow_id'] (same as previous)",
+                    "user_input": {
+                        "CONF_HOST": "127.0.0.42"
+                    },
+                    "mock_elgato.info.side_effect": "None"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_reconfigure_flow_different_device",
+        "device_type": "Elgato",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "added_state": {
+                "variables": {}
+            },
+            "reconfigure_started": {
+                "variables": {}
+            },
+            "abort_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "different_device",
+                    "mock_config_entry.data[CONF_HOST]": "127.0.0.1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "add_to_hass",
+                "starting_state": "initial_state",
+                "ending_state": "added_state",
+                "inputs": {
+                    "hass": "hass"
+                }
+            },
+            {
+                "action": "start_reconfigure_flow",
+                "starting_state": "added_state",
+                "ending_state": "reconfigure_started",
+                "inputs": {
+                    "hass": "hass"
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "reconfigure_started",
+                "ending_state": "abort_state",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {
+                        "CONF_HOST": "127.0.0.42"
+                    }
+                }
+            }
+        ]
+    }
+]

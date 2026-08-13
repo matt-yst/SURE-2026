@@ -1,0 +1,111 @@
+[
+    {
+        "name": "test_get_triggers",
+        "device_type": "Hue Remote",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_setup": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "1",
+                    "len(hass.states.async_all())": "1"
+                }
+            },
+            "state_tap_triggers": {
+                "variables": {
+                    "triggers": "unordered(expected_triggers)"
+                }
+            },
+            "state_dimmer_triggers": {
+                "variables": {
+                    "triggers": "unordered(expected_triggers)"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mock_bridge_v1.mock_sensor_responses.append",
+                "starting_state": "initial_state",
+                "ending_state": "state_setup",
+                "inputs": {
+                    "response": "REMOTES_RESPONSE"
+                }
+            },
+            {
+                "action": "async_get_device_automations",
+                "starting_state": "state_setup",
+                "ending_state": "state_tap_triggers",
+                "inputs": {
+                    "device_id": "hue_tap_device.id"
+                }
+            },
+            {
+                "action": "async_get_device_automations",
+                "starting_state": "state_tap_triggers",
+                "ending_state": "state_dimmer_triggers",
+                "inputs": {
+                    "device_id": "hue_dimmer_device.id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_if_fires_on_state_change",
+        "device_type": "button",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "1",
+                    "len(hass.states.async_all())": "1"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "2",
+                    "len(service_calls)": "1",
+                    "service_calls[0].data['some']": "'B4 - 18'"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "len(mock_bridge_v1.mock_requests)": "3",
+                    "len(service_calls)": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v1",
+                    "platforms": [
+                        "Platform.SENSOR",
+                        "Platform.BINARY_SENSOR"
+                    ]
+                }
+            },
+            {
+                "action": "process_button_event",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "buttonevent": 18,
+                    "lastupdated": "2019-12-28T22:58:02"
+                }
+            },
+            {
+                "action": "process_button_event",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "buttonevent": 34,
+                    "lastupdated": "2019-12-28T22:58:05"
+                }
+            }
+        ]
+    }
+]

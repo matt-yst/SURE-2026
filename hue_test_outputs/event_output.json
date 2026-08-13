@@ -1,0 +1,126 @@
+[
+    {
+        "name": "test_event",
+        "device_type": "Hue Dimmer switch with 4 controls",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "len(hass.states.async_all())": "8"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "state.state": "'unknown'",
+                    "state.name": "'Hue Dimmer switch with 4 controls Button 1'",
+                    "state.attributes[ATTR_EVENT_TYPES]": "['initial_press', 'repeat', 'short_release', 'long_press', 'long_release']"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "state.attributes[ATTR_EVENT_TYPE]": "'initial_press'"
+                }
+            },
+            "state_4": {
+                "variables": {
+                    "state.attributes[ATTR_EVENT_TYPE]": "'long_release'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "platform": "Platform.EVENT"
+                }
+            },
+            {
+                "action": "get_state",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "entity_id": "event.hue_dimmer_switch_with_4_controls_button_1"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "event": "initial_press",
+                    "control_id": 1,
+                    "id": "f92aa267-1387-4f02-9950-210fb7ca1f5a"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_3",
+                "ending_state": "state_4",
+                "inputs": {
+                    "event": "long_release",
+                    "control_id": 1,
+                    "id": "f92aa267-1387-4f02-9950-210fb7ca1f5a"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_sensor_add_update",
+        "device_type": "Relative Rotary",
+        "states": {
+            "initial_state": {
+                "variables": {
+                    "hass.states.get(test_entity_id)": "None"
+                }
+            },
+            "added_state": {
+                "variables": {
+                    "state": "None",
+                    "state.state": "'unknown'",
+                    "state.name": "'Hue mocked device Rotary'",
+                    "state.attributes[ATTR_EVENT_TYPES]": "['clock_wise', 'counter_clock_wise']"
+                }
+            },
+            "updated_state": {
+                "variables": {
+                    "state.attributes[ATTR_EVENT_TYPE]": "'counter_clock_wise'",
+                    "state.attributes['action']": "'repeat'",
+                    "state.attributes['steps']": "60",
+                    "state.attributes['duration']": "400"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "load_test_data",
+                "starting_state": "null_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "data": [
+                        "FAKE_DEVICE",
+                        "FAKE_ZIGBEE_CONNECTIVITY"
+                    ]
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "initial_state",
+                "ending_state": "added_state",
+                "inputs": {
+                    "event_type": "add",
+                    "payload": "FAKE_ROTARY"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "added_state",
+                "ending_state": "updated_state",
+                "inputs": {
+                    "event_type": "update",
+                    "payload": "btn_event"
+                }
+            }
+        ]
+    }
+]

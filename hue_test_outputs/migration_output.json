@@ -1,0 +1,304 @@
+[
+    {
+        "name": "test_migrate_api_key",
+        "device_type": "hue",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "migrated_state": {
+                "variables": {
+                    "config_entry.data": "{'host': '0.0.0.0', 'api_version': 2, 'api_key': 'abcdefgh'}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hue.migration.check_migration",
+                "starting_state": "initial_state",
+                "ending_state": "migrated_state",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry": "config_entry"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_auto_switchover",
+        "device_type": "hue",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_migration": {
+                "variables": {
+                    "host": "0.0.0.0",
+                    "api_version": "2",
+                    "api_key": "abcdefgh"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "check_migration",
+                "starting_state": "initial_state",
+                "ending_state": "post_migration",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry": {
+                        "host": "0.0.0.0",
+                        "api_version": 1,
+                        "username": "abcdefgh"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_light_entity_migration",
+        "device_type": "light",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "config_entry_added": {
+                "variables": {}
+            },
+            "device_created": {
+                "variables": {}
+            },
+            "entity_created": {
+                "variables": {}
+            },
+            "test_data_loaded": {
+                "variables": {}
+            },
+            "migration_handled": {
+                "variables": {}
+            },
+            "migrated_device_state": {
+                "variables": {
+                    "migrated_device": "None",
+                    "migrated_device.identifiers": "(hue.DOMAIN, '0b216218-d811-4c95-8c55-bbcda50f9d50')"
+                }
+            },
+            "migrated_entity_state": {
+                "variables": {
+                    "migrated_entity": "None",
+                    "migrated_entity.unique_id": "02cba059-9c2c-4d45-97e4-4f79b1bfbaa1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "add_config_entry_to_hass",
+                "starting_state": "initial_state",
+                "ending_state": "config_entry_added",
+                "inputs": {
+                    "config_entry": "mock_config_entry_v2"
+                }
+            },
+            {
+                "action": "device_registry.async_get_or_create",
+                "starting_state": "config_entry_added",
+                "ending_state": "device_created",
+                "inputs": {
+                    "config_entry_id": "config_entry.entry_id",
+                    "identifiers": [
+                        [
+                            "hue.DOMAIN",
+                            "00:17:88:01:09:aa:bb:65-0b"
+                        ]
+                    ]
+                }
+            },
+            {
+                "action": "entity_registry.async_get_or_create",
+                "starting_state": "device_created",
+                "ending_state": "entity_created",
+                "inputs": {
+                    "domain": "light",
+                    "platform": "hue.DOMAIN",
+                    "unique_id": "00:17:88:01:09:aa:bb:65-0b",
+                    "suggested_object_id": "migrated_light_1",
+                    "device_id": "device.id"
+                }
+            },
+            {
+                "action": "mock_bridge_v2.api.load_test_data",
+                "starting_state": "entity_created",
+                "ending_state": "test_data_loaded",
+                "inputs": {
+                    "test_data": "v2_resources_test_data"
+                }
+            },
+            {
+                "action": "hue.migration.handle_v2_migration",
+                "starting_state": "test_data_loaded",
+                "ending_state": "migration_handled",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry": "config_entry"
+                }
+            },
+            {
+                "action": "device_registry.async_get",
+                "starting_state": "migration_handled",
+                "ending_state": "migrated_device_state",
+                "inputs": {
+                    "device_id": "device.id"
+                }
+            },
+            {
+                "action": "entity_registry.async_get",
+                "starting_state": "migrated_device_state",
+                "ending_state": "migrated_entity_state",
+                "inputs": {
+                    "entity_id": "light.migrated_light_1"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_sensor_entity_migration",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_migration_state": {
+                "variables": {
+                    "migrated_device": "None",
+                    "migrated_device.identifiers": "(hue.DOMAIN, '2330b45d-6079-4c6e-bba6-1b68afb1a0d6')"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "handle_v2_migration",
+                "starting_state": "initial_state",
+                "ending_state": "post_migration_state",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry": "mock_config_entry_v2",
+                    "sensor_mappings": [
+                        {
+                            "dev_class": "temperature",
+                            "platform": "sensor",
+                            "new_id": "66466e14-d2fa-4b96-b2a0-e10de9cd8b8b"
+                        },
+                        {
+                            "dev_class": "illuminance",
+                            "platform": "sensor",
+                            "new_id": "d504e7a4-9a18-4854-90fd-c5b6ac102c40"
+                        },
+                        {
+                            "dev_class": "battery",
+                            "platform": "sensor",
+                            "new_id": "669f609d-4860-4f1c-bc25-7a9cec1c3b6c"
+                        },
+                        {
+                            "dev_class": "motion",
+                            "platform": "binary_sensor",
+                            "new_id": "b6896534-016d-4052-8cb4-ef04454df62c"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_group_entity_migration_with_v1_id",
+        "device_type": "grouped_lights",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "pre_migration_state": {
+                "variables": {
+                    "migrated_entity": "None"
+                }
+            },
+            "post_migration_state": {
+                "variables": {
+                    "migrated_entity.unique_id": "e937f8db-2f0e-49a0-936e-027e60e15b34"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_and_create_entity",
+                "starting_state": "initial_state",
+                "ending_state": "pre_migration_state",
+                "inputs": {
+                    "config_entry_creation": "mock_config_entry_v2",
+                    "add_config_entry_to_hass": "hass",
+                    "entity_registry_call": {
+                        "domain": "light",
+                        "platform": "hue",
+                        "unique_id": "3",
+                        "suggested_object_id": "hue_migrated_grouped_light",
+                        "config_entry": "config_entry"
+                    }
+                }
+            },
+            {
+                "action": "perform_migration_and_retrieve_entity",
+                "starting_state": "pre_migration_state",
+                "ending_state": "post_migration_state",
+                "inputs": {
+                    "load_test_data": "v2_resources_test_data",
+                    "block_until_done": true,
+                    "handle_v2_migration": {
+                        "hass": "hass",
+                        "config_entry": "config_entry"
+                    },
+                    "retrieve_entity": "light.hue_migrated_grouped_light"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_group_entity_migration_with_v2_group_id",
+        "device_type": "light",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "migrated_entity": "None"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "migrated_entity.unique_id": "e937f8db-2f0e-49a0-936e-027e60e15b34"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "entity_registry.async_get_or_create",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "domain": "light",
+                    "platform": "hue",
+                    "unique_id": "6ddc9066-7e7d-4a03-a773-c73937968296",
+                    "suggested_object_id": "hue_migrated_grouped_light",
+                    "config_entry": "config_entry"
+                }
+            },
+            {
+                "action": "hue.migration.handle_v2_migration",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "config_entry": "config_entry"
+                }
+            }
+        ]
+    }
+]

@@ -1,0 +1,267 @@
+[
+    {
+        "name": "test_hue_activate_scene",
+        "device_type": "hue",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "hue_bridge.api": "mock_api_v1"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "len(mock_api_v1.mock_requests)": "3",
+                    "mock_api_v1.mock_requests[2]['json']['scene']": "scene_1",
+                    "transitiontime": "mock_api_v1.mock_requests[2]['json']",
+                    "mock_api_v1.mock_requests[2]['path']": "groups/group_1/action"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_initialize_bridge",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {}
+            },
+            {
+                "action": "hue_activate_scene_v1",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "bridge": "hue_bridge",
+                    "group_name": "Group 1",
+                    "scene_name": "Cozy dinner"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_hue_activate_scene_transition",
+        "device_type": "Hue Bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_after_initialization": {
+                "variables": {
+                    "hue_bridge.api": "mock_api_v1"
+                }
+            },
+            "state_after_scene_activation": {
+                "variables": {
+                    "len(mock_api_v1.mock_requests)": "3",
+                    "mock_api_v1.mock_requests[2]['json']['scene']": "scene_1",
+                    "mock_api_v1.mock_requests[2]['json']['transitiontime']": "30",
+                    "mock_api_v1.mock_requests[2]['path']": "groups/group_1/action"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_initialize_bridge",
+                "starting_state": "initial_state",
+                "ending_state": "state_after_initialization",
+                "inputs": {
+                    "config_entry": {
+                        "domain": "hue",
+                        "data": {
+                            "host": "1.2.3.4",
+                            "api_key": "mock-api-key",
+                            "api_version": 1
+                        },
+                        "source": "test",
+                        "options": {
+                            "CONF_ALLOW_HUE_GROUPS": true,
+                            "CONF_ALLOW_UNREACHABLE": false
+                        }
+                    }
+                }
+            },
+            {
+                "action": "hue_activate_scene_v1",
+                "starting_state": "state_after_initialization",
+                "ending_state": "state_after_scene_activation",
+                "inputs": {
+                    "hue_bridge": "hue_bridge",
+                    "group_name": "Group 1",
+                    "scene_name": "Cozy dinner",
+                    "transitiontime": 30
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_hue_activate_scene_group_not_found",
+        "device_type": "Hue Bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "snapshot_state": {
+                "variables": {
+                    "hue_bridge.api": "mock_api_v1"
+                }
+            },
+            "activation_failed_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_initialize_bridge",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot_state",
+                "inputs": {}
+            },
+            {
+                "action": "hue_activate_scene_v1",
+                "starting_state": "snapshot_state",
+                "ending_state": "activation_failed_state",
+                "inputs": {
+                    "group_name": "Group 1",
+                    "scene_name": "Cozy dinner"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_hue_activate_scene_scene_not_found",
+        "device_type": "scene",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "initialized": {
+                "variables": {
+                    "hue_bridge.api": "mock_api_v1"
+                }
+            },
+            "scene_not_found": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_initialize_bridge",
+                "starting_state": "initial_state",
+                "ending_state": "initialized",
+                "inputs": {}
+            },
+            {
+                "action": "hue_activate_scene_v1",
+                "starting_state": "initialized",
+                "ending_state": "scene_not_found",
+                "inputs": {
+                    "bridge": "hue_bridge",
+                    "group": "Group 1",
+                    "scene": "Cozy dinner"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_hue_multi_bridge_activate_scene_all_respond",
+        "device_type": "bridge",
+        "states": {
+            "post_activation": {
+                "variables": {
+                    "len(mock_api_v1.mock_requests)": "3",
+                    "mock_api_v1.mock_requests[2]['json']['scene']": "scene_1",
+                    "mock_api_v1.mock_requests[2]['path']": "groups/group_1/action"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hue_activate_scene",
+                "starting_state": "initial_state",
+                "ending_state": "post_activation",
+                "inputs": {
+                    "group_name": "Group 1",
+                    "scene_name": "Cozy dinner"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_hue_multi_bridge_activate_scene_one_responds",
+        "device_type": "bridge",
+        "states": {
+            "post_activation": {
+                "variables": {
+                    "len(mock_api_v1.mock_requests)": "3",
+                    "mock_api_v1.mock_requests[2]['json']['scene']": "scene_1",
+                    "mock_api_v1.mock_requests[2]['path']": "groups/group_1/action"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_component",
+                "starting_state": "initial_state",
+                "ending_state": "setup_complete",
+                "inputs": {}
+            },
+            {
+                "action": "load_test_data",
+                "starting_state": "setup_complete",
+                "ending_state": "data_loaded",
+                "inputs": {
+                    "bridge": "mock_bridge_v2",
+                    "data": "v2_resources_test_data"
+                }
+            },
+            {
+                "action": "setup_bridge",
+                "starting_state": "data_loaded",
+                "ending_state": "bridge_v1_configured",
+                "inputs": {
+                    "bridge": "mock_bridge_v1",
+                    "config_entry": "mock_config_entry_v1"
+                }
+            },
+            {
+                "action": "setup_bridge",
+                "starting_state": "bridge_v1_configured",
+                "ending_state": "bridge_v2_configured",
+                "inputs": {
+                    "bridge": "mock_bridge_v2",
+                    "config_entry": "mock_config_entry_v2"
+                }
+            },
+            {
+                "action": "hue_activate_scene",
+                "starting_state": "bridge_v2_configured",
+                "ending_state": "post_activation",
+                "inputs": {
+                    "group_name": "Group 1",
+                    "scene_name": "Cozy dinner"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_hue_multi_bridge_activate_scene_zero_responds",
+        "device_type": "bridge",
+        "states": {
+            "snapshot_state": {
+                "variables": {
+                    "len(mock_api_v1.mock_requests)": "2",
+                    "mock_hue_activate_scene2.call_count": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hue_activate_scene service call",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot_state",
+                "inputs": {
+                    "group_name": "Non existing group",
+                    "scene_name": "Non existing Scene"
+                }
+            }
+        ]
+    }
+]

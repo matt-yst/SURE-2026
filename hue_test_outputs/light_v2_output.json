@@ -1,0 +1,1052 @@
+[
+    {
+        "name": "test_lights",
+        "device_type": "light",
+        "states": {
+            "post_load_data": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "0",
+                    "len(hass.states.async_all())": "8"
+                }
+            },
+            "light_1_state": {
+                "variables": {
+                    "light_1": "None",
+                    "light_1.attributes['friendly_name']": "'Hue light with color and color temperature 1'",
+                    "light_1.state": "'on'",
+                    "light_1.attributes['brightness']": "int(46.85 / 100 * 255)",
+                    "light_1.attributes['mode']": "'normal'",
+                    "light_1.attributes['color_mode']": "ColorMode.XY",
+                    "set(light_1.attributes['supported_color_modes'])": "{ColorMode.COLOR_TEMP, ColorMode.XY}",
+                    "light_1.attributes['xy_color']": "(0.5614, 0.4058)",
+                    "light_1.attributes['max_color_temp_kelvin']": "6535",
+                    "light_1.attributes['min_color_temp_kelvin']": "2000",
+                    "light_1.attributes['dynamics']": "'dynamic_palette'",
+                    "light_1.attributes['effect_list']": "['off', 'candle', 'fire']",
+                    "light_1.attributes['effect']": "'off'"
+                }
+            },
+            "light_2_state": {
+                "variables": {
+                    "light_2": "None",
+                    "light_2.attributes['friendly_name']": "'Hue light with color temperature only'",
+                    "light_2.state": "'off'",
+                    "light_2.attributes['mode']": "'normal'",
+                    "light_2.attributes['supported_color_modes']": "[ColorMode.COLOR_TEMP]",
+                    "light_2.attributes['max_color_temp_kelvin']": "6535",
+                    "light_2.attributes['min_color_temp_kelvin']": "2202",
+                    "light_2.attributes['dynamics']": "'none'",
+                    "light_2.attributes['effect_list']": "['off', 'candle', 'sunrise']"
+                }
+            },
+            "light_3_state": {
+                "variables": {
+                    "light_3": "None",
+                    "light_3.attributes['friendly_name']": "'Hue light with color only'",
+                    "light_3.state": "'on'",
+                    "light_3.attributes['brightness']": "128",
+                    "light_3.attributes['mode']": "'normal'",
+                    "light_3.attributes['supported_color_modes']": "[ColorMode.XY]",
+                    "light_3.attributes['color_mode']": "ColorMode.XY",
+                    "light_3.attributes['dynamics']": "'dynamic_palette'"
+                }
+            },
+            "light_4_state": {
+                "variables": {
+                    "light_4": "None",
+                    "light_4.attributes['friendly_name']": "'Hue on/off light'",
+                    "light_4.state": "'off'",
+                    "light_4.attributes['mode']": "'normal'",
+                    "light_4.attributes['supported_color_modes']": "[ColorMode.ONOFF]"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "mock_bridge_v2.api.load_test_data",
+                "starting_state": "initial_state",
+                "ending_state": "post_load_data",
+                "inputs": {
+                    "data": "v2_resources_test_data"
+                }
+            },
+            {
+                "action": "setup_platform",
+                "starting_state": "post_load_data",
+                "ending_state": "post_setup_platform",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "platform": "Platform.LIGHT"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "post_setup_platform",
+                "ending_state": "light_1_state",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_1"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "light_1_state",
+                "ending_state": "light_2_state",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "light_2_state",
+                "ending_state": "light_3_state",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_only"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "light_3_state",
+                "ending_state": "light_4_state",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_on_off_light"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_light_turn_on_service",
+        "device_type": "light",
+        "states": {
+            "s0": {
+                "variables": {
+                    "hass.states.get(test_light_id).state": "off"
+                }
+            },
+            "s1": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "1",
+                    "mock_bridge_v2.mock_requests[0]['method']": "put",
+                    "mock_bridge_v2.mock_requests[0]['json']['on']['on']": "True",
+                    "mock_bridge_v2.mock_requests[0]['json']['dimming']['brightness']": "100",
+                    "mock_bridge_v2.mock_requests[0]['json']['color_temperature']['mirek']": "300"
+                }
+            },
+            "s2": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.state": "on",
+                    "test_light.attributes['mode']": "normal",
+                    "test_light.attributes['supported_color_modes']": "[ColorMode.COLOR_TEMP]",
+                    "test_light.attributes['color_mode']": "ColorMode.COLOR_TEMP",
+                    "test_light.attributes['brightness']": "255"
+                }
+            },
+            "s3": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "2",
+                    "mock_bridge_v2.mock_requests[1]['json']['on']['on']": "True",
+                    "mock_bridge_v2.mock_requests[1]['json']['dynamics']['duration']": "200"
+                }
+            },
+            "s4": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "3",
+                    "mock_bridge_v2.mock_requests[2]['json']['alert']['action']": "breathe"
+                }
+            },
+            "s5": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "4",
+                    "mock_bridge_v2.mock_requests[3]['json']['identify']['action']": "identify"
+                }
+            },
+            "s6": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "5",
+                    "mock_bridge_v2.mock_requests[4]['json']['color_temperature']['mirek']": "153"
+                }
+            },
+            "s7": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "6",
+                    "mock_bridge_v2.mock_requests[5]['json']['color_temperature']['mirek']": "454"
+                }
+            },
+            "s8": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "7",
+                    "mock_bridge_v2.mock_requests[6]['json']['effects']['effect']": "candle"
+                }
+            },
+            "s9": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.attributes['effect']": "candle"
+                }
+            },
+            "s10": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "8",
+                    "mock_bridge_v2.mock_requests[7]['json']['effects']['effect']": "no_effect"
+                }
+            },
+            "s11": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.attributes['effect']": "off"
+                }
+            },
+            "s12": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "9",
+                    "effects": "mock_bridge_v2.mock_requests[8]['json']"
+                }
+            },
+            "s13": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "10",
+                    "mock_bridge_v2.mock_requests[9]['json']['timed_effects']['effect']": "sunrise",
+                    "mock_bridge_v2.mock_requests[9]['json']['timed_effects']['duration']": "6000"
+                }
+            },
+            "s14": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "11",
+                    "mock_bridge_v2.mock_requests[10]['json']['effects']['effect']": "candle",
+                    "color_temperature": "mock_bridge_v2.mock_requests[10]['json']"
+                }
+            },
+            "s15": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "12",
+                    "mock_bridge_v2.mock_requests[11]['json']['effects']['effect']": "candle",
+                    "xy_color": "mock_bridge_v2.mock_requests[11]['json']"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup",
+                "starting_state": "initial_state",
+                "ending_state": "s0",
+                "inputs": {
+                    "load_test_data": "v2_resources_test_data",
+                    "setup_platform": {
+                        "hass": "hass",
+                        "mock_bridge_v2": "mock_bridge_v2",
+                        "platform": "Platform.LIGHT"
+                    }
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "s0",
+                "ending_state": "s1",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "brightness_pct": 100,
+                    "color_temp_kelvin": 3333
+                }
+            },
+            {
+                "action": "mock_bridge_v2.api.emit_event",
+                "starting_state": "s1",
+                "ending_state": "s2",
+                "inputs": {
+                    "event": {
+                        "id": "3a6710fa-4474-4eba-b533-5e6e72968feb",
+                        "type": "light",
+                        "on": {
+                            "on": true
+                        },
+                        "dimming": {
+                            "brightness": 100
+                        },
+                        "color_temperature": {
+                            "mirek": 300
+                        }
+                    }
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "s2",
+                "ending_state": "s3",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "brightness_pct": 50,
+                    "transition": 0.25
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "s3",
+                "ending_state": "s4",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "flash": "long"
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "s4",
+                "ending_state": "s5",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "flash": "short"
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "s5",
+                "ending_state": "s6",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "color_temp_kelvin": 20000
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "s6",
+                "ending_state": "s7",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "color_temp_kelvin": 1818
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "s7",
+                "ending_state": "s8",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "effect": "candle"
+                }
+            },
+            {
+                "action": "mock_bridge_v2.api.emit_event",
+                "starting_state": "s8",
+                "ending_state": "s9",
+                "inputs": {
+                    "event": {
+                        "id": "3a6710fa-4474-4eba-b533-5e6e72968feb",
+                        "type": "light",
+                        "effects": {
+                            "status": "candle"
+                        }
+                    }
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "s9",
+                "ending_state": "s10",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "effect": "off"
+                }
+            },
+            {
+                "action": "mock_bridge_v2.api.emit_event",
+                "starting_state": "s10",
+                "ending_state": "s11",
+                "inputs": {
+                    "event": {
+                        "id": "3a6710fa-4474-4eba-b533-5e6e72968feb",
+                        "type": "light",
+                        "effects": {
+                            "status": "no_effect"
+                        }
+                    }
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "s11",
+                "ending_state": "s12",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "effect": "off"
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "s12",
+                "ending_state": "s13",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "effect": "sunrise",
+                    "transition": 6
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "s13",
+                "ending_state": "s14",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "effect": "candle",
+                    "color_temp_kelvin": 2000
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "s14",
+                "ending_state": "s15",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "effect": "candle",
+                    "xy_color": [
+                        0.123,
+                        0.123
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_light_turn_off_service",
+        "device_type": "light",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "light_on_initial": {
+                "variables": {
+                    "hass.states.get(test_light_id).state": "on"
+                }
+            },
+            "off_after_first_turn_off": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.state": "off"
+                }
+            },
+            "off_with_transition": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "2",
+                    "mock_bridge_v2.mock_requests[1]['json']['on']['on']": "False",
+                    "mock_bridge_v2.mock_requests[1]['json']['dynamics']['duration']": "200"
+                }
+            },
+            "on_after_turn_on": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "3",
+                    "mock_bridge_v2.mock_requests[2]['json']['on']['on']": "True",
+                    "round(mock_bridge_v2.mock_requests[2]['json']['dimming']['brightness'] - brightness_pct)": "0"
+                }
+            },
+            "flash_long": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "4",
+                    "mock_bridge_v2.mock_requests[3]['json']['alert']['action']": "breathe"
+                }
+            },
+            "flash_short": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "5",
+                    "mock_bridge_v2.mock_requests[4]['json']['identify']['action']": "identify"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "light_on_initial",
+                "inputs": {
+                    "load_test_data": "v2_resources_test_data",
+                    "platform": "Platform.LIGHT"
+                }
+            },
+            {
+                "action": "turn_off",
+                "starting_state": "light_on_initial",
+                "ending_state": "off_after_first_turn_off",
+                "inputs": {
+                    "entity_id": "test_light_id"
+                }
+            },
+            {
+                "action": "turn_off",
+                "starting_state": "off_after_first_turn_off",
+                "ending_state": "off_with_transition",
+                "inputs": {
+                    "entity_id": "test_light_id",
+                    "transition": 0.25
+                }
+            },
+            {
+                "action": "turn_on",
+                "starting_state": "off_with_transition",
+                "ending_state": "on_after_turn_on",
+                "inputs": {
+                    "entity_id": "test_light_id"
+                }
+            },
+            {
+                "action": "turn_off",
+                "starting_state": "on_after_turn_on",
+                "ending_state": "flash_long",
+                "inputs": {
+                    "entity_id": "test_light_id",
+                    "flash": "long"
+                }
+            },
+            {
+                "action": "turn_off",
+                "starting_state": "flash_long",
+                "ending_state": "flash_short",
+                "inputs": {
+                    "entity_id": "test_light_id",
+                    "flash": "short"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_light_added",
+        "device_type": "light",
+        "states": {
+            "pre_add_state": {
+                "variables": {
+                    "hass.states.get(test_entity_id)": "None"
+                }
+            },
+            "light_added_state": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.state": "'off'",
+                    "test_entity.attributes['friendly_name']": "FAKE_DEVICE['metadata']['name']"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialisation",
+                "starting_state": "initial_state",
+                "ending_state": "pre_add_state",
+                "inputs": {
+                    "load_test_data": [
+                        "FAKE_DEVICE",
+                        "FAKE_ZIGBEE_CONNECTIVITY"
+                    ],
+                    "setup_platform": [
+                        "hass",
+                        "mock_bridge_v2",
+                        "Platform.LIGHT"
+                    ]
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "pre_add_state",
+                "ending_state": "light_added_state",
+                "inputs": {
+                    "event_type": "add",
+                    "payload": "FAKE_LIGHT"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_light_availability",
+        "device_type": "light",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_none": {
+                "variables": {
+                    "test_light": "None"
+                }
+            },
+            "state_on": {
+                "variables": {
+                    "test_light.state": "on"
+                }
+            },
+            "state_unavailable": {
+                "variables": {
+                    "test_light.state": "unavailable"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "state_none",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "platform": "Platform.LIGHT"
+                }
+            },
+            {
+                "action": "load_test_data",
+                "starting_state": "state_none",
+                "ending_state": "state_on",
+                "inputs": {
+                    "bridge_api": "mock_bridge_v2.api",
+                    "data": "v2_resources_test_data"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_on",
+                "ending_state": "state_on",
+                "inputs": {
+                    "id": "1987ba66-c21d-48d0-98fb-121d939a71f3",
+                    "status": "connected",
+                    "type": "zigbee_connectivity"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_on",
+                "ending_state": "state_unavailable",
+                "inputs": {
+                    "id": "1987ba66-c21d-48d0-98fb-121d939a71f3",
+                    "status": "connectivity_issue",
+                    "type": "zigbee_connectivity"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_on",
+                "ending_state": "state_unavailable",
+                "inputs": {
+                    "id": "1987ba66-c21d-48d0-98fb-121d939a71f3",
+                    "status": "disconnected",
+                    "type": "zigbee_connectivity"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_grouped_lights",
+        "device_type": "grouped_light",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "zone_light_initial": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.attributes['friendly_name']": "'Test Zone'",
+                    "test_entity.state": "'on'",
+                    "test_entity.attributes['brightness']": "119",
+                    "test_entity.attributes['color_mode']": "ColorMode.XY",
+                    "set(test_entity.attributes['supported_color_modes'])": "{ColorMode.COLOR_TEMP, ColorMode.XY}",
+                    "test_entity.attributes['max_color_temp_kelvin']": "6535",
+                    "test_entity.attributes['min_color_temp_kelvin']": "2000",
+                    "test_entity.attributes['is_hue_group']": "True",
+                    "test_entity.attributes['hue_scenes']": "{'Dynamic Test Scene'}",
+                    "test_entity.attributes['hue_type']": "'zone'",
+                    "test_entity.attributes['lights']": "{'Hue light with color and color temperature 1', 'Hue light with color and color temperature gradient', 'Hue light with color and color temperature 2'}",
+                    "test_entity.attributes['entity_id']": "{'light.hue_light_with_color_and_color_temperature_gradient', 'light.hue_light_with_color_and_color_temperature_2', 'light.hue_light_with_color_and_color_temperature_1'}"
+                }
+            },
+            "room_light_initial": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.attributes['friendly_name']": "'Test Room'",
+                    "test_entity.state": "'off'",
+                    "test_entity.attributes['supported_color_modes']": "[ColorMode.COLOR_TEMP]",
+                    "test_entity.attributes['max_color_temp_kelvin']": "6535",
+                    "test_entity.attributes['min_color_temp_kelvin']": "2202",
+                    "test_entity.attributes['is_hue_group']": "True",
+                    "test_entity.attributes['hue_scenes']": "{'Regular Test Scene', 'Smart Test Scene'}",
+                    "test_entity.attributes['hue_type']": "'room'",
+                    "test_entity.attributes['lights']": "{'Hue on/off light', 'Hue light with color temperature only'}",
+                    "test_entity.attributes['entity_id']": "{'light.test_room_hue_light_with_color_temperature_only', 'light.test_room_hue_on_off_light'}"
+                }
+            },
+            "group_after_turn_on": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.state": "'on'",
+                    "test_light.attributes['color_mode']": "ColorMode.XY",
+                    "test_light.attributes['brightness']": "255",
+                    "test_light.attributes['xy_color']": "(0.123, 0.123)"
+                }
+            },
+            "group_after_single_off": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.state": "'on'",
+                    "test_light.attributes['xy_color']": "(0.123, 0.123)"
+                }
+            },
+            "group_after_single_xy_change": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.state": "'on'",
+                    "abs(group_x - expected_x)": "0.001",
+                    "abs(group_y - expected_y)": "0.001"
+                }
+            },
+            "group_after_second_light_off": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.state": "'on'",
+                    "abs(group_x - expected_x_two_lights)": "0.001",
+                    "abs(group_y - expected_y_two_lights)": "0.001"
+                }
+            },
+            "group_after_color_temp": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.state": "'on'",
+                    "test_light.attributes['color_mode']": "ColorMode.COLOR_TEMP",
+                    "abs(test_light.attributes['color_temp_kelvin'] - expected_avg_kelvin)": "5"
+                }
+            },
+            "group_after_gradient_off": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.state": "'on'",
+                    "test_light.attributes['color_mode']": "ColorMode.COLOR_TEMP",
+                    "abs(test_light.attributes['color_temp_kelvin'] - expected_avg_kelvin)": "5"
+                }
+            },
+            "group_after_gradient_xy": {
+                "variables": {
+                    "test_light.attributes['color_mode']": "ColorMode.COLOR_TEMP"
+                }
+            },
+            "group_after_another_xy": {
+                "variables": {
+                    "test_light.attributes['color_mode']": "ColorMode.XY"
+                }
+            },
+            "group_after_brightness_all": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.state": "'on'",
+                    "test_light.attributes['brightness']": "expected_brightness"
+                }
+            },
+            "group_after_brightness_two": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.state": "'on'",
+                    "test_light.attributes['brightness']": "expected_brightness_two_lights"
+                }
+            },
+            "group_after_brightness_one": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.state": "'on'",
+                    "test_light.attributes['brightness']": "expected_brightness_one_light"
+                }
+            },
+            "group_off": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.state": "'off'"
+                }
+            },
+            "group_turn_off_with_transition": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "1",
+                    "mock_bridge_v2.mock_requests[0]['json']['on']['on']": "False",
+                    "mock_bridge_v2.mock_requests[0]['json']['dynamics']['duration']": "200"
+                }
+            },
+            "group_on_after_off": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "2",
+                    "mock_bridge_v2.mock_requests[1]['json']['on']['on']": "True",
+                    "mock_bridge_v2.mock_requests[1]['json']['dimming']['brightness']": "100"
+                }
+            },
+            "group_flash_short": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "3",
+                    "mock_bridge_v2.mock_requests[0]['json']['identify']['action']": "'identify'",
+                    "mock_bridge_v2.mock_requests[1]['json']['identify']['action']": "'identify'",
+                    "mock_bridge_v2.mock_requests[2]['json']['identify']['action']": "'identify'"
+                }
+            },
+            "group_flash_long": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "1",
+                    "mock_bridge_v2.mock_requests[0]['json']['alert']['action']": "'breathe'"
+                }
+            },
+            "group_off_flash_short": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "3",
+                    "mock_bridge_v2.mock_requests[0]['json']['identify']['action']": "'identify'",
+                    "mock_bridge_v2.mock_requests[1]['json']['identify']['action']": "'identify'",
+                    "mock_bridge_v2.mock_requests[2]['json']['identify']['action']": "'identify'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "light.turn_on",
+                "starting_state": "initial_state",
+                "ending_state": "group_after_turn_on",
+                "inputs": {
+                    "entity_id": "light.test_zone",
+                    "brightness_pct": 100,
+                    "xy_color": [
+                        0.123,
+                        0.123
+                    ],
+                    "transition": 0.25
+                }
+            },
+            {
+                "action": "light.turn_off",
+                "starting_state": "group_after_turn_on",
+                "ending_state": "group_after_single_off",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_1"
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "group_after_single_off",
+                "ending_state": "group_after_single_xy_change",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_1",
+                    "xy_color": [
+                        0.3127,
+                        0.329
+                    ]
+                }
+            },
+            {
+                "action": "light.turn_off",
+                "starting_state": "group_after_single_xy_change",
+                "ending_state": "group_after_second_light_off",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_2"
+                }
+            },
+            {
+                "action": "light.turn_on (color_temp 1)",
+                "starting_state": "group_after_second_light_off",
+                "ending_state": "group_after_color_temp",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_1",
+                    "color_temp_kelvin": "value derived from mirek 2500"
+                }
+            },
+            {
+                "action": "light.turn_on (color_temp 2)",
+                "starting_state": "group_after_color_temp",
+                "ending_state": "group_after_color_temp",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_gradient",
+                    "color_temp_kelvin": "value derived from mirek 3000"
+                }
+            },
+            {
+                "action": "light.turn_on (color_temp 3)",
+                "starting_state": "group_after_color_temp",
+                "ending_state": "group_after_color_temp",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_2",
+                    "color_temp_kelvin": "value derived from mirek 3500"
+                }
+            },
+            {
+                "action": "light.turn_off",
+                "starting_state": "group_after_color_temp",
+                "ending_state": "group_after_gradient_off",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_gradient"
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "group_after_gradient_off",
+                "ending_state": "group_after_gradient_xy",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_gradient",
+                    "xy_color": [
+                        0.123,
+                        0.123
+                    ]
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "group_after_gradient_xy",
+                "ending_state": "group_after_another_xy",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_2",
+                    "xy_color": [
+                        0.3127,
+                        0.329
+                    ]
+                }
+            },
+            {
+                "action": "light.turn_on (brightness loop)",
+                "starting_state": "group_after_another_xy",
+                "ending_state": "group_after_brightness_all",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_1",
+                    "brightness": 119
+                }
+            },
+            {
+                "action": "light.turn_off",
+                "starting_state": "group_after_brightness_all",
+                "ending_state": "group_after_brightness_two",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_gradient"
+                }
+            },
+            {
+                "action": "light.turn_off",
+                "starting_state": "group_after_brightness_two",
+                "ending_state": "group_after_brightness_one",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_2"
+                }
+            },
+            {
+                "action": "light.turn_off",
+                "starting_state": "group_after_brightness_one",
+                "ending_state": "group_off",
+                "inputs": {
+                    "entity_id": "light.test_zone"
+                }
+            },
+            {
+                "action": "light.turn_off (with transition)",
+                "starting_state": "group_off",
+                "ending_state": "group_turn_off_with_transition",
+                "inputs": {
+                    "entity_id": "light.test_zone",
+                    "transition": 0.25
+                }
+            },
+            {
+                "action": "light.turn_on",
+                "starting_state": "group_turn_off_with_transition",
+                "ending_state": "group_on_after_off",
+                "inputs": {
+                    "entity_id": "light.test_zone"
+                }
+            },
+            {
+                "action": "light.turn_on (flash short)",
+                "starting_state": "group_on_after_off",
+                "ending_state": "group_flash_short",
+                "inputs": {
+                    "entity_id": "light.test_zone",
+                    "flash": "short"
+                }
+            },
+            {
+                "action": "light.turn_on (flash long)",
+                "starting_state": "group_flash_short",
+                "ending_state": "group_flash_long",
+                "inputs": {
+                    "entity_id": "light.test_zone",
+                    "flash": "long"
+                }
+            },
+            {
+                "action": "light.turn_off (flash short)",
+                "starting_state": "group_flash_long",
+                "ending_state": "group_off_flash_short",
+                "inputs": {
+                    "entity_id": "light.test_zone",
+                    "flash": "short"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_light_turn_on_service_deprecation",
+        "device_type": "light",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "mock_bridge_v2.mock_requests[0]['json']['effects']['effect']": "no_effect"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "SERVICE_TURN_ON",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "entity_id": "light.test_room_hue_light_with_color_temperature_only",
+                    "effect": "None"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_light_with_zero_mirek",
+        "device_type": "light",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "data_loaded_state": {
+                "variables": {}
+            },
+            "platform_setup_state": {
+                "variables": {}
+            },
+            "final_state": {
+                "variables": {
+                    "test_light": "None",
+                    "test_light.attributes['max_color_temp_kelvin']": "6535",
+                    "test_light.attributes['min_color_temp_kelvin']": "2000"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "load_test_data",
+                "starting_state": "initial_state",
+                "ending_state": "data_loaded_state",
+                "inputs": {
+                    "data": "v2_resources_test_data",
+                    "modifications": [
+                        {
+                            "target": "resource['color_temperature']['mirek_schema']",
+                            "mirek_minimum": 0,
+                            "mirek_maximum": 0
+                        }
+                    ]
+                }
+            },
+            {
+                "action": "setup_platform",
+                "starting_state": "data_loaded_state",
+                "ending_state": "platform_setup_state",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "platform": "Platform.LIGHT"
+                }
+            },
+            {
+                "action": "get_state",
+                "starting_state": "platform_setup_state",
+                "ending_state": "final_state",
+                "inputs": {
+                    "entity_id": "light.hue_light_with_color_and_color_temperature_1"
+                }
+            }
+        ]
+    }
+]

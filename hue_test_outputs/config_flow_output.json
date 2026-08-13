@@ -1,0 +1,1313 @@
+[
+    {
+        "name": "test_flow_works",
+        "device_type": "Hue Bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "init_form": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "'init'"
+                }
+            },
+            "link_form": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "'link'"
+                }
+            },
+            "unique_id_set": {
+                "variables": {
+                    "flow['context']['unique_id']": "'aabbccddeeff'"
+                }
+            },
+            "entry_created": {
+                "variables": {
+                    "result['type']": "FlowResultType.CREATE_ENTRY",
+                    "result['title']": "'Hue Bridge aabbccddeeff'",
+                    "result['data']": "{'host': '1.2.3.4', 'api_key': '123456789', 'api_version': 2}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "init_form",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_USER"
+                    }
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "init_form",
+                "ending_state": "link_form",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {
+                        "id": "disc_bridge.id"
+                    }
+                }
+            },
+            {
+                "action": "async_progress",
+                "starting_state": "link_form",
+                "ending_state": "unique_id_set",
+                "inputs": {
+                    "flow_id": "result['flow_id']"
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "unique_id_set",
+                "ending_state": "entry_created",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {}
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_manual_flow_works",
+        "device_type": "Hue Bridge",
+        "states": {
+            "init": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "init"
+                }
+            },
+            "manual": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "manual"
+                }
+            },
+            "link": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "link"
+                }
+            },
+            "create_entry": {
+                "variables": {
+                    "result['type']": "FlowResultType.CREATE_ENTRY",
+                    "result['title']": "f'Hue Bridge {disc_bridge.id}'",
+                    "result['data']": "{'host': '2.2.2.2', 'api_key': '123456789', 'api_version': 1}"
+                }
+            },
+            "entries_list": {
+                "variables": {
+                    "len(entries)": "2"
+                }
+            },
+            "final_entry": {
+                "variables": {
+                    "entry.unique_id": "id-1234"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "init",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_USER"
+                    }
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "init",
+                "ending_state": "manual",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {
+                        "id": "manual"
+                    }
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "manual",
+                "ending_state": "link",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {
+                        "host": "2.2.2.2"
+                    },
+                    "patches": {
+                        "config_flow.discover_bridge": "disc_bridge"
+                    }
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "link",
+                "ending_state": "create_entry",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {},
+                    "patches": {
+                        "config_flow.create_app_key": "123456789",
+                        "homeassistant.components.hue.async_unload_entry": true
+                    }
+                }
+            },
+            {
+                "action": "async_entries",
+                "starting_state": "create_entry",
+                "ending_state": "entries_list",
+                "inputs": {
+                    "domain": "hue"
+                }
+            },
+            {
+                "action": "select_last_entry",
+                "starting_state": "entries_list",
+                "ending_state": "final_entry",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_manual_flow_bridge_exist",
+        "device_type": "bridge",
+        "states": {
+            "form_manual": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "manual"
+                }
+            },
+            "abort_already_configured": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "already_configured"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "form_manual",
+                "inputs": {
+                    "source": "config_entries.SOURCE_USER"
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "form_manual",
+                "ending_state": "abort_already_configured",
+                "inputs": {
+                    "host": "2.2.2.2"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_manual_flow_no_discovered_bridges",
+        "device_type": "bridge",
+        "states": {
+            "form_manual": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "manual"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "form_manual",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_USER"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_flow_all_discovered_bridges_exist",
+        "device_type": "bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "form_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "'manual'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init_flow",
+                "starting_state": "initial_state",
+                "ending_state": "form_state",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_USER"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_flow_bridges_discovered",
+        "device_type": "bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "form_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "init"
+                }
+            },
+            "selection_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "form_state",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_USER"
+                    }
+                }
+            },
+            {
+                "action": "data_schema",
+                "starting_state": "form_state",
+                "ending_state": "form_state",
+                "inputs": {
+                    "id": "not-discovered",
+                    "error": "vol.Invalid"
+                }
+            },
+            {
+                "action": "data_schema",
+                "starting_state": "form_state",
+                "ending_state": "selection_state",
+                "inputs": {
+                    "id": "bla"
+                }
+            },
+            {
+                "action": "data_schema",
+                "starting_state": "form_state",
+                "ending_state": "selection_state",
+                "inputs": {
+                    "id": "beer_v2"
+                }
+            },
+            {
+                "action": "data_schema",
+                "starting_state": "form_state",
+                "ending_state": "selection_state",
+                "inputs": {
+                    "id": "manual"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_flow_two_bridges_discovered_one_new",
+        "device_type": "bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "init_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "init"
+                }
+            },
+            "error_state": {
+                "variables": {}
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init_flow",
+                "starting_state": "initial_state",
+                "ending_state": "init_state",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_USER"
+                    }
+                }
+            },
+            {
+                "action": "validate_data_schema",
+                "starting_state": "init_state",
+                "ending_state": "error_state",
+                "inputs": {
+                    "data": {
+                        "id": "bla"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_flow_timeout_discovery",
+        "device_type": "hue",
+        "states": {
+            "snapshot_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "manual"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot_state",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_USER"
+                    },
+                    "patch": {
+                        "target": "homeassistant.components.hue.config_flow.discover_nupnp",
+                        "side_effect": "TimeoutError"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_flow_link_unknown_error",
+        "device_type": "Hue bridge",
+        "states": {
+            "init_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "link"
+                }
+            },
+            "link_error": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "link",
+                    "result['errors']": "{'base': 'linking'}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "init_state",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_USER"
+                    }
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "init_state",
+                "ending_state": "link_error",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {
+                        "id": "disc_bridge.id"
+                    }
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "link_error",
+                "ending_state": "link_error",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {}
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_flow_link_button_not_pressed",
+        "device_type": "Hue bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "link_form": {
+                "variables": {}
+            },
+            "link_form_error": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "link",
+                    "result['errors']": "{'base': 'register_failed'}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "link_form",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_USER"
+                    }
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "link_form",
+                "ending_state": "link_form",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {
+                        "id": "disc_bridge.id"
+                    }
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "link_form",
+                "ending_state": "link_form_error",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {}
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_flow_link_cannot_connect",
+        "device_type": "hue_bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "init_state": {
+                "variables": {}
+            },
+            "configure_step_1": {
+                "variables": {}
+            },
+            "configure_step_2": {
+                "variables": {}
+            },
+            "abort_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "cannot_connect"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "init_state",
+                "inputs": {
+                    "domain": "homeassistant.components.hue",
+                    "context": {
+                        "source": "config_entries.SOURCE_USER"
+                    }
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "init_state",
+                "ending_state": "configure_step_1",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {
+                        "id": "disc_bridge.id"
+                    }
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "configure_step_1",
+                "ending_state": "configure_step_2",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {}
+                }
+            },
+            {
+                "action": "snapshot_assert",
+                "starting_state": "configure_step_2",
+                "ending_state": "abort_state",
+                "inputs": {
+                    "snapshot": [
+                        {
+                            "result['type']": "FlowResultType.ABORT"
+                        },
+                        {
+                            "result['reason']": "cannot_connect"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_import_with_no_config",
+        "device_type": "host",
+        "states": {
+            "form_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "link"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "form_state",
+                "inputs": {
+                    "source": "config_entries.SOURCE_IMPORT",
+                    "data": {
+                        "host": "0.0.0.0"
+                    }
+                }
+            },
+            {
+                "action": "create_mock_api_discovery",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "aioclient_mock": "aioclient_mock",
+                    "targets": [
+                        [
+                            "0.0.0.0",
+                            "1234"
+                        ]
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_creating_entry_removes_entries_for_same_host_or_bridge",
+        "device_type": "Hue Bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_entries_added": {
+                "variables": {
+                    "len(hass.config_entries.async_entries('hue'))": "2"
+                }
+            },
+            "state_flow_form": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "'link'"
+                }
+            },
+            "state_entry_created": {
+                "variables": {
+                    "result['type']": "FlowResultType.CREATE_ENTRY",
+                    "result['title']": "'Hue Bridge id-1234'",
+                    "result['data']": "{'host': '2.2.2.2', 'api_key': '123456789', 'api_version': 1}"
+                }
+            },
+            "state_entries_checked": {
+                "variables": {
+                    "len(entries)": "2"
+                }
+            },
+            "state_entry_verified": {
+                "variables": {
+                    "orig_entry.entry_id": "new_entry.entry_id",
+                    "new_entry.unique_id": "'id-1234'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_existing_entries",
+                "starting_state": "initial_state",
+                "ending_state": "state_entries_added",
+                "inputs": {
+                    "create_mock_api_discovery": "create_mock_api_discovery(aioclient_mock, [('2.2.2.2', 'id-1234')])",
+                    "orig_entry_creation": "orig_entry = MockConfigEntry(domain=DOMAIN, data={'host': '0.0.0.0', 'api_key': '123456789'}, unique_id='id-1234')",
+                    "orig_entry_add": "orig_entry.add_to_hass(hass)",
+                    "second_entry_add": "MockConfigEntry(domain=DOMAIN, data={'host': '1.2.3.4', 'api_key': '123456789'}, unique_id='id-5678').add_to_hass(hass)"
+                }
+            },
+            {
+                "action": "async_init_flow",
+                "starting_state": "state_entries_added",
+                "ending_state": "state_flow_form",
+                "inputs": {
+                    "async_init_call": "result = await hass.config_entries.flow.async_init(DOMAIN, data={'host': '2.2.2.2'}, context={'source': config_entries.SOURCE_IMPORT})"
+                }
+            },
+            {
+                "action": "async_configure_flow",
+                "starting_state": "state_flow_form",
+                "ending_state": "state_entry_created",
+                "inputs": {
+                    "patches_and_configure": "with patch('homeassistant.components.hue.config_flow.create_app_key', return_value='123456789'), patch('homeassistant.components.hue.async_unload_entry', return_value=True):\n    result = await hass.config_entries.flow.async_configure(result['flow_id'], {})"
+                }
+            },
+            {
+                "action": "retrieve_entries",
+                "starting_state": "state_entry_created",
+                "ending_state": "state_entries_checked",
+                "inputs": {
+                    "get_entries": "entries = hass.config_entries.async_entries('hue')"
+                }
+            },
+            {
+                "action": "verify_new_entry",
+                "starting_state": "state_entries_checked",
+                "ending_state": "state_entry_verified",
+                "inputs": {
+                    "select_new_entry": "new_entry = entries[-1]"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bridge_homekit",
+        "device_type": "bridge",
+        "states": {
+            "state1": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "link"
+                }
+            },
+            "state2": {
+                "variables": {
+                    "flow['context']['unique_id']": "config_entries.DEFAULT_DISCOVERY_UNIQUE_ID"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "state1",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_HOMEKIT"
+                    },
+                    "data": "ZeroconfServiceInfo(ip_address=ip_address('0.0.0.0'), ip_addresses=[ip_address('0.0.0.0')], hostname='mock_hostname', name='mock_name', port=None, properties={ATTR_PROPERTIES_ID: 'aa:bb:cc:dd:ee:ff'}, type='mock_type')"
+                }
+            },
+            {
+                "action": "async_progress_lookup",
+                "starting_state": "state1",
+                "ending_state": "state2",
+                "inputs": {
+                    "flow_id": "result['flow_id']"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bridge_import_already_configured",
+        "device_type": "bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "result_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "already_configured"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.config_entries.flow.async_init",
+                "starting_state": "initial_state",
+                "ending_state": "result_state",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_IMPORT"
+                    },
+                    "data": {
+                        "host": "0.0.0.0",
+                        "properties": {
+                            "id": "aa:bb:cc:dd:ee:ff"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bridge_homekit_already_configured",
+        "device_type": "bridge",
+        "states": {
+            "abort_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "already_configured"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.config_entries.flow.async_init",
+                "starting_state": "initial_state",
+                "ending_state": "abort_state",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_HOMEKIT"
+                    },
+                    "data": {
+                        "ip_address": "ip_address('0.0.0.0')",
+                        "ip_addresses": [
+                            "ip_address('0.0.0.0')"
+                        ],
+                        "hostname": "mock_hostname",
+                        "name": "mock_name",
+                        "port": null,
+                        "properties": {
+                            "ATTR_PROPERTIES_ID": "aa:bb:cc:dd:ee:ff"
+                        },
+                        "type": "mock_type"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_options_flow_v1",
+        "device_type": "V1 bridge",
+        "states": {
+            "form_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "init"
+                }
+            },
+            "schema_defaults_state": {
+                "variables": {
+                    "_get_schema_default(schema, const.CONF_ALLOW_HUE_GROUPS)": "const.DEFAULT_ALLOW_HUE_GROUPS",
+                    "_get_schema_default(schema, const.CONF_ALLOW_UNREACHABLE)": "const.DEFAULT_ALLOW_UNREACHABLE"
+                }
+            },
+            "create_entry_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.CREATE_ENTRY",
+                    "result['data']": "{const.CONF_ALLOW_HUE_GROUPS: True, const.CONF_ALLOW_UNREACHABLE: True}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "form_state",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "extract_schema",
+                "starting_state": "form_state",
+                "ending_state": "schema_defaults_state",
+                "inputs": {
+                    "schema_source": "result['data_schema'].schema"
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "schema_defaults_state",
+                "ending_state": "create_entry_state",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {
+                        "const.CONF_ALLOW_HUE_GROUPS": true,
+                        "const.CONF_ALLOW_UNREACHABLE": true
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_options_flow_v2",
+        "device_type": "V2 bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_form_init": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "init"
+                }
+            },
+            "state_schema_default": {
+                "variables": {
+                    "_get_schema_default(schema, const.CONF_IGNORE_AVAILABILITY)": "[]"
+                }
+            },
+            "state_create_entry": {
+                "variables": {
+                    "result['type']": "FlowResultType.CREATE_ENTRY",
+                    "result['data']": "{const.CONF_IGNORE_AVAILABILITY: [mock_dev_id]}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.config_entries.options.async_init",
+                "starting_state": "initial_state",
+                "ending_state": "state_form_init",
+                "inputs": {
+                    "entry_id": "entry.entry_id"
+                }
+            },
+            {
+                "action": "retrieve_schema",
+                "starting_state": "state_form_init",
+                "ending_state": "state_schema_default",
+                "inputs": {}
+            },
+            {
+                "action": "hass.config_entries.options.async_configure",
+                "starting_state": "state_schema_default",
+                "ending_state": "state_create_entry",
+                "inputs": {
+                    "flow_id": "result['flow_id']",
+                    "user_input": {
+                        "const.CONF_IGNORE_AVAILABILITY": [
+                            "mock_dev_id"
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bridge_zeroconf",
+        "device_type": "bridge",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "link"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "create_mock_api_discovery",
+                "starting_state": "initial_state",
+                "ending_state": "initial_state",
+                "inputs": {
+                    "aioclient_mock": "aioclient_mock",
+                    "discovery": [
+                        [
+                            "192.168.1.217",
+                            "ecb5fafffeabcabc"
+                        ]
+                    ]
+                }
+            },
+            {
+                "action": "hass.config_entries.flow.async_init",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_ZEROCONF"
+                    },
+                    "data": {
+                        "ip_address": "192.168.1.217",
+                        "ip_addresses": [
+                            "192.168.1.217"
+                        ],
+                        "port": 443,
+                        "hostname": "Philips-hue.local",
+                        "type": "_hue._tcp.local.",
+                        "name": "Philips Hue - ABCABC._hue._tcp.local.",
+                        "properties": {
+                            "_raw": {
+                                "bridgeid": "ecb5fafffeabcabc",
+                                "modelid": "BSB002"
+                            },
+                            "bridgeid": "ecb5fafffeabcabc",
+                            "modelid": "BSB002"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bridge_zeroconf_already_exists",
+        "device_type": "bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "abort_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "already_configured",
+                    "entry.data['host']": "192.168.1.217"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.config_entries.flow.async_init",
+                "starting_state": "initial_state",
+                "ending_state": "abort_state",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_ZEROCONF"
+                    },
+                    "data": {
+                        "ip_address": "192.168.1.217",
+                        "ip_addresses": [
+                            "192.168.1.217"
+                        ],
+                        "port": 443,
+                        "hostname": "Philips-hue.local",
+                        "type": "_hue._tcp.local.",
+                        "name": "Philips Hue - ABCABC._hue._tcp.local.",
+                        "properties": {
+                            "_raw": {
+                                "bridgeid": "b'ecb5faabcabc'",
+                                "modelid": "b'BSB002'"
+                            },
+                            "bridgeid": "ecb5faabcabc",
+                            "modelid": "BSB002"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bridge_zeroconf_ipv6",
+        "device_type": "bridge",
+        "states": {
+            "abort_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "invalid_host"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "abort_state",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_ZEROCONF"
+                    },
+                    "data": {
+                        "ip_address": "fd00::eeb5:faff:fe84:b17d",
+                        "ip_addresses": [
+                            "fd00::eeb5:faff:fe84:b17d"
+                        ],
+                        "port": 443,
+                        "hostname": "Philips-hue.local",
+                        "type": "_hue._tcp.local.",
+                        "name": "Philips Hue - ABCABC._hue._tcp.local.",
+                        "properties": {
+                            "_raw": {
+                                "bridgeid": "ecb5faabcabc",
+                                "modelid": "BSB002"
+                            },
+                            "bridgeid": "ecb5faabcabc",
+                            "modelid": "BSB002"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bridge_connection_failed",
+        "device_type": "bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "await_user_input": {
+                "variables": {}
+            },
+            "abort_cannot_connect_user": {
+                "variables": {
+                    "type": "FlowResultType.ABORT",
+                    "reason": "cannot_connect",
+                    "log_contains": "Error while attempting to retrieve discovery information"
+                }
+            },
+            "abort_cannot_connect_zeroconf": {
+                "variables": {
+                    "type": "FlowResultType.ABORT",
+                    "reason": "cannot_connect"
+                }
+            },
+            "abort_cannot_connect_homekit": {
+                "variables": {
+                    "type": "FlowResultType.ABORT",
+                    "reason": "cannot_connect"
+                }
+            },
+            "abort_cannot_connect_import": {
+                "variables": {
+                    "type": "FlowResultType.ABORT",
+                    "reason": "cannot_connect"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "await_user_input",
+                "inputs": {
+                    "source": "config_entries.SOURCE_USER"
+                }
+            },
+            {
+                "action": "async_configure",
+                "starting_state": "await_user_input",
+                "ending_state": "abort_cannot_connect_user",
+                "inputs": {
+                    "host": "blah"
+                }
+            },
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "abort_cannot_connect_zeroconf",
+                "inputs": {
+                    "source": "config_entries.SOURCE_ZEROCONF",
+                    "data": "ZeroconfServiceInfo(ip_address=ip_address('1.2.3.4'), ip_addresses=[ip_address('1.2.3.4')], port=443, hostname='Philips\u2011hue.local', type='_hue._tcp.local.', name='Philips Hue - ABCABC._hue._tcp.local.', properties={'_raw': {'bridgeid': b'ecb5fafffeabcabc', 'modelid': b'BSB002'}, 'bridgeid': 'ecb5fafffeabcabc', 'modelid': 'BSB002'})"
+                }
+            },
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "abort_cannot_connect_homekit",
+                "inputs": {
+                    "source": "config_entries.SOURCE_HOMEKIT",
+                    "data": "ZeroconfServiceInfo(ip_address=ip_address('0.0.0.0'), ip_addresses=[ip_address('0.0.0.0')], hostname='mock_hostname', name='mock_name', port=None, properties={ATTR_PROPERTIES_ID: 'aa:bb:cc:dd:ee:ff'}, type='mock_type')"
+                }
+            },
+            {
+                "action": "async_init",
+                "starting_state": "initial_state",
+                "ending_state": "abort_cannot_connect_import",
+                "inputs": {
+                    "source": "config_entries.SOURCE_IMPORT",
+                    "data": {
+                        "host": "blah"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bsb003_bridge_discovery",
+        "device_type": "bridge",
+        "states": {
+            "abort_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.ABORT",
+                    "result['reason']": "migrated_bridge"
+                }
+            },
+            "migration_state": {
+                "variables": {
+                    "migrated_device": "None",
+                    "len(migrated_device.identifiers)": "1",
+                    "list(migrated_device.identifiers)[0]": "(const.DOMAIN, 'bsb003_00000')",
+                    "len(migrated_device.connections)": "0",
+                    "entry.data['host']": "192.168.1.218"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "hass.config_entries.flow.async_init",
+                "starting_state": "initial_state",
+                "ending_state": "abort_state",
+                "inputs": {
+                    "source": "config_entries.SOURCE_ZEROCONF",
+                    "data": "ZeroconfServiceInfo(ip_address='192.168.1.218', ip_addresses=['192.168.1.218'], port=443, hostname='Philips-hue.local', type='_hue._tcp.local.', name='Philips Hue - ABCABC._hue._tcp.local.', properties={'bridgeid': 'bsb003_00000', 'modelid': 'BSB003'})"
+                }
+            },
+            {
+                "action": "device_registry.async_get",
+                "starting_state": "abort_state",
+                "ending_state": "migration_state",
+                "inputs": {
+                    "device_id": "device.id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bsb003_bridge_discovery_old_version",
+        "device_type": "BSB003 bridge",
+        "states": {
+            "form_link": {
+                "variables": {
+                    "type": "FlowResultType.FORM",
+                    "step_id": "link"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init_flow",
+                "starting_state": "initial_state",
+                "ending_state": "form_link",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "source": "config_entries.SOURCE_ZEROCONF",
+                    "zeroconf_data": {
+                        "ip_address": "192.168.1.218",
+                        "ip_addresses": [
+                            "192.168.1.218"
+                        ],
+                        "port": 443,
+                        "hostname": "Philips-hue.local",
+                        "type": "_hue._tcp.local.",
+                        "name": "Philips Hue - ABCABC._hue._tcp.local.",
+                        "properties": {
+                            "bridgeid": "bsb003_00000",
+                            "modelid": "BSB003"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bsb003_bridge_discovery_same_host",
+        "device_type": "bridge",
+        "states": {
+            "snapshot_state": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "link"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init_flow",
+                "starting_state": "initial_state",
+                "ending_state": "snapshot_state",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_ZEROCONF"
+                    },
+                    "data": {
+                        "ip_address": "192.168.1.217",
+                        "ip_addresses": [
+                            "192.168.1.217"
+                        ],
+                        "port": 443,
+                        "hostname": "Philips-hue.local",
+                        "type": "_hue._tcp.local.",
+                        "name": "Philips Hue - ABCABC._hue._tcp.local.",
+                        "properties": {
+                            "bridgeid": "bsb003_00000",
+                            "modelid": "BSB003"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bsb003_bridge_discovery_cannot_connect",
+        "device_type": "bridge",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "result['type']": "FlowResultType.FORM",
+                    "result['step_id']": "'link'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_init_config_flow",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "domain": "const.DOMAIN",
+                    "context": {
+                        "source": "config_entries.SOURCE_ZEROCONF"
+                    },
+                    "data": {
+                        "ip_address": "192.168.1.217",
+                        "ip_addresses": [
+                            "192.168.1.217"
+                        ],
+                        "port": 443,
+                        "hostname": "Philips-hue.local",
+                        "type": "_hue._tcp.local.",
+                        "name": "Philips Hue - ABCABC._hue._tcp.local.",
+                        "properties": {
+                            "bridgeid": "bsb003_00000",
+                            "modelid": "BSB003"
+                        }
+                    },
+                    "patches": {
+                        "discover_bridge": "return disc_bridge",
+                        "HueBridgeV2.fetch_full_state.side_effect": "exception"
+                    }
+                }
+            }
+        ]
+    }
+]

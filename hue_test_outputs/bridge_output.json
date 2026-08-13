@@ -1,0 +1,292 @@
+[
+    {
+        "name": "test_bridge_setup_v1",
+        "device_type": "HueBridgeV1",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "hue_bridge.api": "mock_api_v1",
+                    "hue_bridge.api_version": "1",
+                    "len(mock_forward.mock_calls)": "1"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "forward_entries": "{'light', 'binary_sensor', 'sensor'}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_initialize_bridge",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {}
+            },
+            {
+                "action": "extract_forward_entries",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "mock_forward.mock_calls": "mock_forward.mock_calls"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bridge_device_v1",
+        "device_type": "bridge",
+        "states": {
+            "state1": {
+                "variables": {
+                    "bridge_device": "None",
+                    "bridge_device.connections": "{(dr.CONNECTION_NETWORK_MAC, mock_api_v1.config.mac_address)}"
+                }
+            },
+            "state2": {
+                "variables": {
+                    "len(create_events)": "1"
+                }
+            },
+            "state3": {
+                "variables": {
+                    "light_device": "None",
+                    "light_device.via_device_id": "bridge_device.id"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup bridge device and register it in the device registry",
+                "starting_state": "initial_state",
+                "ending_state": "state1",
+                "inputs": {
+                    "config_entry": "MockConfigEntry(domain=DOMAIN, data={'host': '1.2.3.4', 'api_key': 'mock\u2011api\u2011key', 'api_version': 1}, options={CONF_ALLOW_HUE_GROUPS: False, CONF_ALLOW_UNREACHABLE: False})",
+                    "mock_api_v1": "HueBridgeV1 mock instance (patched)",
+                    "patches": [
+                        "bridge.HueBridgeV1 \u2192 mock_api_v1",
+                        "migration.is_v2_bridge \u2192 False"
+                    ]
+                }
+            },
+            {
+                "action": "capture device\u2011registry\u2011updated events and filter for creation events of the bridge device",
+                "starting_state": "state1",
+                "ending_state": "state2",
+                "inputs": {
+                    "events": "async_capture_events(hass, dr.EVENT_DEVICE_REGISTRY_UPDATED)",
+                    "bridge_device.id": "bridge_device.id"
+                }
+            },
+            {
+                "action": "retrieve the light device that should be linked to the bridge device",
+                "starting_state": "state2",
+                "ending_state": "state3",
+                "inputs": {
+                    "identifier": "(DOMAIN, '456')",
+                    "config_entry_id": "config_entry.entry_id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bridge_device_v2",
+        "device_type": "bridge_device",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "bridge_device": "None",
+                    "bridge_device.identifiers": "{(DOMAIN, mock_bridge_v2.api.config.bridge_id), (DOMAIN, mock_bridge_v2.api.config.bridge_device.id)}",
+                    "bridge_device.connections": "{(dr.CONNECTION_NETWORK_MAC, '00:17:88:01:aa:bb:fd:c7'), (dr.CONNECTION_NETWORK_MAC, mock_bridge_v2.api.config.mac_address)}"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "len(create_events)": "1"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "config": "[]"
+                }
+            },
+            {
+                "action": "filter_create_events",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "events": "events",
+                    "device_id": "bridge_device.id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bridge_setup_v2",
+        "device_type": "HueBridge",
+        "states": {
+            "state1": {
+                "variables": {
+                    "hue_bridge.api": "mock_api_v2",
+                    "hue_bridge.api_version": "2",
+                    "len(mock_forward.mock_calls)": "1"
+                }
+            },
+            "state2": {
+                "variables": {
+                    "forward_entries": "{'light', 'binary_sensor', 'event', 'sensor', 'switch', 'scene'}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_initialize_bridge",
+                "starting_state": "initial_state",
+                "ending_state": "state1",
+                "inputs": {
+                    "config_entry": {
+                        "host": "1.2.3.4",
+                        "api_key": "mock-api-key",
+                        "api_version": 2
+                    }
+                }
+            },
+            {
+                "action": "extract_forward_entries",
+                "starting_state": "state1",
+                "ending_state": "state2",
+                "inputs": {
+                    "mock_forward_calls": "mock_forward.mock_calls[0][1][1]"
+                }
+            },
+            {
+                "action": "set_forward_entries",
+                "starting_state": "state2",
+                "ending_state": "state2",
+                "inputs": {
+                    "forward_entries": "{'light', 'binary_sensor', 'event', 'sensor', 'switch', 'scene'}"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_bridge_setup_invalid_api_key",
+        "device_type": "HueBridge",
+        "states": {
+            "post_init": {
+                "variables": {
+                    "len(mock_init.mock_calls)": "1",
+                    "mock_init.mock_calls[0][2]['data']": "{'host': '1.2.3.4'}"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_initialize_bridge",
+                "starting_state": "initial_state",
+                "ending_state": "post_init",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_bridge_setup_timeout",
+        "device_type": "HueBridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "error_state": {
+                "variables": {
+                    "exception": "ConfigEntryNotReady"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_initialize_bridge",
+                "starting_state": "initial_state",
+                "ending_state": "error_state",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_reset_unloads_entry_if_setup",
+        "device_type": "Hue Bridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "initialized": {
+                "variables": {
+                    "len(hass.services.async_services())": "0",
+                    "len(mock_forward.mock_calls)": "1"
+                }
+            },
+            "reset": {
+                "variables": {
+                    "len(mock_forward.mock_calls)": "3",
+                    "len(hass.services.async_services())": "0"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_initialize_bridge",
+                "starting_state": "initial_state",
+                "ending_state": "initialized",
+                "inputs": {}
+            },
+            {
+                "action": "async_reset",
+                "starting_state": "initialized",
+                "ending_state": "reset",
+                "inputs": {}
+            }
+        ]
+    },
+    {
+        "name": "test_handle_unauthorized",
+        "device_type": "HueBridge",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "initialized_state": {
+                "variables": {}
+            },
+            "unauthorized_handled_state": {
+                "variables": {
+                    "hue_bridge.authorized": "False",
+                    "len(mock_create.mock_calls)": "1",
+                    "mock_create.mock_calls[0][1][1]": "'1.2.3.4'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_initialize_bridge",
+                "starting_state": "initial_state",
+                "ending_state": "initialized_state",
+                "inputs": {}
+            },
+            {
+                "action": "handle_unauthorized_error",
+                "starting_state": "initialized_state",
+                "ending_state": "unauthorized_handled_state",
+                "inputs": {}
+            }
+        ]
+    }
+]

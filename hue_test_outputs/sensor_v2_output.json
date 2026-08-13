@@ -1,0 +1,361 @@
+[
+    {
+        "name": "test_sensors",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_setup": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "0",
+                    "len(hass.states.async_all())": "7"
+                }
+            },
+            "temperature_sensor": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "18.1",
+                    "sensor.attributes['friendly_name']": "Hue motion sensor Temperature",
+                    "sensor.attributes['device_class']": "temperature",
+                    "sensor.attributes['state_class']": "measurement",
+                    "sensor.attributes['unit_of_measurement']": "\u00b0C"
+                }
+            },
+            "illuminance_sensor": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "63",
+                    "sensor.attributes['friendly_name']": "Hue motion sensor Illuminance",
+                    "sensor.attributes['device_class']": "illuminance",
+                    "sensor.attributes['state_class']": "measurement",
+                    "sensor.attributes['unit_of_measurement']": "lx",
+                    "sensor.attributes['light_level']": "18027"
+                }
+            },
+            "battery_sensor": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "100",
+                    "sensor.attributes['friendly_name']": "Wall switch with 2 controls Battery",
+                    "sensor.attributes['device_class']": "battery",
+                    "sensor.attributes['state_class']": "measurement",
+                    "sensor.attributes['unit_of_measurement']": "%",
+                    "sensor.attributes['battery_state']": "normal"
+                }
+            },
+            "group_illuminance_sensor": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "0",
+                    "sensor.attributes['friendly_name']": "Sensor group Illuminance",
+                    "sensor.attributes['device_class']": "illuminance",
+                    "sensor.attributes['state_class']": "measurement",
+                    "sensor.attributes['unit_of_measurement']": "lx",
+                    "sensor.attributes['light_level']": "0"
+                }
+            },
+            "connectivity_entity": {
+                "variables": {
+                    "entity_entry.disabled_by": "er.RegistryEntryDisabler.INTEGRATION"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "await mock_bridge_v2.api.load_test_data & await setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "post_setup",
+                "inputs": {
+                    "data": "v2_resources_test_data",
+                    "hass": "hass",
+                    "mock_bridge_v2": "mock_bridge_v2",
+                    "platform": "Platform.SENSOR"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "post_setup",
+                "ending_state": "temperature_sensor",
+                "inputs": {
+                    "entity_id": "sensor.hue_motion_sensor_temperature"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "temperature_sensor",
+                "ending_state": "illuminance_sensor",
+                "inputs": {
+                    "entity_id": "sensor.hue_motion_sensor_illuminance"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "illuminance_sensor",
+                "ending_state": "battery_sensor",
+                "inputs": {
+                    "entity_id": "sensor.wall_switch_with_2_controls_battery"
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "battery_sensor",
+                "ending_state": "group_illuminance_sensor",
+                "inputs": {
+                    "entity_id": "sensor.sensor_group_illuminance"
+                }
+            },
+            {
+                "action": "entity_registry.async_get",
+                "starting_state": "group_illuminance_sensor",
+                "ending_state": "connectivity_entity",
+                "inputs": {
+                    "entity_id": "sensor.wall_switch_with_2_controls_zigbee_connectivity"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_enable_sensor",
+        "device_type": "sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "setup_complete": {
+                "variables": {
+                    "await async_setup_component(hass, hue.DOMAIN, {})": "True"
+                }
+            },
+            "entity_disabled": {
+                "variables": {
+                    "entity_entry.disabled_by": "er.RegistryEntryDisabler.INTEGRATION"
+                }
+            },
+            "entity_enabled": {
+                "variables": {
+                    "updated_entry": "entity_entry",
+                    "updated_entry.disabled": "False"
+                }
+            },
+            "sensor_connected": {
+                "variables": {
+                    "state.state": "'connected'",
+                    "state.attributes['mac_address']": "'00:17:88:01:0b:aa:bb:99'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "async_setup_component",
+                "starting_state": "initial_state",
+                "ending_state": "setup_complete",
+                "inputs": {
+                    "hass": "hass",
+                    "domain": "hue.DOMAIN",
+                    "config": {}
+                }
+            },
+            {
+                "action": "entity_registry.async_get",
+                "starting_state": "setup_complete",
+                "ending_state": "entity_disabled",
+                "inputs": {
+                    "entity_id": "sensor.wall_switch_with_2_controls_zigbee_connectivity"
+                }
+            },
+            {
+                "action": "entity_registry.async_update_entity",
+                "starting_state": "entity_disabled",
+                "ending_state": "entity_enabled",
+                "inputs": {
+                    "entity_id": "entity_entry.entity_id",
+                    "disabled_by": null
+                }
+            },
+            {
+                "action": "hass.states.get",
+                "starting_state": "entity_enabled",
+                "ending_state": "sensor_connected",
+                "inputs": {
+                    "entity_id": "sensor.wall_switch_with_2_controls_zigbee_connectivity"
+                }
+            },
+            {
+                "action": "await hass.config_entries.async_forward_entry_unload / async_forward_entry_setups + async_block_till_done",
+                "starting_state": "entity_enabled",
+                "ending_state": "sensor_connected",
+                "inputs": {}
+            },
+            {
+                "action": "await hass.async_block_till_done()",
+                "starting_state": "entity_enabled",
+                "ending_state": "sensor_connected",
+                "inputs": {}
+            },
+            {
+                "action": "await hass.config_entries.async_forward_entry_setups(mock_config_entry_v2, [Platform.SENSOR])",
+                "starting_state": "entity_enabled",
+                "ending_state": "sensor_connected",
+                "inputs": {}
+            },
+            {
+                "action": "await hass.config_entries.async_forward_entry_unload(mock_config_entry_v2, Platform.SENSOR)",
+                "starting_state": "entity_enabled",
+                "ending_state": "sensor_connected",
+                "inputs": {}
+            },
+            {
+                "action": "await hass.async_block_till_done()",
+                "starting_state": "entity_enabled",
+                "ending_state": "sensor_connected",
+                "inputs": {}
+            },
+            {
+                "action": "state = hass.states.get(entity_id)",
+                "starting_state": "entity_enabled",
+                "ending_state": "sensor_connected",
+                "inputs": {
+                    "entity_id": "sensor.wall_switch_with_2_controls_zigbee_connectivity"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_sensor_add_update",
+        "device_type": "sensor",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "hass.states.get(test_entity_id)": "None"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.state": "'18.0'"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.state": "'22.5'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialize",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "load_test_data": "await mock_bridge_v2.api.load_test_data([FAKE_DEVICE, FAKE_ZIGBEE_CONNECTIVITY])",
+                    "setup_platform": "await setup_platform(hass, mock_bridge_v2, Platform.SENSOR)",
+                    "assign_entity_id": "test_entity_id = 'sensor.hue_mocked_device_temperature'"
+                }
+            },
+            {
+                "action": "add_sensor",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "emit_add_event": "mock_bridge_v2.api.emit_event('add', FAKE_SENSOR)",
+                    "await_block": "await hass.async_block_till_done()",
+                    "retrieve_entity": "test_entity = hass.states.get(test_entity_id)"
+                }
+            },
+            {
+                "action": "update_sensor",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "create_updated_sensor": "updated_sensor = {**FAKE_SENSOR, 'temperature': {'temperature': 22.5}}",
+                    "emit_update_event": "mock_bridge_v2.api.emit_event('update', updated_sensor)",
+                    "await_block": "await hass.async_block_till_done()",
+                    "retrieve_entity": "test_entity = hass.states.get(test_entity_id)"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_grouped_light_level_sensor",
+        "device_type": "grouped_light_level",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "sensor": ":null:",
+                    "sensor.state": "0",
+                    "sensor.attributes['device_class']": "illuminance",
+                    "sensor.attributes['light_level']": ":number:0"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "sensor.state": "999"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "initialize_test_environment",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "load_test_data": "v2_resources_test_data",
+                    "setup_platform": {
+                        "hass": "hass",
+                        "bridge": "mock_bridge_v2",
+                        "platform": "Platform.SENSOR"
+                    }
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "event": "update",
+                    "payload": {
+                        "id": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+                        "type": "grouped_light_level",
+                        "light": {
+                            "light_level": 30000,
+                            "light_level_report": {
+                                "changed": "2023-09-23T08:20:51.384Z",
+                                "light_level": 30000
+                            }
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_light_level_sensor_none_value",
+        "device_type": "motion_sensor",
+        "states": {
+            "sensor_state": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "STATE_UNKNOWN"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform_and_load_data",
+                "starting_state": "initial_state",
+                "ending_state": "sensor_state",
+                "inputs": {
+                    "resource_modification": {
+                        "id": "d504e7a4-9a18-4854-90fd-c5b6ac102c40",
+                        "light.light_level": null,
+                        "light.light_level_valid": false
+                    },
+                    "load_test_data": "v2_resources_test_data",
+                    "setup_platform": "Platform.SENSOR"
+                }
+            }
+        ]
+    }
+]

@@ -1,0 +1,326 @@
+[
+    {
+        "name": "test_binary_sensors",
+        "device_type": "binary_sensor",
+        "states": {
+            "post_setup": {
+                "variables": {
+                    "len(mock_bridge_v2.mock_requests)": "0"
+                }
+            },
+            "hue_motion_sensor_motion_created": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "'off'",
+                    "sensor.name": "'Hue motion sensor Motion'",
+                    "sensor.attributes['device_class']": "'motion'"
+                }
+            },
+            "philips_hue_entertainmentroom_1_created": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "'off'",
+                    "sensor.name": "'Philips hue Entertainmentroom 1'",
+                    "sensor.attributes['device_class']": "'running'"
+                }
+            },
+            "test_contact_sensor_opening_created": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "'off'",
+                    "sensor.name": "'Test contact sensor Opening'",
+                    "sensor.attributes['device_class']": "'opening'"
+                }
+            },
+            "test_contact_sensor_opening_unknown": {
+                "variables": {
+                    "sensor.state": "'unknown'"
+                }
+            },
+            "test_contact_sensor_tamper_created": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "'off'",
+                    "sensor.name": "'Test contact sensor Tamper'",
+                    "sensor.attributes['device_class']": "'tamper'"
+                }
+            },
+            "test_contact_sensor_tamper_after_update": {
+                "variables": {
+                    "sensor.state": "'off'"
+                }
+            },
+            "test_camera_motion_created": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "'on'",
+                    "sensor.name": "'Test Camera Motion'",
+                    "sensor.attributes['device_class']": "'motion'"
+                }
+            },
+            "sensor_group_motion_created": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "'off'",
+                    "sensor.name": "'Sensor group Motion'",
+                    "sensor.attributes['device_class']": "'motion'"
+                }
+            },
+            "test_room_motion_aware_sensor_1_created": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "'off'",
+                    "sensor.name": "'Test Room Motion Aware Sensor 1'",
+                    "sensor.attributes['device_class']": "'motion'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "load_test_data & setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "post_setup",
+                "inputs": {
+                    "test_data": "v2_resources_test_data",
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "platform": "Platform.BINARY_SENSOR"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "test_contact_sensor_opening_created",
+                "ending_state": "test_contact_sensor_opening_unknown",
+                "inputs": {
+                    "event_type": "update",
+                    "payload": {
+                        "enabled": false,
+                        "id": "18802b4a-b2f6-45dc-8813-99cde47f3a4a",
+                        "type": "contact"
+                    }
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "test_contact_sensor_tamper_created",
+                "ending_state": "test_contact_sensor_tamper_after_update",
+                "inputs": {
+                    "event_type": "update",
+                    "payload": {
+                        "id": "d7fcfab0-69e1-4afb-99df-6ed505211db4",
+                        "tamper_reports": [],
+                        "type": "tamper"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_binary_sensor_add_update",
+        "device_type": "binary_sensor",
+        "states": {
+            "state0": {
+                "variables": {
+                    "hass.states.get(test_entity_id)": "None"
+                }
+            },
+            "state1": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.state": "'off'"
+                }
+            },
+            "state2": {
+                "variables": {
+                    "test_entity": "None",
+                    "test_entity.state": "'on'"
+                }
+            },
+            "state3": {
+                "variables": {
+                    "hass.states.get(test_entity_id).state": "'on'"
+                }
+            },
+            "state4": {
+                "variables": {
+                    "hass.states.get(test_entity_id).state": "'off'"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "emit_event",
+                "starting_state": "state0",
+                "ending_state": "state1",
+                "inputs": {
+                    "event": "add",
+                    "payload": "FAKE_BINARY_SENSOR"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state1",
+                "ending_state": "state2",
+                "inputs": {
+                    "event": "update",
+                    "payload": "updated_sensor (motion True)"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state2",
+                "ending_state": "state3",
+                "inputs": {
+                    "event": "update",
+                    "payload": "updated_sensor (motion False, motion_report.changed True)"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state3",
+                "ending_state": "state4",
+                "inputs": {
+                    "event": "update",
+                    "payload": "updated_sensor (motion True, motion_report.changed False)"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_grouped_motion_sensor",
+        "device_type": "grouped_motion",
+        "states": {
+            "state_off": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "off",
+                    "sensor.attributes['device_class']": "motion"
+                }
+            },
+            "state_on": {
+                "variables": {
+                    "sensor.state": "on"
+                }
+            },
+            "state_unknown": {
+                "variables": {
+                    "sensor.state": "unknown"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "state_off",
+                "inputs": {
+                    "mock_bridge_v2": "mock_bridge_v2",
+                    "platform": "Platform.BINARY_SENSOR"
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_off",
+                "ending_state": "state_on",
+                "inputs": {
+                    "event": "update",
+                    "payload": {
+                        "id": "2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
+                        "type": "grouped_motion",
+                        "motion": {
+                            "motion_report": {
+                                "changed": "2023-09-23T08:20:51.384Z",
+                                "motion": true
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "action": "emit_event",
+                "starting_state": "state_on",
+                "ending_state": "state_unknown",
+                "inputs": {
+                    "event": "update",
+                    "payload": {
+                        "id": "2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
+                        "type": "grouped_motion",
+                        "enabled": false
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_motion_aware_sensor",
+        "device_type": "motion_aware_sensor",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "state_1": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.state": "off",
+                    "sensor.attributes['device_class']": "motion"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "sensor.state": "on"
+                }
+            },
+            "state_3": {
+                "variables": {
+                    "sensor": "None",
+                    "sensor.name": "Test Room Updated Motion Area"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "setup_platform",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "platform": "Platform.BINARY_SENSOR"
+                }
+            },
+            {
+                "action": "mock_bridge_v2.api.emit_event",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "event_type": "update",
+                    "payload": {
+                        "id": "8b7e4f82-9c3d-4e1a-a5f6-8d9c7b2a3e4f",
+                        "type": "security_area_motion",
+                        "motion": {
+                            "motion": true,
+                            "motion_valid": true,
+                            "motion_report": {
+                                "changed": "2023-09-23T05:54:08.166Z",
+                                "motion": true
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "action": "mock_bridge_v2.api.emit_event",
+                "starting_state": "state_2",
+                "ending_state": "state_3",
+                "inputs": {
+                    "event_type": "update",
+                    "payload": {
+                        "id": "5e6f7a8b-9c1d-4e2f-b3a4-5c6d7e8f9a0b",
+                        "type": "motion_area_configuration",
+                        "name": "Updated Motion Area"
+                    }
+                }
+            }
+        ]
+    }
+]

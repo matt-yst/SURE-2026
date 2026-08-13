@@ -1,0 +1,135 @@
+[
+    {
+        "name": "test_hue_event",
+        "device_type": "button",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "post_event_state": {
+                "variables": {
+                    "len(events)": "1",
+                    "events[0].data['id']": "wall_switch_with_2_controls_button",
+                    "events[0].data['unique_id']": "btn_event['id']",
+                    "events[0].data['type']": "btn_event['button']['button_report']['event']",
+                    "events[0].data['subtype']": "btn_event['metadata']['control_id']"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "emit_event",
+                "starting_state": "initial_state",
+                "ending_state": "post_event_state",
+                "inputs": {
+                    "event_type": "update",
+                    "event_data": "btn_event"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_triggers",
+        "device_type": "wall_switch",
+        "states": {
+            "state_1": {
+                "variables": {
+                    "hue_wall_switch_device.via_device_id": "bridge_device.id"
+                }
+            },
+            "state_2": {
+                "variables": {
+                    "triggers": "unordered(expected_triggers)"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "retrieve_devices",
+                "starting_state": "initial_state",
+                "ending_state": "state_1",
+                "inputs": {
+                    "wall_switch_identifier": "3ff06175-29e8-44a8-8fe7-af591b0025da",
+                    "bridge_identifier": "mock_bridge_v2.api.config.bridge_id"
+                }
+            },
+            {
+                "action": "async_get_device_automations",
+                "starting_state": "state_1",
+                "ending_state": "state_2",
+                "inputs": {
+                    "hass": "hass",
+                    "automation_type": "DeviceAutomationType.TRIGGER",
+                    "device_id": "hue_wall_switch_device.id"
+                }
+            }
+        ]
+    },
+    {
+        "name": "test_get_triggers_for_removed_device",
+        "device_type": "hue_device",
+        "states": {
+            "initial_state": {
+                "variables": {}
+            },
+            "test_data_loaded": {
+                "variables": {}
+            },
+            "platform_setup": {
+                "variables": {}
+            },
+            "device_created": {
+                "variables": {}
+            },
+            "snapshot": {
+                "variables": {
+                    "triggers": "[]"
+                }
+            }
+        },
+        "transitions": [
+            {
+                "action": "load_test_data",
+                "starting_state": "initial_state",
+                "ending_state": "test_data_loaded",
+                "inputs": {
+                    "data": "v2_resources_test_data"
+                }
+            },
+            {
+                "action": "setup_platform",
+                "starting_state": "test_data_loaded",
+                "ending_state": "platform_setup",
+                "inputs": {
+                    "hass": "hass",
+                    "bridge": "mock_bridge_v2",
+                    "platforms": [
+                        "binary_sensor",
+                        "sensor"
+                    ]
+                }
+            },
+            {
+                "action": "create_orphaned_device",
+                "starting_state": "platform_setup",
+                "ending_state": "device_created",
+                "inputs": {
+                    "config_entry_id": "mock_bridge_v2.config_entry.entry_id",
+                    "identifiers": [
+                        "hue.DOMAIN",
+                        "non-existent-hue-device-id"
+                    ]
+                }
+            },
+            {
+                "action": "async_get_device_automations",
+                "starting_state": "device_created",
+                "ending_state": "snapshot",
+                "inputs": {
+                    "device_id": "orphaned_device.id",
+                    "automation_type": "DeviceAutomationType.TRIGGER"
+                }
+            }
+        ]
+    }
+]
