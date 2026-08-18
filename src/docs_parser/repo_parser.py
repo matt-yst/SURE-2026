@@ -1,13 +1,8 @@
-import requests
-import re
 import json
 from pydantic import BaseModel, Field
-import os
-from anthropic import Anthropic 
 import ast 
 from typing import Any
 from pydantic import BaseModel, Field
-from dotenv import load_dotenv 
 from pathlib import Path
 from ollama import chat
 
@@ -143,7 +138,7 @@ if __name__ == "__main__":
     print("FILES IN COMPONENT DIRECTORY: ")
     print_files(component_dir, 0)
 
-    output_folder = script_dir / "elgato_test_outputs"
+    output_folder = script_dir / "test_outputs"
     output_folder.mkdir(exist_ok=True)
 
     print("\n")
