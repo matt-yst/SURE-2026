@@ -86,6 +86,7 @@ In its current iteration, there are times where the LLM can be inaccurate in its
 Want to discuss further about this project? You can contact me through these means:
 
 email - matthew.y.tan@mail.mcgill.ca
+
 LinkedIn - https://www.linkedin.com/in/matt-yst/
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -94,3 +95,4 @@ LinkedIn - https://www.linkedin.com/in/matt-yst/
 
 Thank you to Rufeng Chen, Dr. Lili Wei and Dr. Steven Ding for your support throughout this project. I would not have been able to accomplish it without your help.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
