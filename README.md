@@ -21,7 +21,7 @@
     <li><a href="#usage">Usage</a></li>
     <li><a href="#known-bugs">Known Bugs</a></li>
     <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
+    <li><a href="#acknowledgements">Acknowledgements</a></li>
   </ol>
 </details>
 
