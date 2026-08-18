@@ -19,7 +19,7 @@ class Test_shelly_binary_sensor():
         test_case = self.data[0]
         assert len(test_case["transitions"]) == 2
 
-    @pytest.mark.xfail(reason="wrong number of transitions")
+    @pytest.mark.xfail(reason="1 extra transition(s)")
     def test_block_binary_gas_sensor_creation_length(self):
         test_case = self.data[1]
 
@@ -51,7 +51,7 @@ class Test_shelly_binary_sensor():
 
         assert len(test_case["transitions"]) == 2
 
-    @pytest.mark.xfail(reason="wrong number of transitions")
+    @pytest.mark.xfail(reason="1 extra transition(s)")
     def test_rpc_binary_sensor_length(self):
         test_case = self.data[7]
 
@@ -82,7 +82,7 @@ class Test_shelly_binary_sensor():
 
         assert len(test_case["transitions"]) == 2
 
-    @pytest.mark.xfail(reason="wrong number of transitions")
+    @pytest.mark.xfail(reason="1 extra transition(s)")
     def test_rpc_restored_sleeping_binary_sensor_no_last_state_length(self):
         test_case = self.data[13]
 
@@ -101,7 +101,7 @@ class Test_hue_binary_sensor():
             data = json.load(f) 
         self.data = data
 
-    @pytest.mark.xfail(reason="wrong number of transitions")
+    @pytest.mark.xfail(reason="7 less transition(s)")
     def test_binary_sensors_length(self):
         test_case = self.data[0]
 
