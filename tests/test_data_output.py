@@ -1,8 +1,6 @@
 import pytest
-from pathlib import Path
-import pydantic 
+from pathlib import Path 
 import json
-import ast
 
 
 # **********************************************TESTS**********************************************
